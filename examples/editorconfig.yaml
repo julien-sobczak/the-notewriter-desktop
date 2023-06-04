@@ -1,0 +1,54 @@
+# The NoteWriter Desktop
+# Main configuration file
+# ~/.nt/editorconfig.yml (in complement to ~/.nt/config.yml for saved searched, etc.)
+
+
+# List of workspaces (= The NoteWriter repositories)
+# Useful when spliting work and life notes in different Git repositories while keeping the options to search across all collections of notes using the desktop application.
+# (Ex; You can keep Go cheatsheets inside your main collection as can be useful if you change work and still want to search them at work)
+workspaces:
+- name: Main
+  slug: main # Useful to reference in desks
+  path: ~/notes
+  selected: true # Selected by default
+- name: My Company
+  slug: my-company
+  path: ~/Workshop/notes
+
+
+# "Get inspired by" action
+inspirations:
+  dailyQuote: "path:references @kind:quote"
+  categories:
+  # Default can be
+  # - name: Quotes
+  #   workspace: all
+  #   query: "@kind:quote"
+  # - name: Art
+  #   workspace: all
+  #   query: "@kind:artwork"
+  - name: Life
+    workspace: main
+    query: "path:references/persons (#life or #purpose) @kind:quote"
+  - name: Art
+    workspace: main
+    query: "path:references @kind:artwork"
+  # Complete with more inspirations
+
+
+# List of desks
+# (probably in a `~/.nt/editorconfig.json` file to be saved easily from the code without losing comments, formating)
+# The NoteWriter Deskop must load this file at startup and support a save button to persist change in desks or new desks (like VS Code supports editing the configuration).
+desks:
+- name: My Project
+  workspace: main
+  layout: horizontal # vertical | horizontal | container (default)
+  elements:
+  - width: "70%" # TODO: or just "size"? Accept only percent?
+    query: "path:projects/my-project (kind:note)"
+  - layout: vertical
+    elements:
+    - query: "path:projects/my-project kind:todo title:Backlog"
+      view: single # single | grid (default) | list
+      height: "30%"
+    - query: "path:projects/my-project (kind:reference or kind:quote)"
