@@ -66,7 +66,8 @@ if (fs.existsSync(homeConfigPath)) {
   });
 }
 
-// TODO delete?
+/*
+TODO delete?
 function searchMatch(pattern: string) {
   const db = datasources.get('main');
   if (!db) {
@@ -87,7 +88,6 @@ function searchMatch(pattern: string) {
   });
 }
 
-// TODO delete?
 async function searchMatchSync(pattern: string) {
   try {
     const rows = await searchMatch(pattern);
@@ -100,6 +100,7 @@ async function searchMatchSync(pattern: string) {
     console.error(e.message);
   }
 }
+*/
 
 async function searchDailyQuote() {
   const db = datasources.get('main');

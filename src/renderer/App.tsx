@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
+import { VscSplitHorizontal, VscSplitVertical } from 'react-icons/vsc';
 import icon from '../../assets/icon.svg';
 import './Reset.css';
 import './App.css';
 import { Note } from '../shared/model/Note';
 
-import { VscSplitHorizontal } from 'react-icons/vsc';
-import { VscSplitVertical } from 'react-icons/vsc';
-
 const { ipcRenderer } = window.electron;
-
 
 // https://medium.com/@paulohfev/problem-solving-custom-react-hook-for-keydown-events-e68c8b0a371
 export const useKeyDown = (callback: any, keys: any) => {
@@ -48,7 +45,7 @@ function DailyQuote({ onClose }: any) {
       onClose();
     }, 60000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [onClose]);
 
   // or close after pressing enter
   useKeyDown(() => {
@@ -80,7 +77,6 @@ function Actions() {
     </div>
   );
 }
-
 
 // TODO create Desk()
 
