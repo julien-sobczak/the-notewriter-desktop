@@ -13,7 +13,7 @@ workspaces:
   selected: true # Selected by default
 - name: My Company
   slug: my-company
-  path: ~/Workshop/notes
+  path: ~/Workspace/notes
 
 
 # "Get inspired by" action

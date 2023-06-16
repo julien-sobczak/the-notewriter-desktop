@@ -22,7 +22,7 @@ function Actions() {
 
 export default function StaticDesk() {
   // Demo (TODO load from configuration file)
-  const workspace = {
+  const desk = {
     name: 'My Project',
     workspace: 'main',
     root: {
@@ -52,7 +52,7 @@ export default function StaticDesk() {
     },
   };
 
-  console.log(workspace);
+  console.log(desk);
 
   return (
     <div className="Desk">

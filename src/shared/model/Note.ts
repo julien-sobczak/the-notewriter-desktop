@@ -1,7 +1,24 @@
+export interface Blob {
+  oid: string;
+  mime: string;
+  tags: string[];
+}
+
+export interface Media {
+  oid: string;
+  kind: string;
+  blobs: Blob[];
+}
+
 export interface Note {
   oid: string;
   // File containing the note
   oidFile: string;
+
+  // Enriched information about the workspace where the note comes from
+  workspaceSlug: string;
+  workspacePath: string;
+
   // Type of note: free, reference, ...
   kind: string;
 
@@ -25,4 +42,15 @@ export interface Note {
   content: string;
   // Content in HTML format
   comment: string;
+
+  // Medias/Blobs referenced by the note
+  medias: Media[];
+}
+
+export interface Relation {
+  source_oid: string;
+  source_kind: string;
+  target_oid: string;
+  target_kind: string;
+  relationType: string;
 }

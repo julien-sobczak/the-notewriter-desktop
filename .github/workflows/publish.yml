@@ -1,9 +1,12 @@
 name: Publish
 
 on:
+  workflow_dispatch:
   push:
-    branches:
+    branches: # FIXME remove
       - main
+    tags:
+      - '*'
 
 jobs:
   publish:

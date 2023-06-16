@@ -23,196 +23,25 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import YAML from 'yaml';
-import { Database, verbose as sqlite3Verbose } from 'sqlite3';
 
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import { Note } from '../shared/model/Note';
+import { EditorConfig } from './config';
+import DatabaseManager from './database';
 
-sqlite3Verbose();
+let editorConfig: EditorConfig | null = null; // new EditorConfig() to extract below lines
+const db = new DatabaseManager(); // TODO pass editorConfig?
 
-interface Workspace {
-  name: string;
-  slug: string;
-  path: string;
-  selected: boolean;
-}
-interface EditorConfig {
-  workspaces: Workspace[];
-}
-
-let editorConfig: EditorConfig | null = null;
-// List of datasources based on workspaces defined in global configuration
-const datasources = new Map<string, Database>();
-
-// Returns an absolute normalized path.
-function normalizePath(relativePath: string) {
-  return path.normalize(relativePath.replace('~', os.homedir));
-}
-
-const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.yaml'); // TODO support .yml too
-if (fs.existsSync(homeConfigPath)) {
-  const data = fs.readFileSync(homeConfigPath, 'utf8');
-  editorConfig = YAML.parse(data) as EditorConfig;
-  console.log('ici', editorConfig); // FIXME remove
-  editorConfig.workspaces.forEach((workspace) => {
-    const dbPath = path.join(normalizePath(workspace.path), '.nt/database.db');
-    if (fs.existsSync(dbPath)) {
-      console.debug(`Using database ${dbPath}`);
-      const db = new Database(dbPath);
-      datasources.set(workspace.slug, db);
-    }
-    // else TODO
-  });
-}
-
-/*
-TODO delete?
-function searchMatch(pattern: string) {
-  const db = datasources.get('main');
-  if (!db) {
-    throw new Error('No datasource found');
-  }
-  return new Promise<any[]>((resolve, reject) => {
-    db.all(
-      `SELECT note_fts.rowid as id, note.oid, note.content_raw FROM note_fts JOIN note on note.oid = note_fts.oid where note_fts MATCH ?`,
-      pattern,
-      (err: any, rows: any) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
-      }
-    );
-  });
-}
-
-async function searchMatchSync(pattern: string) {
-  try {
-    const rows = await searchMatch(pattern);
-    console.log(`Found ${rows.length} results`);
-    rows.map((row) => {
-      console.log(`${row.id}: ${row.oid} ${row.content_raw}`);
-      return undefined;
+(async () => {
+  const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.yaml'); // TODO support .yml too
+  if (fs.existsSync(homeConfigPath)) {
+    const data = fs.readFileSync(homeConfigPath, 'utf8');
+    editorConfig = YAML.parse(data) as EditorConfig;
+    editorConfig.workspaces.forEach((workspace) => {
+      db.registerWorkspace(workspace);
     });
-  } catch (e: any) {
-    console.error(e.message);
   }
-}
-*/
-
-async function searchDailyQuote() {
-  const db = datasources.get('main');
-  if (!db) {
-    throw new Error('No datasource found');
-  }
-  return new Promise<Note>((resolve, reject) => {
-    db.all(
-      `
-        SELECT
-          oid,
-          file_oid,
-          kind,
-          relative_path,
-          wikilink,
-          attributes,
-          tags,
-          line,
-          title_html,
-          content_html,
-          comment_html
-        FROM note
-        WHERE kind = 'quote'
-        ORDER BY RANDOM()
-        LIMIT 1`,
-      (err: any, rows: any) => {
-        if (err) {
-          console.log('Error while searching for daily quote', err);
-          reject(err);
-        } else {
-          const row = rows[0];
-          const note = {
-            oid: row.oid,
-            oidFile: row.file_oid,
-            kind: row.kind,
-            relativePath: row.relative_path,
-            wikilink: row.wikilink,
-            attributes: {}, // TODO parse row.attributes,
-            tags: [], // TODO parse row.tags,
-            line: row.line,
-            title: row.title_html,
-            content: row.content_html,
-            comment: row.comment_html,
-          };
-          resolve(note);
-        }
-      }
-    );
-  });
-}
-
-async function search(query: string, selectedWorkspaces: string[] = []) {
-  const db = datasources.get('main');
-  if (!db) {
-    throw new Error('No datasource found');
-  }
-  console.debug(selectedWorkspaces); // FIXME remove
-  // TODO convert query to SQL
-  return new Promise<Note[]>((resolve, reject) => {
-    db.all(
-      `
-        SELECT
-          oid,
-          file_oid,
-          kind,
-          relative_path,
-          wikilink,
-          attributes,
-          tags,
-          line,
-          title_html,
-          content_html,
-          comment_html
-        ${query}
-        FROM note
-        LIMIT 100`,
-      (err: any, rows: any) => {
-        if (err) {
-          console.log('Error while searching for notes', err);
-          reject(err);
-        } else {
-          const notes: Note[] = [];
-          rows.forEach((row: any) => {
-            const note = {
-              oid: row.oid,
-              oidFile: row.file_oid,
-              kind: row.kind,
-              relativePath: row.relative_path,
-              wikilink: row.wikilink,
-              attributes: {}, // TODO parse row.attributes,
-              tags: [], // TODO parse row.tags,
-              line: row.line,
-              title: row.title_html,
-              content: row.content_html,
-              comment: row.comment_html,
-            };
-            notes.push(note);
-          });
-          resolve(notes);
-        }
-      }
-    );
-  });
-}
-
-/* FIXME to remove
-db.serialize(async () => {
-  console.log('Searching for patterns');
-  searchSync('book');
-  db.close();
-});
-*/
+})();
 
 class AppUpdater {
   constructor() {
@@ -268,12 +97,14 @@ ipcMain.on('copyText', (event, text) => {
 });
 
 ipcMain.on('search', async (event, query, selectedWorkspaces = undefined) => {
-  const notes = await search(query, selectedWorkspaces);
+  console.debug(`Searching for "${query}" in workspaces ${selectedWorkspaces}`);
+  const notes = await db.search(query, selectedWorkspaces);
+  console.debug(`Found ${notes.length} notes`);
   event.reply('search', notes);
 });
 
 ipcMain.on('get-daily-quote', async (event) => {
-  const note = await searchDailyQuote();
+  const note = await db.searchDailyQuote();
   event.reply('get-daily-quote', note);
 });
 
@@ -417,10 +248,7 @@ app.on('window-all-closed', () => {
   }
 });
 app.on('quit', () => {
-  datasources.forEach((db, name) => {
-    console.debug(`Closing datasource ${name}`);
-    db.close();
-  });
+  db.close();
 });
 
 app

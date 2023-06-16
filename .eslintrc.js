@@ -13,6 +13,11 @@ module.exports = {
     '@typescript-eslint/no-shadow': 'error',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
+    // Overrides:
+    'no-plusplus': 'off',
+    'no-restricted-syntax': 'off',
+    'no-use-before-define': 'off',
+    'no-console': 'off',
   },
   parserOptions: {
     ecmaVersion: 2020,
