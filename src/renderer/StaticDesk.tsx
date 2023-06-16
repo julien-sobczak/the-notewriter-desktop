@@ -21,7 +21,7 @@ function Actions() {
 }
 
 export default function StaticDesk() {
-  // Demo (TODO load from configuration)
+  // Demo (TODO load from configuration file)
   const workspace = {
     name: 'My Project',
     workspace: 'main',
