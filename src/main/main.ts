@@ -20,28 +20,15 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn } from 'child_process';
-import fs from 'fs';
-import os from 'os';
-import YAML from 'yaml';
 
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import { EditorConfig } from './config';
+import ConfigManager from './config';
 import DatabaseManager from './database';
 
-let editorConfig: EditorConfig | null = null; // new EditorConfig() to extract below lines
+const config = new ConfigManager();
 const db = new DatabaseManager(); // TODO pass editorConfig?
-
-(async () => {
-  const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.yaml'); // TODO support .yml too
-  if (fs.existsSync(homeConfigPath)) {
-    const data = fs.readFileSync(homeConfigPath, 'utf8');
-    editorConfig = YAML.parse(data) as EditorConfig;
-    editorConfig.workspaces.forEach((workspace) => {
-      db.registerWorkspace(workspace);
-    });
-  }
-})();
+config.Workspaces().forEach((workspace) => db.registerWorkspace(workspace));
 
 class AppUpdater {
   constructor() {
