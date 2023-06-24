@@ -3,21 +3,23 @@ import os from 'os';
 import fs from 'fs';
 import YAML from 'yaml';
 
-export interface Workspace {
-  name: string;
-  slug: string;
-  path: string;
-  selected: boolean;
-}
-
-export interface EditorConfig {
-  workspaces: Workspace[];
-}
+import {
+  EditorStaticConfig,
+  EditorDynamicConfig,
+  Workspace,
+} from '../shared/model/Config';
 
 export default class ConfigManager {
-  editorConfig: EditorConfig;
+  editorStaticConfig: EditorStaticConfig;
+
+  editorDynamicConfig: EditorDynamicConfig;
 
   constructor() {
+    this.editorStaticConfig = ConfigManager.#readStaticConfig();
+    this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
+  }
+
+  static #readStaticConfig() {
     // Ensure the configuration file exists
     const homeConfigPath1 = path.join(os.homedir(), '.nt/editorconfig.yaml');
     const homeConfigPath2 = path.join(os.homedir(), '.nt/editorconfig.yml');
@@ -31,18 +33,42 @@ export default class ConfigManager {
       homeConfigValidPath = homeConfigPath2;
     }
     const data = fs.readFileSync(homeConfigValidPath, 'utf8');
-    this.editorConfig = YAML.parse(data) as EditorConfig;
+    return YAML.parse(data) as EditorStaticConfig;
+  }
+
+  static #readDynamicConfig() {
+    const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.json');
+    if (!fs.existsSync(homeConfigPath)) {
+      // Define default configuration
+      return {
+        desks: [],
+      } as EditorDynamicConfig;
+    }
+
+    const data = fs.readFileSync(homeConfigPath, 'utf8');
+    return JSON.parse(data) as EditorDynamicConfig;
   }
 
   // Returns all declared workspaces.
-  Workspaces(): Workspace[] {
-    return this.editorConfig.workspaces;
+  workspaces(): Workspace[] {
+    return this.editorStaticConfig.workspaces;
   }
 
   // Returns only workspaces selected by default.
-  SelectedWorkspaces(): Workspace[] {
-    return this.editorConfig.workspaces.filter(
+  selectedWorkspaces(): Workspace[] {
+    return this.editorStaticConfig.workspaces.filter(
       (workspace) => workspace.selected
     );
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  save(config: EditorDynamicConfig) {
+    const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.json');
+    console.log(`Saving ${homeConfigPath}...`);
+    fs.writeFile(homeConfigPath, JSON.stringify(config), (err) => {
+      if (err) {
+        console.error(err);
+      }
+    });
   }
 }

@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import classNames from 'classnames';
+import { Desk, EditorDynamicConfig } from 'shared/model/Config';
+import { Note } from '../shared/model/Note';
 import StaticDesk from './StaticDesk';
+import { ConfigContext, ConfigContextProvider } from './ConfigContext';
 import './Reset.css';
 import './App.css';
-import { Note } from '../shared/model/Note';
 import RenderedNote from './Note';
 
 const { ipcRenderer } = window.electron;
@@ -63,34 +65,41 @@ function DailyQuote({ onClose }: any) {
   );
 }
 
-// TODO create Desk()
-
-type Desk = {
-  id: string;
-  name: string;
-  notes: Note[]; // TODO use template instead to store notes
-  template: {};
-};
+type NotesCache = { [key: string]: Note[] };
 
 function Workspace() {
+  const { state, dispatch } = useContext(ConfigContext);
+
+  const dynamicConfig = state.dynamic as EditorDynamicConfig;
+
   const inputElement = useRef<HTMLInputElement>(null);
   const [inputQuery, setInputQuery] = useState<string>(''); // current input value
   const [searchQuery, setSearchQuery] = useState<string>(''); // last search value
-  const [desks, setDesks] = useState<Desk[]>([]);
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
     undefined
   );
+  const [notesByBlockID, setNotesByBlockID] = useState<NotesCache>({});
 
   const handleSearch = (event: any) => {
     const newDesk: Desk = {
       id: uuidv4(),
       name: 'Untitled',
-      notes: [],
-      template: {},
+      workspaces: [], // TODO use selected workspaces
+      root: {
+        id: uuidv4(),
+        layout: 'container',
+        size: null,
+        elements: [],
+        view: 'list',
+        query: null,
+      },
     };
     setSearchQuery(inputQuery);
     setSelectedDeskId(newDesk.id);
-    setDesks([...desks, newDesk]);
+    dispatch({
+      type: 'add-desk',
+      payload: newDesk,
+    });
     event.preventDefault();
   };
 
@@ -101,15 +110,14 @@ function Workspace() {
     window.electron.ipcRenderer.sendMessage('search', searchQuery);
     ipcRenderer.on('search', (arg) => {
       const foundNotes = arg as Note[];
-      const newDesks = [];
-      for (const desk of desks) {
+      for (const desk of dynamicConfig.desks) {
         // FIXME Rework to find the id from arg instead
-        if (desk.id === selectedDeskId) {
-          desk.notes = foundNotes;
-        }
-        newDesks.push(desk);
+        const newNotesByBlockID = {
+          ...notesByBlockID,
+        };
+        newNotesByBlockID[desk.root.id] = foundNotes;
+        setNotesByBlockID(newNotesByBlockID);
       }
-      setDesks(newDesks);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
@@ -131,16 +139,16 @@ function Workspace() {
           />
         </form>
       </header>
-      {desks && (
+      {dynamicConfig.desks && (
         <div className="DeskContainer">
           <nav>
             <ul>
-              {desks.map((desk) => {
+              {dynamicConfig.desks.map((desk) => {
                 return <li key={desk.id}>{desk.name}</li>;
               })}
             </ul>
           </nav>
-          {desks.map((desk) => {
+          {dynamicConfig.desks.map((desk) => {
             return (
               <div
                 key={desk.id}
@@ -148,7 +156,7 @@ function Workspace() {
                   selected: desk.id === selectedDeskId,
                 })}
               >
-                {desk.notes.map((note) => {
+                {notesByBlockID[desk.root.id]?.map((note) => {
                   return <RenderedNote key={note.oid} note={note} />;
                 })}
               </div>
@@ -175,10 +183,12 @@ function Home() {
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </Router>
+    <ConfigContextProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </Router>
+    </ConfigContextProvider>
   );
 }

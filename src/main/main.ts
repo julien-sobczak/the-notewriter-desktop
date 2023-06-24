@@ -28,7 +28,8 @@ import DatabaseManager from './database';
 
 const config = new ConfigManager();
 const db = new DatabaseManager(); // TODO pass editorConfig?
-config.Workspaces().forEach((workspace) => db.registerWorkspace(workspace));
+config.workspaces().forEach((workspace) => db.registerWorkspace(workspace));
+let configSaved = false; // true after saving configuration back to file before closing the application
 
 class AppUpdater {
   constructor() {
@@ -95,6 +96,14 @@ ipcMain.on('get-daily-quote', async (event) => {
   event.reply('get-daily-quote', note);
 });
 
+ipcMain.on('window-is-closing', async (event, dynamicConfig) => {
+  console.log('received window-is-closing');
+  await config.save(dynamicConfig);
+  configSaved = true;
+  mainWindow?.close();
+  mainWindow = null;
+});
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -152,6 +161,13 @@ const createWindow = async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
+
+    // Forward configuration state
+    mainWindow.webContents.send('configuration-loaded', {
+      static: config.editorStaticConfig,
+      dynamic: config.editorDynamicConfig,
+    });
+
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
@@ -160,8 +176,11 @@ const createWindow = async () => {
     }
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindow.on('close', (event: any) => {
+    if (!configSaved && mainWindow) {
+      event.preventDefault();
+      mainWindow.webContents.send('window-is-closing');
+    }
   });
 
   // Redirect external links to the browser
