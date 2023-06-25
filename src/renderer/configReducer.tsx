@@ -23,7 +23,6 @@ export default function configReducer(draft: Config, action: Action): any {
       break;
     }
     case 'add-desk': {
-      console.log('ici');
       draft.dynamic.desks.push(action.payload as Desk);
       break;
     }

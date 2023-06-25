@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import classNames from 'classnames';
-import { Desk, EditorDynamicConfig } from 'shared/model/Config';
+import { Desk } from 'shared/model/Config';
 import { Note } from '../shared/model/Note';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
@@ -13,9 +13,9 @@ const { ipcRenderer } = window.electron;
 type NotesCache = { [key: string]: Note[] };
 
 function Workspace() {
-  const { state, dispatch } = useContext(ConfigContext);
+  const { config, dispatch } = useContext(ConfigContext);
 
-  const dynamicConfig = state.dynamic as EditorDynamicConfig;
+  const dynamicConfig = config.dynamic;
 
   const inputElement = useRef<HTMLInputElement>(null);
   const [inputQuery, setInputQuery] = useState<string>(''); // current input value

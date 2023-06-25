@@ -2,7 +2,12 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type Channels = 'ipc-example' | 'get-daily-quote' | 'search';
+export type Channels =
+  | 'ipc-example'
+  | 'get-daily-quote'
+  | 'search'
+  | 'configuration-loaded'
+  | 'window-is-closing';
 
 const electronHandler = {
   ipcRenderer: {
