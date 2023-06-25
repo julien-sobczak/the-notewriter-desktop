@@ -33,7 +33,8 @@ export default class ConfigManager {
       homeConfigValidPath = homeConfigPath2;
     }
     const data = fs.readFileSync(homeConfigValidPath, 'utf8');
-    return YAML.parse(data) as EditorStaticConfig;
+    const config = YAML.parse(data) as EditorStaticConfig;
+    return ConfigManager.#applyDefaultStaticConfig(config);
   }
 
   static #readDynamicConfig() {
@@ -47,6 +48,22 @@ export default class ConfigManager {
 
     const data = fs.readFileSync(homeConfigPath, 'utf8');
     return JSON.parse(data) as EditorDynamicConfig;
+  }
+
+  // Traverse the static configuration to apply default values.
+  static #applyDefaultStaticConfig(
+    config: EditorStaticConfig
+  ): EditorStaticConfig {
+    if (config.workspaces) {
+      for (let i = 0; i < config.workspaces.length; i++) {
+        const workspace = config.workspaces[i];
+        if (workspace.selected == null) {
+          // Workspaces are selected by default
+          workspace.selected = true;
+        }
+      }
+    }
+    return config;
   }
 
   // Returns all declared workspaces.

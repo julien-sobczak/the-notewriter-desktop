@@ -22,6 +22,14 @@ export default function configReducer(draft: Config, action: Action): any {
       draft.dynamic = action.payload.dynamic;
       break;
     }
+    case 'toggleWorkspaceSelected': {
+      for (const workspace of draft.static.workspaces) {
+        if (workspace.name === action.payload) {
+          workspace.selected = !workspace.selected;
+        }
+      }
+      break;
+    }
     case 'add-desk': {
       draft.dynamic.desks.push(action.payload as Desk);
       break;

@@ -50,11 +50,26 @@ a:hover {
   padding: 0.25rem;
   height: 2rem;
   text-align: center;
+  font-size: 0.70em;
 }
 .TopBar input {
   border-radius: 0.25rem;
   border-color: gray;
   width: 300px;
+}
+.TopBar .WorkspaceButtonGroup {
+  float: right;
+}
+.TopBar .WorkspaceButtonGroup button {
+  padding: 0.25rem 0.5rem;
+  margin: 0 0.1rem;
+  background: transparent;
+  border: none;
+}
+.TopBar .WorkspaceButtonGroup button.selected {
+  background: black;
+  color: white;
+  border-radius: 0.25rem;
 }
 
 .RenderedNote {

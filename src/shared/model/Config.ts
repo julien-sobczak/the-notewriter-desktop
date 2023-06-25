@@ -2,7 +2,7 @@ export interface Workspace {
   name: string;
   slug: string;
   path: string;
-  selected: boolean;
+  selected: boolean | null;
 }
 
 export interface Block {

@@ -15,6 +15,7 @@ type NotesCache = { [key: string]: Note[] };
 function Workspace() {
   const { config, dispatch } = useContext(ConfigContext);
 
+  const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
 
   const inputElement = useRef<HTMLInputElement>(null);
@@ -71,6 +72,13 @@ function Workspace() {
     inputElement.current?.focus();
   });
 
+  const handleWorkspaceClick = (name: string) => {
+    dispatch({
+      type: 'toggleWorkspaceSelected',
+      payload: name,
+    });
+  };
+
   return (
     <div>
       <header className="TopBar">
@@ -82,6 +90,18 @@ function Workspace() {
             value={inputQuery}
             onChange={(event: any) => setInputQuery(event.target.value)}
           />
+          <nav className="WorkspaceButtonGroup">
+            {staticConfig.workspaces.map((workspace) => (
+              <button
+                type="button"
+                key={workspace.name}
+                className={classNames({ selected: workspace.selected })}
+                onClick={() => handleWorkspaceClick(workspace.name)}
+              >
+                {workspace.name}
+              </button>
+            ))}
+          </nav>
         </form>
       </header>
       {dynamicConfig.desks && (
