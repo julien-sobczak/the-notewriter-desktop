@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid'; // uuidv4()
 import classNames from 'classnames';
 import { Desk } from 'shared/model/Config';
 import { Note } from '../shared/model/Note';
@@ -7,6 +7,7 @@ import { ConfigContext } from './ConfigContext';
 import './Reset.css';
 import './App.css';
 import RenderedNote from './Note';
+import { Query, QueryResult } from '../shared/model/Query';
 
 const { ipcRenderer } = window.electron;
 
@@ -18,51 +19,55 @@ function Workspace() {
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
 
+  // Global search
   const inputElement = useRef<HTMLInputElement>(null);
   const [inputQuery, setInputQuery] = useState<string>(''); // current input value
   const [searchQuery, setSearchQuery] = useState<string>(''); // last search value
+  const [searchResults, setSearchResults] = useState<QueryResult | null>(null); // last search value results
+  const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // display the aside panel with search results
+
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
     undefined
   );
-  const [notesByBlockID, setNotesByBlockID] = useState<NotesCache>({});
+
+  const [notesCache, setNotesCache] = useState<NotesCache>({});
 
   const handleSearch = (event: any) => {
-    const newDesk: Desk = {
-      id: uuidv4(),
-      name: 'Untitled',
-      workspaces: [], // TODO use selected workspaces
-      root: {
-        id: uuidv4(),
-        layout: 'container',
-        size: null,
-        elements: [],
-        view: 'list',
-        query: null,
-      },
-    };
     setSearchQuery(inputQuery);
-    setSelectedDeskId(newDesk.id);
-    dispatch({
-      type: 'add-desk',
-      payload: newDesk,
-    });
     event.preventDefault();
   };
+
+  const selectedWorkspaceNames = staticConfig.workspaces
+    .filter((workspace) => workspace.selected)
+    .map((workspace) => workspace.name);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
       return;
     }
-    window.electron.ipcRenderer.sendMessage('search', searchQuery);
+    console.debug(`Searching ${searchQuery}...`);
+    const query: Query = {
+      q: searchQuery,
+      workspaces: selectedWorkspaceNames,
+      blockId: null,
+      deskId: null,
+    };
+    ipcRenderer.sendMessage('search', query);
     ipcRenderer.on('search', (arg) => {
-      const foundNotes = arg as Note[];
-      for (const desk of dynamicConfig.desks) {
-        // FIXME Rework to find the id from arg instead
-        const newNotesByBlockID = {
-          ...notesByBlockID,
+      const result = arg as QueryResult;
+      console.debug(
+        `Found ${result.notes.length} results for ${result.query.q}`
+      );
+      if (result.query.blockId) {
+        const newNotesCache: NotesCache = {
+          ...notesCache,
         };
-        newNotesByBlockID[desk.root.id] = foundNotes;
-        setNotesByBlockID(newNotesByBlockID);
+        newNotesCache[result.query.blockId] = result.notes;
+        setNotesCache(newNotesCache);
+      } else if (!result.query.deskId) {
+        // global search
+        setSearchResults(result);
+        setShowSearchResults(true);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,8 +84,13 @@ function Workspace() {
     });
   };
 
+  const handleDeskClick = (id: string) => {
+    setSelectedDeskId(id);
+  };
+
   return (
     <div>
+      {/* Search bar */}
       <header className="TopBar">
         <form onSubmit={handleSearch}>
           <input
@@ -104,33 +114,76 @@ function Workspace() {
           </nav>
         </form>
       </header>
+
+      {showSearchResults && (
+        <div className="SearchPanel">
+          <NotesContainer notes={searchResults?.notes} />
+        </div>
+      )}
+
+      {/* Desks */}
       {dynamicConfig.desks && (
         <div className="DeskContainer">
           <nav>
             <ul>
-              {dynamicConfig.desks.map((desk) => {
-                return <li key={desk.id}>{desk.name}</li>;
-              })}
+              {dynamicConfig.desks.map((desk) => (
+                <li
+                  key={desk.id}
+                  className={classNames({
+                    selected: desk.id === selectedDeskId,
+                  })}
+                  onClick={() => handleDeskClick(desk.id)}
+                >
+                  {desk.name}
+                </li>
+              ))}
             </ul>
           </nav>
-          {dynamicConfig.desks.map((desk) => {
-            return (
-              <div
-                key={desk.id}
-                className={classNames({
-                  selected: desk.id === selectedDeskId,
-                })}
-              >
-                {notesByBlockID[desk.root.id]?.map((note) => {
-                  return <RenderedNote key={note.oid} note={note} />;
-                })}
-              </div>
-            );
-          })}
+          {dynamicConfig.desks.map((desk) => (
+            <RenderedDesk
+              key={desk.id}
+              desk={desk}
+              notesCache={notesCache}
+              selected={desk.id === selectedDeskId}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
+type RenderedDeskProps = {
+  desk: Desk;
+  notesCache: NotesCache;
+  selected: boolean;
+};
+
+function RenderedDesk({ desk, notesCache, selected }: RenderedDeskProps) {
+  return (
+    <div className={classNames({ Desk: true, selected })}>
+      <NotesContainer notes={notesCache[desk.root.id]} />
+    </div>
+  );
+}
+
+type NotesContainerProps = {
+  notes: Note[] | undefined;
+};
+
+function NotesContainer({ notes }: NotesContainerProps) {
+  return (
+    <div>
+      {notes?.map((note: Note) => {
+        return <RenderedNote key={note.oid} note={note} />;
+      })}
+    </div>
+  );
+}
+
 export default Workspace;
+
+// TODO create a component Desk
+// useState to store the current desk layout (updated when using click on close/split buttons)
+// useRef to store the current version with change like resizing (= does not trigger a redraw) (updated every time)
+// BUG: How to persist the data in useRef when leaving the application => Force user to save desk explicity using Ctrl+S (see hook https://stackoverflow.com/questions/70545552/custom-react-hook-on-ctrls-keydown)

@@ -16,6 +16,7 @@ import {
   ipcMain,
   globalShortcut,
   clipboard,
+  IpcMainEvent,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -25,6 +26,7 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import ConfigManager from './config';
 import DatabaseManager from './database';
+import { Query } from '../shared/model/Query';
 
 const config = new ConfigManager();
 const db = new DatabaseManager(); // TODO pass editorConfig?
@@ -84,11 +86,49 @@ ipcMain.on('copyText', (event, text) => {
   // new Notification({ title: "Copied!", body: text.substring(0, 10) + '...' }).show()
 });
 
-ipcMain.on('search', async (event, query, selectedWorkspaces = undefined) => {
-  console.debug(`Searching for "${query}" in workspaces ${selectedWorkspaces}`);
-  const notes = await db.search(query, selectedWorkspaces);
-  console.debug(`Found ${notes.length} notes`);
-  event.reply('search', notes);
+async function doSearch(channel: string, event: IpcMainEvent, query: Query) {
+  console.debug(`Searching for "${query.q}" in workspaces ${query.workspaces}`);
+  const result = await db.search(query);
+  console.debug(`Found ${result.notes.length} notes`);
+  event.reply(channel, result);
+}
+ipcMain.on('search', async (event, query: Query) => {
+  doSearch('search', event, query);
+});
+ipcMain.on('search-desk0', async (event, query: Query) => {
+  doSearch('search-desk0', event, query);
+});
+ipcMain.on('search-desk1', async (event, query: Query) => {
+  doSearch('search-desk1', event, query);
+});
+ipcMain.on('search-desk2', async (event, query: Query) => {
+  doSearch('search-desk2', event, query);
+});
+ipcMain.on('search-desk3', async (event, query: Query) => {
+  doSearch('search-desk3', event, query);
+});
+ipcMain.on('search-desk4', async (event, query: Query) => {
+  doSearch('search-desk4', event, query);
+});
+ipcMain.on('search-desk5', async (event, query: Query) => {
+  doSearch('search-desk5', event, query);
+});
+ipcMain.on('search-desk6', async (event, query: Query) => {
+  doSearch('search-desk6', event, query);
+});
+ipcMain.on('search-desk7', async (event, query: Query) => {
+  doSearch('search-desk7', event, query);
+});
+ipcMain.on('search-desk8', async (event, query: Query) => {
+  doSearch('search-desk8', event, query);
+});
+ipcMain.on('search-desk9', async (event, query: Query) => {
+  doSearch('search-desk9', event, query);
+});
+
+ipcMain.on('multi-search', async (event, queries: Query[]) => {
+  const results = await db.multiSearch(queries);
+  event.reply('multi-search', results);
 });
 
 ipcMain.on('get-daily-quote', async (event) => {

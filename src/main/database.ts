@@ -2,8 +2,9 @@ import { Database, verbose as sqlite3Verbose } from 'sqlite3';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { Workspace } from './config';
 import { Note, Media } from '../shared/model/Note';
+import { Query, QueryResult } from '../shared/model/Query';
+import { Workspace } from '../shared/model/Config';
 
 sqlite3Verbose();
 
@@ -214,28 +215,41 @@ export default class DatabaseManager {
     });
   }
 
-  async search(
-    query: string,
-    selectedWorkspaces: string[] = []
-  ): Promise<Note[]> {
+  async search(query: Query): Promise<QueryResult> {
     const results: Promise<Note[]>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
-        !selectedWorkspaces ||
-        selectedWorkspaces.length === 0 ||
-        selectedWorkspaces.includes(datasourceName)
+        !query.workspaces ||
+        query.workspaces.length === 0 ||
+        query.workspaces.includes(datasourceName)
       ) {
-        results.push(this.searchNotes(query, datasourceName));
+        results.push(this.searchNotes(query.q, datasourceName));
       }
     }
 
     return Promise.all(results).then((allNotes) => {
-      return new Promise<Note[]>((resolve) => {
+      return new Promise<QueryResult>((resolve) => {
         let returnedNotes: Note[] = [];
         for (const notes of allNotes) {
           returnedNotes = returnedNotes.concat(notes);
         }
-        resolve(returnedNotes);
+        resolve({
+          query,
+          notes: returnedNotes,
+        });
+      });
+    });
+  }
+
+  async multiSearch(queries: Query[]): Promise<QueryResult[]> {
+    const results: Promise<QueryResult>[] = [];
+    for (const query of queries) {
+      results.push(this.search(query));
+    }
+
+    return Promise.all(results).then((allResults) => {
+      return new Promise<QueryResult[]>((resolve) => {
+        resolve(allResults);
       });
     });
   }

@@ -6,6 +6,16 @@ export type Channels =
   | 'ipc-example'
   | 'get-daily-quote'
   | 'search'
+  | 'search-desk0'
+  | 'search-desk1'
+  | 'search-desk2'
+  | 'search-desk3'
+  | 'search-desk4'
+  | 'search-desk5'
+  | 'search-desk6'
+  | 'search-desk7'
+  | 'search-desk8'
+  | 'search-desk9'
   | 'configuration-loaded'
   | 'window-is-closing';
 

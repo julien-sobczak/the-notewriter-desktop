@@ -1,5 +1,7 @@
 # Notebook
 
+## Draft Components
+
 ```javascript
 <Note value={note} mediaMode={"preview|large|original"} showAttributes={true} showTags={true} excerpt={true} /> {/* show buttons? */}
 
@@ -64,5 +66,21 @@ const desk = {
 // Step 0: Duplicate the template to insert random id to each block (useful in following steps)
 // Step 1: Iterate over the template to trigger the search of notes (use a map with blockid=>loaded to show results progressively)
 // Step 2: Iterate over the template to build the HTML using <VerticalPane>, <HorizontalPane> and <NoteContainer>
-// Step 3:
 ```
+
+## Draft Workspace
+
+```jsx
+<Workspace>
+  searchResults // Side panel to quickly find notes even when working on a desk
+  notesCache<string, Note[]> // by block ID
+  useRef(layouts<string, Block>) // by desk ID
+  
+  <Desk notesCache={notesCache} desk={desk} onLayoutChange={onLayoutChange} />
+    send('multi-search') // or send('search')
+    onSave => onLayoutChange(desk.root)
+
+
+```
+
+
