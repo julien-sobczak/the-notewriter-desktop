@@ -12,7 +12,14 @@ sqlite3Verbose();
 
 // Returns an absolute normalized path.
 function normalizePath(relativePath: string) {
-  return path.normalize(relativePath.replace('~', os.homedir));
+  let normalizedPath = relativePath;
+  normalizedPath = normalizedPath.replace('~', os.homedir);
+  normalizedPath = normalizedPath.replace('$PWD', process.cwd());
+  return path.normalize(normalizedPath);
+}
+
+function randomElement(items: string[]): string {
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export default class DatabaseManager {
@@ -65,7 +72,7 @@ export default class DatabaseManager {
   async searchMedias(oids: string[], datasourceName: string): Promise<Media[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
-      throw new Error('No datasource found');
+      throw new Error(`No datasource ${datasourceName} found`);
     }
     return new Promise<Media[]>((resolve, reject) => {
       const sqlOids = `'${oids.join("','")}'`;
@@ -114,7 +121,7 @@ export default class DatabaseManager {
   async searchNotes(q: string, datasourceName: string): Promise<Note[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
-      throw new Error('No datasource found');
+      throw new Error(`No datasource ${datasourceName} found`);
     }
     return new Promise<Note[]>((resolve, reject) => {
       const sqlQuery = query2sql(q);
@@ -177,12 +184,22 @@ export default class DatabaseManager {
     });
   }
 
-  async searchDailyQuote(): Promise<Note> {
-    const datasourceName = 'main'; // FIXME use all selected workspaces by default
-    const db = this.datasources.get(datasourceName);
-    if (!db) {
-      throw new Error('No datasource found');
+  async searchDailyQuote(query: Query): Promise<Note> {
+    let selectedDatasourceName: string;
+    if (!query.workspaces || query.workspaces.length === 0) {
+      selectedDatasourceName = randomElement([...this.datasources.keys()]);
+    } else if (query.workspaces.length === 1) {
+      // eslint-disable-next-line prefer-destructuring
+      selectedDatasourceName = query.workspaces[0];
+    } else {
+      selectedDatasourceName = randomElement(query.workspaces);
     }
+    console.log('ici', query, selectedDatasourceName);
+    const db = this.datasources.get(selectedDatasourceName);
+    if (!db) {
+      throw new Error(`No datasource ${selectedDatasourceName} found`);
+    }
+
     return new Promise<Note>((resolve, reject) => {
       db.all(
         `
@@ -207,7 +224,7 @@ export default class DatabaseManager {
             console.log('Error while searching for daily quote', err);
             reject(err);
           } else {
-            const note = this.#rowToNote(rows[0], datasourceName);
+            const note = this.#rowToNote(rows[0], selectedDatasourceName);
             resolve(note);
           }
         }

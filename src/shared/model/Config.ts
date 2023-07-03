@@ -26,8 +26,25 @@ export interface Desk {
   root: Block;
 }
 
+export interface DailyQuote {
+  query: string;
+  workspaces: string[];
+}
+
+export interface InspirationCategory {
+  name: string;
+  workspaces: string[];
+  query: string;
+}
+
+export interface Inspiration {
+  dailyQuote: DailyQuote | null;
+  categories: InspirationCategory[];
+}
+
 export interface EditorStaticConfig {
   workspaces: Workspace[];
+  inspirations: Inspiration;
 }
 
 export interface EditorDynamicConfig {

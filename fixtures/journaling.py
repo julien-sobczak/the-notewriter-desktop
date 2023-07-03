@@ -8,8 +8,8 @@ Usage:
         --frequency 0.5 --activities Work,Hobbies
 
 Examples:
-$ ./fixtures/journaling.py --start 2023-03-01 --end 2023-05-01 --frequency 0.5 --activities Work fixtures/work
-$ ./fixtures/journaling.py --start 2022-12-01 --end 2023-05-01 --frequency 0.8 --days MTWTFSS --activities Gratitude,Sport,Meditation,Family,Hobbies fixtures/life
+$ ./fixtures/journaling.py --start 2023-03-01 --end 2023-05-01 --frequency 0.5 --activities Work fixtures/work/journal
+$ ./fixtures/journaling.py --start 2022-12-01 --end 2023-05-01 --frequency 0.8 --days MTWTFSS --activities Gratitude,Sport,Meditation,Family,Hobbies fixtures/life/journal
 """
 
 import argparse
@@ -110,7 +110,7 @@ def fill_journal(dir, today, activities):
     date = today.strftime("%Y-%m-%d")
 
     # Generate the entry content
-    entry = "# %s\n\n%s\n" % (date, entries)
+    entry = "# Journal: %s\n\n%s\n" % (date, entries)
 
     # Write the entry
     year_dir = os.path.join(dir, year)

@@ -1,0 +1,38 @@
+{
+  "desks": [
+    {
+      "id": "24ec6613-0318-4e8d-93e7-e2b0b42085f1",
+      "name": "The NoteWriter",
+      "workspaces": "life",
+      "root": {
+        "id": "469f71c1-45fe-4aa3-9791-0521d7c36b0f",
+        "layout": "vertical",
+        "elements": [
+          {
+            "id": "967663cc-d37f-4689-8e1a-763d86f2e33e",
+            "layout": "container",
+            "size": "25%",
+            "query": "@title:Backlog path:projects/the-notewriter/",
+            "view": "single"
+          },
+          {
+            "id": "6bd012ca-f391-4012-8766-1933abfb4982",
+            "layout": "horizontal",
+            "elements": [
+              {
+                "id": "6f70be15-640a-4ad8-b4a4-f39f964e99dd",
+                "query": "@kind:note path:projects/the-notewriter/",
+                "view": "list"
+              },
+              {
+                "id": "87115cae-3df4-44b8-851a-2444f20f7c9b",
+                "query": "@kind:reference path:projects/the-notewriter/",
+                "view": "grid"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

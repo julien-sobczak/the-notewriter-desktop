@@ -19,10 +19,24 @@ export default class ConfigManager {
     this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
   }
 
+  // Returns the home directory except if the environment variable $NT_HOME is set.
+  static #getHomeDir() {
+    if (process.env.NT_HOME) {
+      return process.env.NT_HOME;
+    }
+    return path.join(os.homedir(), '.nt');
+  }
+
   static #readStaticConfig() {
     // Ensure the configuration file exists
-    const homeConfigPath1 = path.join(os.homedir(), '.nt/editorconfig.yaml');
-    const homeConfigPath2 = path.join(os.homedir(), '.nt/editorconfig.yml');
+    const homeConfigPath1 = path.join(
+      ConfigManager.#getHomeDir(),
+      'editorconfig.yaml'
+    );
+    const homeConfigPath2 = path.join(
+      ConfigManager.#getHomeDir(),
+      'editorconfig.yml'
+    );
     if (!fs.existsSync(homeConfigPath1) && !fs.existsSync(homeConfigPath2)) {
       throw new Error(`No configuration file not found in home directory`);
     }
@@ -32,13 +46,18 @@ export default class ConfigManager {
     if (!fs.existsSync(homeConfigPath1)) {
       homeConfigValidPath = homeConfigPath2;
     }
+
+    console.log(`Reading configuration from ${homeConfigValidPath}`);
     const data = fs.readFileSync(homeConfigValidPath, 'utf8');
     const config = YAML.parse(data) as EditorStaticConfig;
     return ConfigManager.#applyDefaultStaticConfig(config);
   }
 
   static #readDynamicConfig() {
-    const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.json');
+    const homeConfigPath = path.join(
+      ConfigManager.#getHomeDir(),
+      'editorconfig.json'
+    );
     if (!fs.existsSync(homeConfigPath)) {
       // Define default configuration
       return {
@@ -54,6 +73,7 @@ export default class ConfigManager {
   static #applyDefaultStaticConfig(
     config: EditorStaticConfig
   ): EditorStaticConfig {
+    // Select workspaces by default
     if (config.workspaces) {
       for (let i = 0; i < config.workspaces.length; i++) {
         const workspace = config.workspaces[i];
@@ -63,6 +83,14 @@ export default class ConfigManager {
         }
       }
     }
+    // Define default daily quote
+    if (!config.inspirations.dailyQuote) {
+      config.inspirations.dailyQuote = {
+        query: `@kind:quote`, // any quote
+        workspaces: [], // any workspace
+      };
+    }
+
     return config;
   }
 
@@ -80,7 +108,10 @@ export default class ConfigManager {
 
   // eslint-disable-next-line class-methods-use-this
   save(config: EditorDynamicConfig) {
-    const homeConfigPath = path.join(os.homedir(), '.nt/editorconfig.json');
+    const homeConfigPath = path.join(
+      ConfigManager.#getHomeDir(),
+      'editorconfig.json'
+    );
     console.log(`Saving ${homeConfigPath}...`);
     fs.writeFile(homeConfigPath, JSON.stringify(config), (err) => {
       if (err) {

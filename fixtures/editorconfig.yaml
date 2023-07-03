@@ -1,20 +1,20 @@
 workspaces:
 - name: Life
   slug: life
-  path: "$PWD/life"
+  path: "$PWD/fixtures/life"
 - name: Work
   slug: work
-  path: "$PWD/work"
+  path: "$PWD/fixtures/work"
   selected: false
 
 inspirations:
   dailyQuote:
-    - query: "path:references @kind:quote"
-      workspace: life
+    query: "path:references @kind:quote"
+    workspaces: [life]
   categories:
   - name: Life
-    workspace: life
     query: "path:references/persons (#life or #purpose) @kind:quote"
+    workspaces: [life]
   - name: Art
-    workspace: life
     query: "path:references @kind:artwork"
+    workspaces: [life]

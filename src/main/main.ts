@@ -29,7 +29,7 @@ import DatabaseManager from './database';
 import { Query } from '../shared/model/Query';
 
 const config = new ConfigManager();
-const db = new DatabaseManager(); // TODO pass editorConfig?
+const db = new DatabaseManager();
 config.workspaces().forEach((workspace) => db.registerWorkspace(workspace));
 let configSaved = false; // true after saving configuration back to file before closing the application
 
@@ -132,13 +132,24 @@ ipcMain.on('multi-search', async (event, queries: Query[]) => {
 });
 
 ipcMain.on('get-daily-quote', async (event) => {
-  const note = await db.searchDailyQuote();
+  const { dailyQuote } = config.editorStaticConfig.inspirations;
+  if (!dailyQuote) {
+    throw new Error('No daily quote found');
+  }
+  const query: Query = {
+    q: dailyQuote.query,
+    workspaces: dailyQuote.workspaces,
+    blockId: undefined,
+    deskId: undefined,
+  };
+  const note = await db.searchDailyQuote(query);
   event.reply('get-daily-quote', note);
 });
 
 ipcMain.on('window-is-closing', async (event, dynamicConfig) => {
   console.log('received window-is-closing');
-  await config.save(dynamicConfig);
+  console.log('Saving...', dynamicConfig);
+  // await config.save(dynamicConfig); // FIXME uncomment
   configSaved = true;
   mainWindow?.close();
   mainWindow = null;
