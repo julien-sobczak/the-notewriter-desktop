@@ -22,6 +22,7 @@ npm install
 Start the app in the `dev` environment:
 
 ```bash
+npm run fixtures
 npm start
 ```
 
@@ -37,3 +38,5 @@ npm run package
 [github-actions-url]: https://github.com/julien-sobczak/the-notewriter-desktop/actions
 [github-tag-image]: https://img.shields.io/github/tag/julien-sobczak/the-notewriter-desktop.svg?label=version
 [github-tag-url]: https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest
+
+
