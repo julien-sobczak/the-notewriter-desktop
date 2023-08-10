@@ -44,7 +44,7 @@ export interface Inspiration {
 
 export interface EditorStaticConfig {
   workspaces: Workspace[];
-  inspirations: Inspiration;
+  inspirations: Inspiration | null;
 }
 
 export interface EditorDynamicConfig {

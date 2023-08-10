@@ -15,3 +15,14 @@ export interface QueryResult {
   query: Query;
   notes: Note[];
 }
+
+export interface File {
+  workspacePath: string;
+  relativePath: string;
+  countNotes: number;
+}
+
+export interface FilesResult {
+  workspaceSlug: string;
+  files: File[];
+}

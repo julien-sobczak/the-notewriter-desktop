@@ -1,13 +1,33 @@
+/* eslint-disable react/jsx-no-useless-fragment */
 import { useState, useEffect, useRef, useContext } from 'react';
 // import { v4 as uuidv4 } from 'uuid'; // uuidv4()
 import classNames from 'classnames';
+import {
+  TbLamp2 as DesktopIcon,
+  TbFiles as BrowseIcon,
+  TbBrain as StudyIcon,
+} from 'react-icons/tb';
+import { HiOutlineLightBulb as InspirationIcon } from 'react-icons/hi';
+import { BiStats as StatsIcon } from 'react-icons/bi';
+import { IoJournal as JournalIcon } from 'react-icons/io5';
+import { FaTasks as TasksIcon } from 'react-icons/fa';
+import { PiHandWaving as HiIcon } from 'react-icons/pi';
+import { GiMeditation as ZenIcon } from 'react-icons/gi';
 import { Desk } from 'shared/model/Config';
+import { Query, QueryResult } from '../shared/model/Query';
 import { Note } from '../shared/model/Note';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
 import './App.css';
-import RenderedNote from './Note';
-import { Query, QueryResult } from '../shared/model/Query';
+import Hi from './Hi';
+import Browser from './Browser';
+import Planner from './Planner';
+import Stats from './Stats';
+import Inspiration from './Inspiration';
+import Revision from './Revision';
+import ZenMode from './ZenMode';
+import NotesContainer from './NoteContainer';
+import Journal from './Journal';
 
 const { ipcRenderer } = window.electron;
 
@@ -26,6 +46,9 @@ function Workspace() {
   const [searchResults, setSearchResults] = useState<QueryResult | null>(null); // last search value results
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // display the aside panel with search results
 
+  // Activities
+  const [activity, setActivity] = useState<string>('desktop');
+
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
     undefined
   );
@@ -37,9 +60,9 @@ function Workspace() {
     event.preventDefault();
   };
 
-  const selectedWorkspaceNames = staticConfig.workspaces
+  const selectedWorkspaceSlugs = staticConfig.workspaces
     .filter((workspace) => workspace.selected)
-    .map((workspace) => workspace.name);
+    .map((workspace) => workspace.slug);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -48,7 +71,7 @@ function Workspace() {
     console.debug(`Searching ${searchQuery}...`);
     const query: Query = {
       q: searchQuery,
-      workspaces: selectedWorkspaceNames,
+      workspaces: selectedWorkspaceSlugs,
       blockId: null,
       deskId: null,
     };
@@ -89,13 +112,14 @@ function Workspace() {
   };
 
   return (
-    <div>
+    <div className="Workspace">
       {/* Search bar */}
       <header className="TopBar">
         <form onSubmit={handleSearch}>
           <input
             type="text"
             ref={inputElement}
+            placeholder="🔍 Search"
             name="search"
             value={inputQuery}
             onChange={(event: any) => setInputQuery(event.target.value)}
@@ -115,40 +139,158 @@ function Workspace() {
         </form>
       </header>
 
-      {showSearchResults && (
-        <div className="SearchPanel">
-          <NotesContainer notes={searchResults?.notes} />
+      <div className="Main">
+        <div className="ActivityBar">
+          <ul>
+            <li className={classNames({ selected: activity === 'hi' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('hi')}
+                aria-label="Hi"
+              >
+                <HiIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'browse' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('browse')}
+                aria-label="Browse"
+              >
+                <BrowseIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'desktop' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('desktop')}
+                aria-label="Desktop"
+              >
+                <DesktopIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'journal' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('journal')}
+                aria-label="Journal"
+              >
+                <JournalIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'study' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('study')}
+                aria-label="Flashcards"
+              >
+                <StudyIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'tasks' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('tasks')}
+                aria-label="Tasks"
+              >
+                <TasksIcon />
+              </button>
+            </li>
+            <li
+              className={classNames({ selected: activity === 'inspiration' })}
+            >
+              <button
+                type="button"
+                onClick={() => setActivity('inspiration')}
+                aria-label="Inspiration"
+              >
+                <InspirationIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'zen' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('zen')}
+                aria-label="Zen Mode"
+              >
+                <ZenIcon />
+              </button>
+            </li>
+            <li className={classNames({ selected: activity === 'stats' })}>
+              <button
+                type="button"
+                onClick={() => setActivity('stats')}
+                aria-label="Statistics"
+              >
+                <StatsIcon />
+              </button>
+            </li>
+          </ul>
         </div>
-      )}
 
-      {/* Desks */}
-      {dynamicConfig.desks && (
-        <div className="DeskContainer">
-          <nav>
-            <ul>
-              {dynamicConfig.desks.map((desk) => (
-                <li
-                  key={desk.id}
-                  className={classNames({
-                    selected: desk.id === selectedDeskId,
-                  })}
-                  onClick={() => handleDeskClick(desk.id)}
-                >
-                  {desk.name}
-                </li>
-              ))}
-            </ul>
-          </nav>
-          {dynamicConfig.desks.map((desk) => (
-            <RenderedDesk
-              key={desk.id}
-              desk={desk}
-              notesCache={notesCache}
-              selected={desk.id === selectedDeskId}
-            />
-          ))}
-        </div>
-      )}
+        {showSearchResults && (
+          <div className="SearchPanel">
+            <NotesContainer notes={searchResults?.notes} />
+          </div>
+        )}
+
+        {/* Hi */}
+        {activity === 'hi' && <Hi />}
+
+        {/* Browse */}
+        {activity === 'browse' && <Browser />}
+
+        {/* Desktop */}
+        {activity === 'desktop' && (
+          <>
+            {dynamicConfig.desks && (
+              <div className="DeskContainer">
+                <nav>
+                  <ul>
+                    {dynamicConfig.desks.map((desk) => (
+                      <li
+                        key={desk.id}
+                        className={classNames({
+                          selected: desk.id === selectedDeskId,
+                        })}
+                        onClick={() => handleDeskClick(desk.id)}
+                      >
+                        {desk.name}
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+                {dynamicConfig.desks.map((desk) => (
+                  <RenderedDesk
+                    key={desk.id}
+                    desk={desk}
+                    notesCache={notesCache}
+                    selected={desk.id === selectedDeskId}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Journal */}
+        {activity === 'journal' && <Journal />}
+
+        {/* Study */}
+        {activity === 'study' && <Revision />}
+
+        {/* Tasks */}
+        {activity === 'tasks' && <Planner />}
+
+        {/* Inspiration */}
+        {activity === 'inspiration' && <Inspiration />}
+
+        {/* Zen */}
+        {activity === 'zen' && <ZenMode />}
+
+        {/* Stats */}
+        {activity === 'stats' && <Stats />}
+      </div>
     </div>
   );
 }
@@ -163,20 +305,6 @@ function RenderedDesk({ desk, notesCache, selected }: RenderedDeskProps) {
   return (
     <div className={classNames({ Desk: true, selected })}>
       <NotesContainer notes={notesCache[desk.root.id]} />
-    </div>
-  );
-}
-
-type NotesContainerProps = {
-  notes: Note[] | undefined;
-};
-
-function NotesContainer({ notes }: NotesContainerProps) {
-  return (
-    <div>
-      {notes?.map((note: Note) => {
-        return <RenderedNote key={note.oid} note={note} />;
-      })}
     </div>
   );
 }

@@ -18,6 +18,7 @@ type ConfigContextType = {
 const initialState: ConfigContextType = {
   static: {
     workspaces: [],
+    inspirations: null,
   },
   dynamic: {
     desks: [],

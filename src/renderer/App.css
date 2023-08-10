@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&family=Poiret+One&family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700;1,900&display=swap');
 
+:root{
+  --color-separator: #DDD;
+  --color-background-light: #F9F9F9;
+  --color-text-dimmed: gray;
+}
+
 /*
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
@@ -28,6 +34,15 @@ a:hover {
   overflow: hidden;
 }
 
+button {
+  all: unset;
+  cursor: pointer;
+}
+
+button:focus {
+  outline: revert;
+}
+
 /* <DailyQuote> */
 
 .DailyQuote {
@@ -46,16 +61,28 @@ a:hover {
   height: 100vh;
 }
 
+.Main {
+  display: flex;
+  height: 100%;
+}
+
 .TopBar {
   padding: 0.25rem;
   height: 2rem;
   text-align: center;
   font-size: 0.70em;
+  border-bottom: 1px solid var(--color-separator);
 }
 .TopBar input {
   border-radius: 0.25rem;
-  border-color: gray;
+  border: 1px solid var(--color-separator) !important;
+  box-shadow: none !important;
+  background-color: var(--color-background-light);
   width: 300px;
+}
+.TopBar input::placeholder {
+  color: var(--color-text-dimmed);
+  text-align: center;
 }
 .TopBar .WorkspaceButtonGroup {
   float: right;
@@ -65,20 +92,85 @@ a:hover {
   margin: 0 0.1rem;
   background: transparent;
   border: none;
+  color: var(--color-text-dimmed);
+  border: 1px solid white;
 }
 .TopBar .WorkspaceButtonGroup button.selected {
-  background: black;
-  color: white;
+  border: 1px solid black;
+  color: black;
   border-radius: 0.25rem;
 }
 
+.ActivityBar {
+  width: 48px;
+  height: 100%;
+  border-right: 1px solid var(--color-separator);
+}
+.ActivityBar ul {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+.ActivityBar li {
+  list-style-type: none;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  color: var(--color-text-dimmed);
+}
+.ActivityBar li.selected {
+  color: black;
+}
+
+/* Note */
+
 .RenderedNote {
-  padding: 1em;
-  border: 1px solid gray;
+  border: 1px solid var(--color-separator);
+  background: white;
   margin: 1em;
-  max-height: 20em;
-  max-width: 20em;
   overflow: hidden;
+}
+.RenderedNoteTitle,
+.RenderedNoteContent {
+  padding: 0 1em;
+}
+.RenderedNoteContent {
+  max-height: 20em;
+  overflow: scroll;
+}
+.RenderedNote.LayoutGrid {
+  max-width: 20em;
+}
+.RenderedNoteMetadata {
+  background: white;
+}
+.RenderedNoteMetadata ul,
+.RenderedNoteActions ul {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+}
+.RenderedNoteActions ul {
+  justify-content: flex-end;
+}
+.RenderedNoteMetadata ul li,
+.RenderedNoteActions ul li {
+  list-style-type: none;
+  margin: 0.25em 0.5em;
+  padding: 0.25em;
+  border-radius: 0.25em;
+}
+
+.RenderedNoteMetadata li {
+  font-family: monospace;
+  font-size: 0.8em;
+  background: var(--color-background-light);
+  color: var(--color-text-dimmed);
 }
 
 .Hello {
@@ -140,4 +232,78 @@ a:hover {
 }
 .Actions ul li {
   margin: 0 0.1rem;
+}
+
+
+/* Browser */
+
+.Browser {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.BrowserTree {
+  height: 100%;
+  font-size: 0.9em;
+  border-right: 1px solid var(--color-separator);
+}
+.BrowserTree select {
+  float: right;
+  border: none;
+}
+.BrowserEditor {
+  height: 100%;
+  overflow: scroll;
+  flex-grow: 2; /* Use remaining space */
+  background-color: var(--color-background-light);
+}
+
+
+/* See https://dgreene1.github.io/react-accessible-treeview/docs/examples-DirectoryTree */
+
+.directory {
+  user-select: none;
+  padding: 20px;
+  border-radius: 0.4em;
+}
+
+.directory .tree,
+.directory .tree-node,
+.directory .tree-node-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.directory .tree-branch-wrapper,
+.directory .tree-node__leaf {
+  outline: none;
+  outline: none;
+}
+
+.directory .tree-node {
+  cursor: pointer;
+}
+
+.directory .tree-node:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.directory .tree .tree-node--focused {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.directory .tree .tree-node--selected {
+  font-weight: 600;
+}
+
+.directory .tree-node__branch {
+  display: block;
+}
+
+.directory .icon {
+  vertical-align: middle;
+  padding-right: 5px;
+  display: inline-block;
 }

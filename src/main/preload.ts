@@ -16,6 +16,8 @@ export type Channels =
   | 'search-desk7'
   | 'search-desk8'
   | 'search-desk9'
+  | 'list-files'
+  | 'list-notes-in-file'
   | 'configuration-loaded'
   | 'window-is-closing';
 

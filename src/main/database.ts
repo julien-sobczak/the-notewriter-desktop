@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { Note, Media } from '../shared/model/Note';
-import { Query, QueryResult } from '../shared/model/Query';
+import { File, FilesResult, Query, QueryResult } from '../shared/model/Query';
 import { Workspace } from '../shared/model/Config';
 
 sqlite3Verbose();
@@ -81,6 +81,7 @@ export default class DatabaseManager {
         FROM media m JOIN blob b on m.oid = b.media_oid
         WHERE m.dangling = 0 AND m.oid IN (${sqlOids})
       `;
+      console.log(sqlQuery); // FIXME remove
       db.all(sqlQuery, async (err: any, rows: any) => {
         if (err) {
           console.log('Error while searching for medias', err);
@@ -159,7 +160,9 @@ export default class DatabaseManager {
         }
 
         // Search for medias
+        console.log(`Having ${mediaOids.length} medias to find...`); // FIXME remove
         const foundMedias = await this.searchMedias(mediaOids, datasourceName);
+        console.log(`Found ${foundMedias.length} medias`); // FIXME remove
         const mediasByOids = new Map<string, Media>();
         foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
 
@@ -167,10 +170,11 @@ export default class DatabaseManager {
         for (let i = 0; i < notes.length; i++) {
           const note = notes[i];
           if (!notesMediaOids.has(note.oid)) {
-            // eslint-disable-next-line no-continue
+            // No medias for this note
             continue;
           }
 
+          console.log(`Have medias to append for note ${note.oid}`); // FIXME remove
           const referencedMediaOids = notesMediaOids.get(note.oid);
           referencedMediaOids?.forEach((mediaOid) => {
             const media = mediasByOids.get(mediaOid);
@@ -185,6 +189,7 @@ export default class DatabaseManager {
   }
 
   async searchDailyQuote(query: Query): Promise<Note> {
+    // Choose a datasource
     let selectedDatasourceName: string;
     if (!query.workspaces || query.workspaces.length === 0) {
       selectedDatasourceName = randomElement([...this.datasources.keys()]);
@@ -194,7 +199,7 @@ export default class DatabaseManager {
     } else {
       selectedDatasourceName = randomElement(query.workspaces);
     }
-    console.log('ici', query, selectedDatasourceName);
+
     const db = this.datasources.get(selectedDatasourceName);
     if (!db) {
       throw new Error(`No datasource ${selectedDatasourceName} found`);
@@ -271,7 +276,58 @@ export default class DatabaseManager {
     });
   }
 
+  /* Files Management */
+
+  async listFiles(workspaceSlug: string): Promise<FilesResult> {
+    const db = this.datasources.get(workspaceSlug);
+    if (!db) {
+      throw new Error(`No datasource ${workspaceSlug} found`);
+    }
+
+    return new Promise<FilesResult>((resolve, reject) => {
+      db.all(
+        `
+          SELECT
+            relative_path,
+            count(*) as count_notes
+          FROM note
+          GROUP BY relative_path
+          ORDER BY relative_path ASC`,
+        (err: any, rows: any) => {
+          if (err) {
+            console.log('Error while listing files in database', err);
+            reject(err);
+          } else {
+            const files: File[] = [];
+            for (const row of rows) {
+              files.push(this.#rowToFile(row, workspaceSlug));
+            }
+            resolve({
+              workspaceSlug,
+              files,
+            });
+          }
+        }
+      );
+    });
+  }
+
+  async listNotesInFile(
+    workspaceSlug: string,
+    relativePath: string
+  ): Promise<Note[]> {
+    return this.searchNotes(`path:${relativePath}`, workspaceSlug);
+  }
+
   /* Converters */
+
+  #rowToFile(row: any, workspaceSlug: string): File {
+    return {
+      workspacePath: this.#getWorkspacePath(workspaceSlug),
+      relativePath: row.relative_path,
+      countNotes: row.count_notes,
+    };
+  }
 
   #rowToNote(row: any, workspaceSlug: string): Note {
     return {

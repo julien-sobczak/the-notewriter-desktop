@@ -86,6 +86,24 @@ ipcMain.on('copyText', (event, text) => {
   // new Notification({ title: "Copied!", body: text.substring(0, 10) + '...' }).show()
 });
 
+ipcMain.on('list-files', async (event, workspaceSlug: string) => {
+  console.debug(`Listing files in workspace ${workspaceSlug}`);
+  const result = await db.listFiles(workspaceSlug);
+  console.debug(`Found ${result.files.length} files`);
+  event.reply('list-files', result);
+});
+ipcMain.on(
+  'list-notes-in-file',
+  async (event, workspaceSlug: string, relativePath: string) => {
+    console.debug(
+      `Listing note in file ${relativePath} in workspace ${workspaceSlug}`
+    );
+    const result = await db.listNotesInFile(workspaceSlug, relativePath);
+    console.debug(`Found ${result.length} notes`);
+    event.reply('list-notes-in-file', result);
+  }
+);
+
 async function doSearch(channel: string, event: IpcMainEvent, query: Query) {
   console.debug(`Searching for "${query.q}" in workspaces ${query.workspaces}`);
   const result = await db.search(query);
@@ -132,6 +150,9 @@ ipcMain.on('multi-search', async (event, queries: Query[]) => {
 });
 
 ipcMain.on('get-daily-quote', async (event) => {
+  if (!config.editorStaticConfig.inspirations) {
+    throw new Error('No daily quote found');
+  }
   const { dailyQuote } = config.editorStaticConfig.inspirations;
   if (!dailyQuote) {
     throw new Error('No daily quote found');
@@ -200,6 +221,11 @@ const createWindow = async () => {
     icon: getAssetPath('icon.png'),
     titleBarStyle: 'hidden',
     webPreferences: {
+      // Impossible to reference local files in <img src="file://" /> with the default settings.
+      // See https://stackoverflow.com/questions/61623156/electron-throws-not-allowed-to-load-local-resource-when-using-showopendialog
+      // A non-optimal solution is to disable the security:
+      webSecurity: false, // TODO use a custom protocol instead
+
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
@@ -237,18 +263,13 @@ const createWindow = async () => {
   // Redirect external links to the browser
   // See https://stackoverflow.com/questions/32402327/how-can-i-force-external-links-from-browser-window-to-open-in-a-default-browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    console.log(`Opening external url ${url}...`);
     shell.openExternal(url);
     return { action: 'deny' };
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
-
-  // Open urls in the user's browser
-  mainWindow.webContents.setWindowOpenHandler((edata) => {
-    shell.openExternal(edata.url);
-    return { action: 'deny' };
-  });
 
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
