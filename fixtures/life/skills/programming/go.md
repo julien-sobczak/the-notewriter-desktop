@@ -1,5 +1,6 @@
 ---
 source: https://devhints.io/go
+tags: go
 ---
 
 # Go

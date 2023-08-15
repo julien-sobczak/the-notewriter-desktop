@@ -1,3 +1,8 @@
+---
+tags:
+- productivity
+---
+
 # On Productivity
 
 

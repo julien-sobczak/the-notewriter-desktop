@@ -140,26 +140,23 @@ button:focus {
 }
 .RenderedNoteContent {
   max-height: 20em;
-  overflow: scroll;
-}
-.RenderedNote.LayoutGrid {
-  max-width: 20em;
+  overflow: auto; /* show scrollbar only when needed */
 }
 .RenderedNoteMetadata {
   background: white;
 }
 .RenderedNoteMetadata ul,
-.RenderedNoteActions ul {
+.Actions ul {
   display: flex;
   flex-direction: row;
   margin: 0;
   padding: 0;
 }
-.RenderedNoteActions ul {
+.Actions ul {
   justify-content: flex-end;
 }
 .RenderedNoteMetadata ul li,
-.RenderedNoteActions ul li {
+.Actions ul li {
   list-style-type: none;
   margin: 0.25em 0.5em;
   padding: 0.25em;
@@ -215,24 +212,6 @@ button:focus {
   margin: 1em;
 }
 
-.Actions {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 1.5rem;
-  padding: 0.25rem;
-  font-size: 1rem;
-}
-.Actions ul {
-  margin: 0;
-  padding: 0;
-  list-style-type: none;
-  display: flex;
-  flex-direction: row;
-}
-.Actions ul li {
-  margin: 0 0.1rem;
-}
 
 
 /* Browser */
@@ -307,3 +286,28 @@ button:focus {
   padding-right: 5px;
   display: inline-block;
 }
+
+
+/* NoteContainer */
+
+.NoteContainer .Content {
+  display: flex;
+}
+.NoteContainer .Content.LayoutGrid {
+  flex-wrap: wrap;
+}
+.NoteContainer .Content.LayoutList {
+  display: flex;
+  flex-direction: column;
+}
+.NoteContainer .Content.LayoutList {
+  display: block;
+  position: relative; /* Notes will be positioned using static values */
+}
+.LayoutGrid > .RenderedNote {
+  width: 20em;
+}
+.LayoutList > .RenderedNote {
+  /* flex-direction is already columns */
+}
+

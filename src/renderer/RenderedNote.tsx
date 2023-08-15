@@ -2,6 +2,7 @@ import { PiPencil as EditIcon } from 'react-icons/pi';
 import classNames from 'classnames';
 import { Note, Media } from 'shared/model/Note';
 import NotFound from '../../assets/404.svg';
+import { capitalize } from './helpers';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -70,25 +71,44 @@ export function formatContent(note: Note, tags: string[] = []): string {
   return result;
 }
 
-function capitalize(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1);
-}
+// List of attributes that must be hidden (as duplicating information already displayed elsewhere)
+const omitAttributes = ['tags', 'title'];
 
 // See https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/basic_type_example/
 type RenderedNoteProps = {
+  // Content
   note: Note;
-  layout: string;
+  // Style
+  layout?: string;
+  showTags?: boolean;
+  showAttributes?: boolean;
+  // Container
+  draggable?: boolean;
 };
 
-export default function RenderedNote(props: RenderedNoteProps) {
-  const { note, layout } = props;
+export default function RenderedNote({
+  note,
+  layout = 'default',
+  showTags = true,
+  showAttributes = true,
+  draggable = false,
+}: RenderedNoteProps) {
+  // Remove extra attributes
+  const filteredAttributes = Object.fromEntries(
+    Object.entries(note.attributes).filter(
+      ([key]) => !omitAttributes.includes(key)
+    )
+  );
 
+  const noteHasMetadata = note.tags || filteredAttributes;
+  const metadataVisible = showTags || showAttributes;
   return (
     <div
       className={classNames(['RenderedNote', `Layout${capitalize(layout)}`])}
       key={note.oid}
+      draggable={draggable ? 'true' : 'false'}
     >
-      <div className="RenderedNoteActions">
+      <div className="Actions">
         <nav>
           <ul>
             <li>
@@ -109,22 +129,21 @@ export default function RenderedNote(props: RenderedNoteProps) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: formatContent(note, ['preview']) }}
       />
-      {(note.tags || note.attributes) && (
+      {metadataVisible && noteHasMetadata && (
         <div className="RenderedNoteMetadata">
-          {note.tags && (
+          {showTags && note.tags && (
             <ul>
               {note.tags.map((tag: string) => {
-                return <li key={tag}>{tag}</li>;
+                return <li key={tag}>#{tag}</li>;
               })}
             </ul>
           )}
-          {note.attributes && (
+          {showAttributes && filteredAttributes && (
             <ul>
-              {Object.entries(note.attributes).map(([key, value]) => {
-                if (key === 'tags') return null;
+              {Object.entries(filteredAttributes).map(([key, value]: any) => {
                 return (
                   <li key={key}>
-                    {key}: {value}
+                    @{key}: {value}
                   </li>
                 );
               })}

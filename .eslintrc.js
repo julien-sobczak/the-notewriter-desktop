@@ -14,13 +14,17 @@ module.exports = {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
     // Overrides:
+    // - Misc
     'no-plusplus': 'off',
     'no-restricted-syntax': 'off',
     'no-use-before-define': 'off',
     'no-console': 'off',
     'no-continue': 'off',
+    // - Accessibility
     'jsx-a11y/click-events-have-key-events': 'off',
     'jsx-a11y/no-noninteractive-element-interactions': 'off',
+    // - React
+    'react/require-default-props': 'off', // DefaultProps are mostly obsolete
   },
   parserOptions: {
     ecmaVersion: 2020,

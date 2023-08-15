@@ -1,5 +1,6 @@
 ---
 source: https://devhints.io/typescript
+tags: typescript
 ---
 
 # TypeScript
