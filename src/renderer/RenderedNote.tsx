@@ -1,4 +1,12 @@
-import { PiPencil as EditIcon } from 'react-icons/pi';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/mouse-events-have-key-events */
+import React, { useRef } from 'react';
+import {
+  PiPencil as EditIcon,
+  PiArrowSquareOut as DragIcon,
+  PiArrowSquareUp as MoveUpIcon,
+  PiArrowSquareDown as MoveDownIcon,
+} from 'react-icons/pi';
 import classNames from 'classnames';
 import { Note, Media } from 'shared/model/Note';
 import NotFound from '../../assets/404.svg';
@@ -74,6 +82,11 @@ export function formatContent(note: Note, tags: string[] = []): string {
 // List of attributes that must be hidden (as duplicating information already displayed elsewhere)
 const omitAttributes = ['tags', 'title'];
 
+interface LastPosition {
+  left?: number;
+  top?: number;
+}
+
 // See https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/basic_type_example/
 type RenderedNoteProps = {
   // Content
@@ -84,6 +97,9 @@ type RenderedNoteProps = {
   showAttributes?: boolean;
   // Container
   draggable?: boolean;
+  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrag?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
 };
 
 export default function RenderedNote({
@@ -92,7 +108,17 @@ export default function RenderedNote({
   showTags = true,
   showAttributes = true,
   draggable = false,
+  onDragStart = () => {},
+  onDrag = () => {},
+  onDragEnd = () => {},
 }: RenderedNoteProps) {
+  const dragElement = useRef<HTMLDivElement>(null);
+  const dragInProgress = useRef<boolean>(false);
+  const lastPosition = useRef<LastPosition>({
+    left: undefined,
+    top: undefined,
+  });
+
   // Remove extra attributes
   const filteredAttributes = Object.fromEntries(
     Object.entries(note.attributes).filter(
@@ -102,16 +128,111 @@ export default function RenderedNote({
 
   const noteHasMetadata = note.tags || filteredAttributes;
   const metadataVisible = showTags || showAttributes;
+
+  const handleDragClick = () => {
+    dragInProgress.current = !dragInProgress.current;
+  };
+
+  // FIXME remove
+  // const getDraggableAncestor = (element: HTMLElement) => {
+  //   if (element.getAttribute('data-draggable')) return element;
+  //   return getDraggableAncestor(element.parentElement);
+  // };
+
+  const handleMouseStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (dragInProgress.current || dragElement.current === null) return;
+    lastPosition.current.left = event.clientX;
+    lastPosition.current.top = event.clientY;
+    dragElement.current.classList.add('dragging');
+    dragElement.current.addEventListener('mousemove', handleMouseMove);
+  };
+
+  const handleMouseMove = (event: MouseEvent) => {
+    if (dragInProgress.current || dragElement.current === null) return;
+    if (!lastPosition.current.left) {
+      lastPosition.current.left = 0;
+    }
+    if (!lastPosition.current.top) {
+      lastPosition.current.top = 0;
+    }
+    const oldLeft = parseInt(dragElement.current.style.left, 10);
+    const oldTop = parseInt(dragElement.current.style.top, 10);
+    const newLeft = oldLeft + event.clientX - lastPosition.current.left;
+    const newTop = oldTop + event.clientY - lastPosition.current.top;
+
+    dragElement.current.style.setProperty('left', `${newLeft}px`);
+    dragElement.current.style.setProperty('top', `${newTop}px`);
+    lastPosition.current.left = event.clientX;
+    lastPosition.current.top = event.clientY;
+  };
+
+  const handleMouseEnd = () => {
+    if (dragInProgress.current || dragElement.current === null) return;
+    dragElement.current.classList.remove('dragging');
+    dragElement.current.removeEventListener('mousemove', handleMouseMove);
+  };
+
+  const handleMoveUp = () => {
+    if (dragElement.current === null) return;
+    let oldZIndex = parseInt(dragElement.current.style.zIndex, 10);
+    if (Number.isNaN(oldZIndex)) {
+      oldZIndex = 0;
+    }
+    const newZIndex = oldZIndex + 10;
+    console.log(`z-index: ${newZIndex} <= ${dragElement.current.style.zIndex}`);
+    dragElement.current.style.zIndex = `${newZIndex}`;
+  };
+  const handleMoveDown = () => {
+    if (dragElement.current === null) return;
+    let oldZIndex = parseInt(dragElement.current.style.zIndex, 10);
+    if (Number.isNaN(oldZIndex)) {
+      oldZIndex = 0;
+    }
+    let newZIndex = oldZIndex - 10;
+    newZIndex = Math.max(newZIndex, 0);
+    console.log(`z-index: ${newZIndex} <= ${dragElement.current.style.zIndex}`);
+    dragElement.current.style.zIndex = `${newZIndex}`;
+  };
+
+  // TODO now drag on actions panel only, not content to allow selection/copy/paste
+  // TODO now check for notes not to move past parent-container.
+
   return (
     <div
+      ref={dragElement}
       className={classNames(['RenderedNote', `Layout${capitalize(layout)}`])}
+      data-draggable="true"
       key={note.oid}
-      draggable={draggable ? 'true' : 'false'}
+      id={note.oid}
+      // Support Drag & Drop API to move notes between containers
+      // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
+      draggable={draggable && dragInProgress.current ? 'true' : 'false'}
+      onDragStart={onDragStart}
+      onDrag={onDrag}
+      onDragEnd={onDragEnd}
+      // Use standard mouse events to drag freely notes without the ghosting effect
+      // See https://blog.coderfy.io/creating-a-draggable-and-resizable-box
+      onMouseDown={handleMouseStart}
+      onMouseUp={handleMouseEnd}
+      onMouseOut={handleMouseEnd}
     >
       <div className="Actions">
         <nav>
           <ul>
             <li>
+              <button type="button" onClick={handleDragClick}>
+                <DragIcon />
+              </button>
+              {layout === 'free' && (
+                <button type="button" onClick={handleMoveUp}>
+                  <MoveUpIcon />
+                </button>
+              )}
+              {layout === 'free' && (
+                <button type="button" onClick={handleMoveDown}>
+                  <MoveDownIcon />
+                </button>
+              )}
               <button type="button">
                 <EditIcon />
               </button>

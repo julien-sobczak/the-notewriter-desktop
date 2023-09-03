@@ -231,6 +231,9 @@ button:focus {
   float: right;
   border: none;
 }
+.BrowserTree .directory {
+  width: 250px; /* to avoid resizing when switching between mode */
+}
 .BrowserEditor {
   height: 100%;
   overflow: scroll;
@@ -292,17 +295,22 @@ button:focus {
 
 .NoteContainer .Content {
   display: flex;
+  position: relative;
 }
 .NoteContainer .Content.LayoutGrid {
   flex-wrap: wrap;
 }
 .NoteContainer .Content.LayoutList {
-  display: flex;
   flex-direction: column;
 }
-.NoteContainer .Content.LayoutList {
+.NoteContainer .Content.LayoutFree {
   display: block;
   position: relative; /* Notes will be positioned using static values */
+}
+.NoteContainer .Content.LayoutFree .RenderedNote {
+  position: absolute;
+  resize: both;
+  z-index: 0;
 }
 .LayoutGrid > .RenderedNote {
   width: 20em;

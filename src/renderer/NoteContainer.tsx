@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Note } from 'shared/model/Note';
 import {
   CiGrid2H as ListIcon,
@@ -17,6 +17,23 @@ type NotesContainerProps = {
 function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
+    // Add the target element's id to the data transfer object
+    if (!event.target || !event.dataTransfer) return;
+    event.dataTransfer.effectAllowed = 'all'; // detect special keys in DragEvent (ex: useful to detect shift to clone notes)
+    event.dataTransfer.setData('text/plain', event.currentTarget.id);
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnd = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.target || !event.dataTransfer) return;
+    // const id = event.dataTransfer.getData('text/plain');
+    console.log('ici', event, event.shiftKey); // TODO remove
+    // TODO clone note if event.shiftKey <= seems to be true only on 'drag' event... 😭
+    event.currentTarget.style.left = `${event.clientX}px`;
+    event.currentTarget.style.top = `${event.clientY}px`;
+  };
 
   const changeLayout = (newLayout: string) => {
     if (!containerRef.current) return;
@@ -39,10 +56,13 @@ function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
           offsetHeight: child.offsetHeight,
         });
       }
+
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         const position = positions[i];
         child.style.position = `absolute`;
+        // FIXME left and top seems too large
+        // TODO use percent to keep the overall placements when switching to a larger/smaller screen
         child.style.left = `${position.offsetLeft}px`;
         child.style.top = `${position.offsetTop}px`;
         child.style.width = `${position.offsetWidth}px`;
@@ -104,7 +124,10 @@ function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
             <RenderedNote
               key={note.oid}
               note={note}
+              layout={selectedLayout}
               draggable={selectedLayout === 'free'}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
             />
           );
         })}
