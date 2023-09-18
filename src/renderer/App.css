@@ -72,6 +72,10 @@ button:focus {
   text-align: center;
   font-size: 0.70em;
   border-bottom: 1px solid var(--color-separator);
+
+  /* Make the frameless windows draggable using the top bar (similar to other applications such as Slack Desktop)
+  /* https://stackoverflow.com/questions/44818508/how-do-i-move-a-frameless-window-in-electron-without-using-webkit-app-region */
+  -webkit-app-region: drag; /* NB: The property must be reset on child element to make them focusable. */
 }
 .TopBar input {
   border-radius: 0.25rem;
@@ -79,6 +83,7 @@ button:focus {
   box-shadow: none !important;
   background-color: var(--color-background-light);
   width: 300px;
+  -webkit-app-region: none;
 }
 .TopBar input::placeholder {
   color: var(--color-text-dimmed);
@@ -86,6 +91,7 @@ button:focus {
 }
 .TopBar .WorkspaceButtonGroup {
   float: right;
+  -webkit-app-region: none;
 }
 .TopBar .WorkspaceButtonGroup button {
   padding: 0.25rem 0.5rem;
@@ -318,4 +324,15 @@ button:focus {
 .LayoutList > .RenderedNote {
   /* flex-direction is already columns */
 }
+.LayoutFree > .RenderedNote .Actions {
+  cursor: move;
+}
 
+/* Added when the user drags a note */
+.prevent-select .RenderedNote .RenderedNoteContent,
+.prevent-select .RenderedNote .RenderedNoteTitle,
+.prevent-select .RenderedNote .RenderedNoteMetadata,
+.prevent-select .RenderedNote .RenderedNoteComment {
+  /* If we don't disable text selection, the drag stops as soon as the user hover some text. */
+  user-select: none;
+}

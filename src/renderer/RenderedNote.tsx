@@ -100,6 +100,8 @@ type RenderedNoteProps = {
   onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDrag?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onMouseStart?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseEnd?: (event: React.MouseEvent<HTMLDivElement>) => void;
 };
 
 export default function RenderedNote({
@@ -111,6 +113,8 @@ export default function RenderedNote({
   onDragStart = () => {},
   onDrag = () => {},
   onDragEnd = () => {},
+  onMouseStart = () => {},
+  onMouseEnd = () => {},
 }: RenderedNoteProps) {
   const dragElement = useRef<HTMLDivElement>(null);
   const dragInProgress = useRef<boolean>(false);
@@ -144,7 +148,9 @@ export default function RenderedNote({
     lastPosition.current.left = event.clientX;
     lastPosition.current.top = event.clientY;
     dragElement.current.classList.add('dragging');
+    console.log('handleMouseStart');
     dragElement.current.addEventListener('mousemove', handleMouseMove);
+    onMouseStart(event);
   };
 
   const handleMouseMove = (event: MouseEvent) => {
@@ -166,10 +172,12 @@ export default function RenderedNote({
     lastPosition.current.top = event.clientY;
   };
 
-  const handleMouseEnd = () => {
+  const handleMouseEnd = (event: React.MouseEvent<HTMLDivElement>) => {
     if (dragInProgress.current || dragElement.current === null) return;
+    console.log('handleMouseEnd');
     dragElement.current.classList.remove('dragging');
     dragElement.current.removeEventListener('mousemove', handleMouseMove);
+    onMouseEnd(event);
   };
 
   const handleMoveUp = () => {
@@ -204,19 +212,21 @@ export default function RenderedNote({
       data-draggable="true"
       key={note.oid}
       id={note.oid}
-      // Support Drag & Drop API to move notes between containers
-      // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
-      draggable={draggable && dragInProgress.current ? 'true' : 'false'}
-      onDragStart={onDragStart}
-      onDrag={onDrag}
-      onDragEnd={onDragEnd}
-      // Use standard mouse events to drag freely notes without the ghosting effect
-      // See https://blog.coderfy.io/creating-a-draggable-and-resizable-box
-      onMouseDown={handleMouseStart}
-      onMouseUp={handleMouseEnd}
-      onMouseOut={handleMouseEnd}
     >
-      <div className="Actions">
+      <div
+        className="Actions"
+        // Support Drag & Drop API to move notes between containers
+        // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
+        draggable={draggable && dragInProgress.current ? 'true' : 'false'}
+        onDragStart={onDragStart}
+        onDrag={onDrag}
+        onDragEnd={onDragEnd}
+        // Use standard mouse events to drag freely notes without the ghosting effect
+        // See https://blog.coderfy.io/creating-a-draggable-and-resizable-box
+        onMouseDown={handleMouseStart}
+        onMouseUp={handleMouseEnd}
+        // onMouseOut={handleMouseEnd} FIXME BUG we probably need this event but it seems to be triggered a lot!!!
+      >
         <nav>
           <ul>
             <li>

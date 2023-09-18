@@ -29,26 +29,36 @@ function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
   const handleDragEnd = (event: React.DragEvent<HTMLDivElement>) => {
     if (!event.target || !event.dataTransfer) return;
     // const id = event.dataTransfer.getData('text/plain');
-    console.log('ici', event, event.shiftKey); // TODO remove
+    // console.log('ici', event, event.shiftKey); // TODO remove
     // TODO clone note if event.shiftKey <= seems to be true only on 'drag' event... 😭
     event.currentTarget.style.left = `${event.clientX}px`;
     event.currentTarget.style.top = `${event.clientY}px`;
   };
 
+  /* Prevent text selection while dragging otherwise drag can stop abrutly */
+  const handleMouseStart = () => {
+    if (!containerRef.current) return;
+    console.log('+prevent-select');
+    containerRef.current.classList.add('prevent-select');
+  };
+  const handleMouseEnd = () => {
+    if (!containerRef.current) return;
+    console.log('-prevent-select');
+    containerRef.current.classList.remove('prevent-select');
+  };
+
   const changeLayout = (newLayout: string) => {
     if (!containerRef.current) return;
 
-    const parentWidth = containerRef.current.offsetWidth;
-    const parentHeight = containerRef.current.offsetHeight;
     const children = Object.values(
       containerRef.current.childNodes
     ) as HTMLElement[];
-    console.log('parent', parentWidth, parentHeight); // TODO remove
+    // console.log('parent', containerRef.current.offsetWidth, containerRef.current.offsetHeight); // TODO remove
 
     if (newLayout === 'free') {
       const positions = [];
       for (const child of children) {
-        console.log(child.tagName, child.offsetLeft, child.offsetTop); // TODO remove
+        // console.log(child.tagName, child.offsetLeft, child.offsetTop); // TODO remove
         positions.push({
           offsetLeft: child.offsetLeft,
           offsetTop: child.offsetTop,
@@ -128,6 +138,8 @@ function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
               draggable={selectedLayout === 'free'}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
+              onMouseStart={handleMouseStart}
+              onMouseEnd={handleMouseEnd}
             />
           );
         })}
