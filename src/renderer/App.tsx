@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
+import { IconContext, IconProps } from '@phosphor-icons/react';
 import DailyQuote from './DailyQuote';
 import StaticDesk from './StaticDesk';
 import Workspace from './Workspace';
@@ -21,13 +22,23 @@ function Home() {
 }
 
 export default function App() {
+  const iconStyle = useMemo<IconProps>(() => {
+    return {
+      color: 'black',
+      size: 16,
+      weight: 'thin',
+      mirrored: false,
+    };
+  }, []);
   return (
-    <ConfigContextProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </Router>
-    </ConfigContextProvider>
+    <IconContext.Provider value={iconStyle}>
+      <ConfigContextProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+          </Routes>
+        </Router>
+      </ConfigContextProvider>
+    </IconContext.Provider>
   );
 }

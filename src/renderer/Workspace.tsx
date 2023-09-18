@@ -1,18 +1,18 @@
 /* eslint-disable react/jsx-no-useless-fragment */
 import { useState, useEffect, useRef, useContext } from 'react';
 // import { v4 as uuidv4 } from 'uuid'; // uuidv4()
-import classNames from 'classnames';
 import {
-  TbLamp2 as DesktopIcon,
-  TbFiles as BrowseIcon,
-  TbBrain as StudyIcon,
-} from 'react-icons/tb';
-import { HiOutlineLightBulb as InspirationIcon } from 'react-icons/hi';
-import { BiStats as StatsIcon } from 'react-icons/bi';
-import { IoJournal as JournalIcon } from 'react-icons/io5';
-import { FaTasks as TasksIcon } from 'react-icons/fa';
-import { PiHandWaving as HiIcon } from 'react-icons/pi';
-import { GiMeditation as ZenIcon } from 'react-icons/gi';
+  HandWaving,
+  FileSearch,
+  Desktop,
+  Notebook,
+  Brain,
+  Kanban,
+  Lightbulb,
+  HandsPraying,
+  ChartBar,
+} from '@phosphor-icons/react';
+import classNames from 'classnames';
 import { Desk } from 'shared/model/Config';
 import { Query, QueryResult } from '../shared/model/Query';
 import { Note } from '../shared/model/Note';
@@ -148,7 +148,10 @@ function Workspace() {
                 onClick={() => setActivity('hi')}
                 aria-label="Hi"
               >
-                <HiIcon />
+                <HandWaving
+                  weight={activity === 'hi' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'browse' })}>
@@ -157,7 +160,10 @@ function Workspace() {
                 onClick={() => setActivity('browse')}
                 aria-label="Browse"
               >
-                <BrowseIcon />
+                <FileSearch
+                  weight={activity === 'browse' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'desktop' })}>
@@ -166,7 +172,10 @@ function Workspace() {
                 onClick={() => setActivity('desktop')}
                 aria-label="Desktop"
               >
-                <DesktopIcon />
+                <Desktop
+                  weight={activity === 'desktop' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'journal' })}>
@@ -175,7 +184,10 @@ function Workspace() {
                 onClick={() => setActivity('journal')}
                 aria-label="Journal"
               >
-                <JournalIcon />
+                <Notebook
+                  weight={activity === 'journal' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'study' })}>
@@ -184,7 +196,10 @@ function Workspace() {
                 onClick={() => setActivity('study')}
                 aria-label="Flashcards"
               >
-                <StudyIcon />
+                <Brain
+                  weight={activity === 'study' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'tasks' })}>
@@ -193,7 +208,10 @@ function Workspace() {
                 onClick={() => setActivity('tasks')}
                 aria-label="Tasks"
               >
-                <TasksIcon />
+                <Kanban
+                  weight={activity === 'tasks' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li
@@ -204,7 +222,10 @@ function Workspace() {
                 onClick={() => setActivity('inspiration')}
                 aria-label="Inspiration"
               >
-                <InspirationIcon />
+                <Lightbulb
+                  weight={activity === 'inspiration' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'zen' })}>
@@ -213,7 +234,10 @@ function Workspace() {
                 onClick={() => setActivity('zen')}
                 aria-label="Zen Mode"
               >
-                <ZenIcon />
+                <HandsPraying
+                  weight={activity === 'zen' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
             <li className={classNames({ selected: activity === 'stats' })}>
@@ -222,7 +246,10 @@ function Workspace() {
                 onClick={() => setActivity('stats')}
                 aria-label="Statistics"
               >
-                <StatsIcon />
+                <ChartBar
+                  weight={activity === 'stats' ? 'light' : 'thin'}
+                  size={24}
+                />
               </button>
             </li>
           </ul>

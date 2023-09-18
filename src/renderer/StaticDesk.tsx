@@ -1,4 +1,7 @@
-import { VscSplitHorizontal, VscSplitVertical } from 'react-icons/vsc';
+import {
+  ArrowsOutLineHorizontal,
+  ArrowsOutLineVertical,
+} from '@phosphor-icons/react';
 import icon from '../../assets/icon.svg';
 import './Reset.css';
 import './App.css';
@@ -9,10 +12,10 @@ function Actions() {
       <nav>
         <ul>
           <li>
-            <VscSplitHorizontal />
+            <ArrowsOutLineHorizontal />
           </li>
           <li>
-            <VscSplitVertical />
+            <ArrowsOutLineVertical />
           </li>
         </ul>
       </nav>

@@ -2,8 +2,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useContext } from 'react';
-import { DiMarkdown } from 'react-icons/di';
-import { FaRegFolder, FaRegFolderOpen } from 'react-icons/fa';
+import { Folder, FolderOpen, FileText } from '@phosphor-icons/react';
 import TreeView, {
   ITreeViewOnNodeSelectProps,
   flattenTree,
@@ -218,9 +217,9 @@ function filesToFolder(files: File[]): any {
 
 function FolderIcon({ isOpen }: any) {
   return isOpen ? (
-    <FaRegFolderOpen color="gray" className="icon" />
+    <FolderOpen color="gray" className="icon" />
   ) : (
-    <FaRegFolder color="gray" className="icon" />
+    <Folder color="gray" className="icon" />
   );
 }
 
@@ -228,9 +227,9 @@ function FileIcon({ filename }: any) {
   const extension = filename.slice(filename.lastIndexOf('.') + 1);
   switch (extension) {
     case 'md':
-      return <DiMarkdown color="gray" className="icon" />;
+      return <FileText color="gray" className="icon" />;
     case 'markdown':
-      return <DiMarkdown color="gray" className="icon" />;
+      return <FileText color="gray" className="icon" />;
     default:
       return null;
   }

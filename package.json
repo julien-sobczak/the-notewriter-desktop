@@ -80,6 +80,7 @@
     }
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.0.10",
     "classnames": "^2.3.2",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
@@ -88,7 +89,6 @@
     "react": "^18.2.0",
     "react-accessible-treeview": "^2.6.3",
     "react-dom": "^18.2.0",
-    "react-icons": "^4.10.1",
     "react-router-dom": "^6.11.2",
     "sqlite": "^4.2.1",
     "use-immer": "^0.9.0",

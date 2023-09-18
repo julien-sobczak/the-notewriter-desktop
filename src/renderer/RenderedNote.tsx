@@ -2,11 +2,11 @@
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
 import React, { useRef } from 'react';
 import {
-  PiPencil as EditIcon,
-  PiArrowSquareOut as DragIcon,
-  PiArrowSquareUp as MoveUpIcon,
-  PiArrowSquareDown as MoveDownIcon,
-} from 'react-icons/pi';
+  PencilSimple as EditIcon,
+  Copy as DragIcon,
+  ArrowUp as MoveUpIcon,
+  ArrowDown as MoveDownIcon,
+} from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Note, Media } from 'shared/model/Note';
 import NotFound from '../../assets/404.svg';

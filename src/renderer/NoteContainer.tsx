@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Note } from 'shared/model/Note';
 import {
-  CiGrid2H as ListIcon,
-  CiGrid41 as GridIcon,
-  CiGrid42 as FreeIcon,
-} from 'react-icons/ci';
+  Rows as ListIcon,
+  SquaresFour as GridIcon,
+  Stack as FreeIcon,
+} from '@phosphor-icons/react';
 import classNames from 'classnames';
 import RenderedNote from './RenderedNote';
 import { capitalize } from './helpers';
