@@ -41,6 +41,14 @@ class AppUpdater {
   }
 }
 
+/*
+ * local REST
+ */
+
+/*
+ * IPC
+ */
+
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('ipc-example', async (event, arg) => {

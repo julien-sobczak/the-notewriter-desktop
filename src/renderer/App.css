@@ -136,6 +136,7 @@ button:focus {
 
 .RenderedNote {
   border: 1px solid var(--color-separator);
+  border-radius: 1em 1em 0 1em;
   background: white;
   margin: 1em;
   overflow: hidden;
@@ -302,6 +303,7 @@ button:focus {
 .NoteContainer .Content {
   display: flex;
   position: relative;
+  height: 100%; /* Useful to use offsetHeight in JavaScript */
 }
 .NoteContainer .Content.LayoutGrid {
   flex-wrap: wrap;
@@ -335,4 +337,8 @@ button:focus {
 .prevent-select .RenderedNote .RenderedNoteComment {
   /* If we don't disable text selection, the drag stops as soon as the user hover some text. */
   user-select: none;
+}
+
+.dragging {
+  border: 2px solid gray;
 }

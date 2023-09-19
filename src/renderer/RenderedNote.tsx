@@ -133,8 +133,9 @@ export default function RenderedNote({
   const noteHasMetadata = note.tags || filteredAttributes;
   const metadataVisible = showTags || showAttributes;
 
-  const handleDragClick = () => {
+  const handleDragClick = (event: React.MouseEvent) => {
     dragInProgress.current = !dragInProgress.current;
+    event.stopPropagation();
   };
 
   // FIXME remove
@@ -144,13 +145,31 @@ export default function RenderedNote({
   // };
 
   const handleMouseStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (layout !== 'free') return;
     if (dragInProgress.current || dragElement.current === null) return;
     lastPosition.current.left = event.clientX;
     lastPosition.current.top = event.clientY;
     dragElement.current.classList.add('dragging');
     console.log('handleMouseStart');
-    dragElement.current.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove); // Listen on the windows as the mouse can move anywhere, not just over the dragged element
     onMouseStart(event);
+  };
+
+  // Returns the RenderedNote element.
+  const getRenderedNote = (
+    target: HTMLElement | null | undefined
+  ): HTMLElement | null | undefined => {
+    if (!target) return undefined;
+    if (target.classList.contains('RenderedNote')) {
+      return target;
+    }
+    return getRenderedNote(target.parentElement);
+  };
+  // Returns the parent of the RenderedNote element.
+  const getContainer = (
+    target: HTMLElement | null | undefined
+  ): HTMLElement | null | undefined => {
+    return getRenderedNote(target)?.parentElement;
   };
 
   const handleMouseMove = (event: MouseEvent) => {
@@ -163,8 +182,24 @@ export default function RenderedNote({
     }
     const oldLeft = parseInt(dragElement.current.style.left, 10);
     const oldTop = parseInt(dragElement.current.style.top, 10);
-    const newLeft = oldLeft + event.clientX - lastPosition.current.left;
-    const newTop = oldTop + event.clientY - lastPosition.current.top;
+    let newLeft = oldLeft + event.clientX - lastPosition.current.left;
+    let newTop = oldTop + event.clientY - lastPosition.current.top;
+
+    // Bound possitions to container to not let a note escape
+    const containerElement = getContainer(dragElement.current);
+    const noteElement = getRenderedNote(dragElement.current);
+    if (newLeft < 0) {
+      newLeft = 0;
+    }
+    if (newTop < 0) {
+      newTop = 0;
+    }
+    if (containerElement && noteElement) {
+      if (newLeft > containerElement.offsetWidth - noteElement.offsetWidth) {
+        newLeft = containerElement.offsetWidth - noteElement.offsetWidth;
+      }
+      // Do not enforce boundaries on the bottom. Let the user scrolles instead.
+    }
 
     dragElement.current.style.setProperty('left', `${newLeft}px`);
     dragElement.current.style.setProperty('top', `${newTop}px`);
@@ -173,24 +208,25 @@ export default function RenderedNote({
   };
 
   const handleMouseEnd = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (layout !== 'free') return;
     if (dragInProgress.current || dragElement.current === null) return;
     console.log('handleMouseEnd');
     dragElement.current.classList.remove('dragging');
-    dragElement.current.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mousemove', handleMouseMove);
     onMouseEnd(event);
   };
 
-  const handleMoveUp = () => {
+  const handleMoveUp = (event: React.MouseEvent) => {
     if (dragElement.current === null) return;
     let oldZIndex = parseInt(dragElement.current.style.zIndex, 10);
     if (Number.isNaN(oldZIndex)) {
       oldZIndex = 0;
     }
     const newZIndex = oldZIndex + 10;
-    console.log(`z-index: ${newZIndex} <= ${dragElement.current.style.zIndex}`);
     dragElement.current.style.zIndex = `${newZIndex}`;
+    event.stopPropagation();
   };
-  const handleMoveDown = () => {
+  const handleMoveDown = (event: React.MouseEvent) => {
     if (dragElement.current === null) return;
     let oldZIndex = parseInt(dragElement.current.style.zIndex, 10);
     if (Number.isNaN(oldZIndex)) {
@@ -198,11 +234,20 @@ export default function RenderedNote({
     }
     let newZIndex = oldZIndex - 10;
     newZIndex = Math.max(newZIndex, 0);
-    console.log(`z-index: ${newZIndex} <= ${dragElement.current.style.zIndex}`);
     dragElement.current.style.zIndex = `${newZIndex}`;
+    event.stopPropagation();
+  };
+  const handleMouseOut = (event: React.MouseEvent) => {
+    console.log(
+      `mouseout ${window.innerWidth}x${window.innerHeight} vs ${event.clientX}x${event.clientY}`
+    ); // FIXME remove
+    event.stopPropagation();
   };
 
-  // TODO now drag on actions panel only, not content to allow selection/copy/paste
+  const handleEdit = (event: React.MouseEvent) => {
+    event.stopPropagation();
+  };
+
   // TODO now check for notes not to move past parent-container.
 
   return (
@@ -212,20 +257,22 @@ export default function RenderedNote({
       data-draggable="true"
       key={note.oid}
       id={note.oid}
+      // Support Drag & Drop API to move notes between containers
+      // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
+      draggable={draggable && dragInProgress.current ? 'true' : 'false'}
+      onDragStart={onDragStart}
+      onDrag={onDrag}
+      onDragEnd={onDragEnd}
     >
       <div
         className="Actions"
-        // Support Drag & Drop API to move notes between containers
-        // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
-        draggable={draggable && dragInProgress.current ? 'true' : 'false'}
-        onDragStart={onDragStart}
-        onDrag={onDrag}
-        onDragEnd={onDragEnd}
-        // Use standard mouse events to drag freely notes without the ghosting effect
+        // Support basic drag to move notes inside a free container.
+        // We listen on actions panel to keep the note content easily selectable.
+        // We use standard mouse events to drag freely notes without the ghosting effect
         // See https://blog.coderfy.io/creating-a-draggable-and-resizable-box
         onMouseDown={handleMouseStart}
         onMouseUp={handleMouseEnd}
-        // onMouseOut={handleMouseEnd} FIXME BUG we probably need this event but it seems to be triggered a lot!!!
+        onMouseOut={handleMouseOut} // FIXME BUG we need to stop drag when the mouse is released outside the viewport. This solution doesn't seem to work...
       >
         <nav>
           <ul>
@@ -243,7 +290,7 @@ export default function RenderedNote({
                   <MoveDownIcon />
                 </button>
               )}
-              <button type="button">
+              <button type="button" onClick={handleEdit}>
                 <EditIcon />
               </button>
             </li>
