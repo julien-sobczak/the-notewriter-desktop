@@ -12,6 +12,8 @@ import { Note, Media } from 'shared/model/Note';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
 
+const { ipcRenderer } = window.electron;
+
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
   // Regex to locale links to append target="_blank"
@@ -245,10 +247,14 @@ export default function RenderedNote({
   };
 
   const handleEdit = (event: React.MouseEvent) => {
+    ipcRenderer.sendMessage(
+      'edit',
+      note.workspaceSlug,
+      note.relativePath,
+      note.line
+    );
     event.stopPropagation();
   };
-
-  // TODO now check for notes not to move past parent-container.
 
   return (
     <div

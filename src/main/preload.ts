@@ -5,6 +5,7 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 export type Channels =
   | 'ipc-example'
   | 'get-daily-quote'
+  | 'edit'
   | 'search'
   | 'search-desk0'
   | 'search-desk1'

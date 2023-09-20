@@ -1,7 +1,7 @@
 import { Database, verbose as sqlite3Verbose } from 'sqlite3';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
+import { normalizePath } from './util';
 import { Note, Media } from '../shared/model/Note';
 import { File, FilesResult, Query, QueryResult } from '../shared/model/Query';
 import { Workspace } from '../shared/model/Config';
@@ -9,14 +9,6 @@ import { Workspace } from '../shared/model/Config';
 sqlite3Verbose();
 
 // See for async/await https://github.com/danielsomerfield/function-first-composition-example-typescript/blob/main/test/domainTestingHelpers.ts
-
-// Returns an absolute normalized path.
-function normalizePath(relativePath: string) {
-  let normalizedPath = relativePath;
-  normalizedPath = normalizedPath.replace('~', os.homedir);
-  normalizedPath = normalizedPath.replace('$PWD', process.cwd());
-  return path.normalize(normalizedPath);
-}
 
 function randomElement(items: string[]): string {
   return items[Math.floor(Math.random() * items.length)];

@@ -21,9 +21,10 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn } from 'child_process';
+import express from 'express';
 
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, normalizePath } from './util';
 import ConfigManager from './config';
 import DatabaseManager from './database';
 import { Query } from '../shared/model/Query';
@@ -42,8 +43,32 @@ class AppUpdater {
 }
 
 /*
- * local REST
+ * Local REST API.
+ *
+ * The motivation is to make easy for query notes from any React components.
+ * Using IPC is challenging when several components want to consumme the same channel.
  */
+const api = express();
+api.use(express.json());
+const port = process.env.PORT || 3000;
+api.get('/status', (request, response) => {
+  response.send({
+    Status: 'Running',
+  });
+});
+api.post('/search', async (request, response) => {
+  const query = request.body as Query;
+  const result = await db.search(query);
+  response.send(result);
+});
+api.post('/multi-search', async (request, response) => {
+  const queries = request.body as Query[];
+  const results = await db.multiSearch(queries);
+  response.send(results);
+});
+api.listen(port, () => {
+  console.log(`Server Listening on PORT: ${port}`);
+});
 
 /*
  * IPC
@@ -57,21 +82,32 @@ ipcMain.on('ipc-example', async (event, arg) => {
   event.reply('ipc-example', msgTemplate('pong'));
 });
 
-ipcMain.on('edit', (event, workspace, relativePath, line) => {
+ipcMain.on('edit', (event, workspaceSlug, relativePath, line) => {
   let relativeFileReference = relativePath;
   if (line > 0) {
     relativeFileReference += `:${line}`;
   }
 
+  const workspace = config.workspaces().find((w) => w.slug === workspaceSlug);
+  if (!workspace) {
+    console.log(`Unknown workspace ${workspaceSlug}`);
+    return;
+  }
+  const workspacePath = normalizePath(workspace.path);
+
   // TODO support VISUAL/EDITOR-like env variables
   console.log(
-    `Launching VS Code: code ${workspace} -g ${relativeFileReference}...`
+    `Launching VS Code: code ${workspacePath} -g ${workspacePath}/${relativeFileReference}...`
   );
 
-  const subprocess = spawn('code', [workspace, '-g', relativeFileReference], {
-    detached: true,
-    stdio: 'ignore',
-  });
+  const subprocess = spawn(
+    'code',
+    [workspacePath, '-g', `${workspacePath}/${relativeFileReference}`],
+    {
+      detached: true,
+      stdio: 'ignore',
+    }
+  );
   subprocess.on('error', (err) => {
     console.error(`Failed to edit ${relativePath}`, err);
   });
@@ -121,6 +157,7 @@ async function doSearch(channel: string, event: IpcMainEvent, query: Query) {
 ipcMain.on('search', async (event, query: Query) => {
   doSearch('search', event, query);
 });
+// TODO probably delete following events (use the REST API instead)
 ipcMain.on('search-desk0', async (event, query: Query) => {
   doSearch('search-desk0', event, query);
 });
