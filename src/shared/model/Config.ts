@@ -9,19 +9,30 @@ export interface Block {
   // Unique identifier inside a single desk
   id: string;
   layout: string; // container | horizontal | vertical
-  query: string | null; // for container blocks
+  workspaces: string[]; // Workspaces to use by default on queries (recursively)
   view: string | null; // single | grid | list | free
   // Percentage of this block on parent size (height for vertical, width for horizontal)
   size: string | null;
-  elements: Block[] | null; // for horizontal/vertical blocks
+
+  // Layout-specific attributes
+
+  // for horizontal/vertical blocks
+  elements: Block[] | null;
+
+  // for container blocks
+  query: string | null;
+  noteRefs: NoteRef[];
+}
+
+export interface NoteRef {
+  id: string;
+  workspace: string;
 }
 
 export interface Desk {
   id: string;
   // Name of the desk
   name: string;
-  // Workspaces to use by default on queries
-  workspaces: string[];
   // Layout
   root: Block;
 }

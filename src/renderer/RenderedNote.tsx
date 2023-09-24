@@ -140,12 +140,6 @@ export default function RenderedNote({
     event.stopPropagation();
   };
 
-  // FIXME remove
-  // const getDraggableAncestor = (element: HTMLElement) => {
-  //   if (element.getAttribute('data-draggable')) return element;
-  //   return getDraggableAncestor(element.parentElement);
-  // };
-
   const handleMouseStart = (event: React.MouseEvent<HTMLDivElement>) => {
     if (layout !== 'free') return;
     if (dragInProgress.current || dragElement.current === null) return;
@@ -153,7 +147,8 @@ export default function RenderedNote({
     lastPosition.current.top = event.clientY;
     dragElement.current.classList.add('dragging');
     console.log('handleMouseStart');
-    window.addEventListener('mousemove', handleMouseMove); // Listen on the windows as the mouse can move anywhere, not just over the dragged element
+    // We listen on the window as the mouse can move anywhere, not just over the dragged element
+    window.addEventListener('mousemove', handleMouseMove);
     onMouseStart(event);
   };
 

@@ -1,5 +1,5 @@
 # TODO: This Quarter
 
-* [*] Bootstrap project `julien-sobczak/the-notewriter-desktop`
+* [x] Bootstrap project `julien-sobczak/the-notewriter-desktop`
 * [ ] Draft first version _The NoteWriter Desktop_
 

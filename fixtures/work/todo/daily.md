@@ -1,4 +1,4 @@
 # TODO: Today
 
-* [*] Review MRs
+* [x] Review MRs
 * [ ] Complete ticket `TICKET-123`

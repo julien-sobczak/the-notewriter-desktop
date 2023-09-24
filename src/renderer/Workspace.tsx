@@ -11,11 +11,10 @@ import {
   Lightbulb,
   HandsPraying,
   ChartBar,
+  X,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Desk } from 'shared/model/Config';
 import { Query, QueryResult } from '../shared/model/Query';
-import { Note } from '../shared/model/Note';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
 import './App.css';
@@ -26,12 +25,11 @@ import Stats from './Stats';
 import Inspiration from './Inspiration';
 import Revision from './Revision';
 import ZenMode from './ZenMode';
+import RenderedDesk from './RenderedDesk';
 import NotesContainer from './NoteContainer';
 import Journal from './Journal';
 
 const { ipcRenderer } = window.electron;
-
-type NotesCache = { [key: string]: Note[] };
 
 function Workspace() {
   const { config, dispatch } = useContext(ConfigContext);
@@ -52,8 +50,6 @@ function Workspace() {
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
     undefined
   );
-
-  const [notesCache, setNotesCache] = useState<NotesCache>({});
 
   const handleSearch = (event: any) => {
     setSearchQuery(inputQuery);
@@ -81,13 +77,7 @@ function Workspace() {
       console.debug(
         `Found ${result.notes.length} results for ${result.query.q}`
       );
-      if (result.query.blockId) {
-        const newNotesCache: NotesCache = {
-          ...notesCache,
-        };
-        newNotesCache[result.query.blockId] = result.notes;
-        setNotesCache(newNotesCache);
-      } else if (!result.query.deskId) {
+      if (!result.query.blockId) {
         // global search
         setSearchResults(result);
         setShowSearchResults(true);
@@ -282,7 +272,8 @@ function Workspace() {
                         })}
                         onClick={() => handleDeskClick(desk.id)}
                       >
-                        {desk.name}
+                        <span>{desk.name}</span>
+                        <X size={12} />
                       </li>
                     ))}
                   </ul>
@@ -291,7 +282,6 @@ function Workspace() {
                   <RenderedDesk
                     key={desk.id}
                     desk={desk}
-                    notesCache={notesCache}
                     selected={desk.id === selectedDeskId}
                   />
                 ))}
@@ -318,20 +308,6 @@ function Workspace() {
         {/* Stats */}
         {activity === 'stats' && <Stats />}
       </div>
-    </div>
-  );
-}
-
-type RenderedDeskProps = {
-  desk: Desk;
-  notesCache: NotesCache;
-  selected: boolean;
-};
-
-function RenderedDesk({ desk, notesCache, selected }: RenderedDeskProps) {
-  return (
-    <div className={classNames({ Desk: true, selected })}>
-      <NotesContainer notes={notesCache[desk.root.id]} />
     </div>
   );
 }

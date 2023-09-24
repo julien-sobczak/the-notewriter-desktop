@@ -4,7 +4,7 @@ import path from 'path';
 import { normalizePath } from './util';
 import { Note, Media } from '../shared/model/Note';
 import { File, FilesResult, Query, QueryResult } from '../shared/model/Query';
-import { Workspace } from '../shared/model/Config';
+import { Workspace, NoteRef } from '../shared/model/Config';
 
 sqlite3Verbose();
 
@@ -12,6 +12,24 @@ sqlite3Verbose();
 
 function randomElement(items: string[]): string {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+// Extract medias OIDs from a single note
+function extractMediaOIDs(note: Note): string[] {
+  const results: string[] = [];
+
+  const re: RegExp = /oid:([a-zA-Z0-9]{40})/g;
+  let m: RegExpExecArray | null;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    m = re.exec(note.content);
+    if (m == null) {
+      break;
+    }
+    results.push(m[1]);
+  }
+
+  return results;
 }
 
 export default class DatabaseManager {
@@ -126,48 +144,34 @@ export default class DatabaseManager {
           return;
         }
 
-        const notes: Note[] = [];
-        const mediaOids: string[] = [];
-        const notesMediaOids = new Map<string, string[]>();
+        const notes: Note[] = []; // The found notes
+        const mediaOIDs: string[] = []; // The list of all medias found
+        const notesMediaOIDs = new Map<string, string[]>(); // The mapping of note <-> medias
 
         // Iterate over found notes and search for potential referenced medias
         for (let i = 0; i < rows.length; i++) {
           const note = this.#rowToNote(rows[i], datasourceName);
-          const re: RegExp = /oid:([a-zA-Z0-9]{40})/g;
-          let m: RegExpExecArray | null;
-          const noteMediaOids: string[] = [];
-          // eslint-disable-next-line no-constant-condition
-          while (true) {
-            m = re.exec(note.content);
-            if (m == null) {
-              break;
-            }
-            noteMediaOids.push(m[1]);
-          }
-          if (noteMediaOids.length > 0) {
-            notesMediaOids.set(note.oid, noteMediaOids);
-            mediaOids.push(...noteMediaOids);
-          }
+          const noteMediaOIDs = extractMediaOIDs(note);
+          notesMediaOIDs.set(note.oid, noteMediaOIDs);
+          mediaOIDs.push(...noteMediaOIDs);
           notes.push(note);
         }
 
         // Search for medias
-        console.log(`Having ${mediaOids.length} medias to find...`); // FIXME remove
-        const foundMedias = await this.searchMedias(mediaOids, datasourceName);
-        console.log(`Found ${foundMedias.length} medias`); // FIXME remove
+        const foundMedias = await this.searchMedias(mediaOIDs, datasourceName);
         const mediasByOids = new Map<string, Media>();
         foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
 
         // Append found medias on notes
         for (let i = 0; i < notes.length; i++) {
           const note = notes[i];
-          if (!notesMediaOids.has(note.oid)) {
+          if (!notesMediaOIDs.has(note.oid)) {
             // No medias for this note
             continue;
           }
 
           console.log(`Have medias to append for note ${note.oid}`); // FIXME remove
-          const referencedMediaOids = notesMediaOids.get(note.oid);
+          const referencedMediaOids = notesMediaOIDs.get(note.oid);
           referencedMediaOids?.forEach((mediaOid) => {
             const media = mediasByOids.get(mediaOid);
             if (media) {
@@ -226,6 +230,147 @@ export default class DatabaseManager {
           }
         }
       );
+    });
+  }
+
+  async find(noteRef: NoteRef): Promise<Note> {
+    const datasourceName = noteRef.workspace;
+    const db = this.datasources.get(datasourceName);
+    if (!db) {
+      throw new Error(`No datasource ${datasourceName} found`);
+    }
+    return new Promise<Note>((resolve, reject) => {
+      const sqlQuery = `
+        SELECT
+          oid,
+          file_oid,
+          kind,
+          relative_path,
+          wikilink,
+          attributes,
+          tags,
+          line,
+          title_html,
+          content_html,
+          comment_html
+        FROM note
+        WHERE id = '?'
+      `;
+      console.debug(`[${datasourceName}] ${sqlQuery}`);
+      db.get(sqlQuery, [noteRef.id], async (err: any, row: any) => {
+        if (err) {
+          console.log('Error while searching for note by id', err);
+          reject(err);
+          return;
+        }
+
+        const note = this.#rowToNote(row, datasourceName);
+        const mediaOIDs = extractMediaOIDs(note);
+
+        // Append found medias on note
+        const foundMedias = await this.searchMedias(mediaOIDs, datasourceName);
+        note.medias.push(...foundMedias);
+
+        resolve(note);
+      });
+    });
+  }
+
+  async multiFind(noteRefs: NoteRef[]): Promise<Note[]> {
+    // Group OID by datasource
+    const oidByWorkspace = new Map<string, string[]>();
+    for (const noteRef of noteRefs) {
+      if (!oidByWorkspace.has(noteRef.workspace)) {
+        oidByWorkspace.set(noteRef.workspace, []);
+      }
+      oidByWorkspace.get(noteRef.workspace)?.push(noteRef.id);
+    }
+
+    // Trigger one query per datasource
+    const results: Promise<Note[]>[] = [];
+    for (const [datasourceName, oids] of oidByWorkspace) {
+      const db = this.datasources.get(datasourceName);
+      if (!db) {
+        throw new Error(`No datasource ${datasourceName} found`);
+      }
+      const result = new Promise<Note[]>((resolve, reject) => {
+        const sqlQuery = `
+          SELECT
+            oid,
+            file_oid,
+            kind,
+            relative_path,
+            wikilink,
+            attributes,
+            tags,
+            line,
+            title_html,
+            content_html,
+            comment_html
+          FROM note
+          WHERE id IN ?
+        `;
+        console.debug(`[${datasourceName}] ${sqlQuery}`);
+        db.all(sqlQuery, [oids], async (err: any, rows: any) => {
+          if (err) {
+            console.log('Error while searching for notes by id', err);
+            reject(err);
+            return;
+          }
+
+          const notes: Note[] = []; // The found notes
+          const mediaOIDs: string[] = []; // The list of all medias found
+          const notesMediaOIDs = new Map<string, string[]>(); // The mapping of note <-> medias
+
+          // Iterate over found notes and search for potential referenced medias
+          for (let i = 0; i < rows.length; i++) {
+            const note = this.#rowToNote(rows[i], datasourceName);
+            const noteMediaOIDs = extractMediaOIDs(note);
+            notesMediaOIDs.set(note.oid, noteMediaOIDs);
+            mediaOIDs.push(...noteMediaOIDs);
+            notes.push(note);
+          }
+
+          // Search for medias
+          const foundMedias = await this.searchMedias(
+            mediaOIDs,
+            datasourceName
+          );
+          const mediasByOids = new Map<string, Media>();
+          foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
+
+          // Append found medias on notes
+          for (let i = 0; i < notes.length; i++) {
+            const note = notes[i];
+            if (!notesMediaOIDs.has(note.oid)) {
+              // No medias for this note
+              continue;
+            }
+
+            console.log(`Have medias to append for note ${note.oid}`); // FIXME remove
+            const referencedMediaOids = notesMediaOIDs.get(note.oid);
+            referencedMediaOids?.forEach((mediaOid) => {
+              const media = mediasByOids.get(mediaOid);
+              if (media) {
+                note.medias.push(media);
+              }
+            });
+          }
+          resolve(notes);
+        });
+      });
+
+      results.push(result);
+    }
+
+    return Promise.all(results).then((allNotes) => {
+      return new Promise<Note[]>((resolve) => {
+        let returnedNotes: Note[] = [];
+        for (const notes of allNotes) {
+          returnedNotes = returnedNotes.concat(notes);
+        }
+        resolve(returnedNotes);
+      });
     });
   }
 

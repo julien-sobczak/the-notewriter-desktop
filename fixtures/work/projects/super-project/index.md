@@ -2,7 +2,7 @@
 
 ## TODO: Next Steps
 
-* [*] Deploy in staging
+* [x] Deploy in staging
 * [ ] Toggle feature flag to enable new super feature
 
 

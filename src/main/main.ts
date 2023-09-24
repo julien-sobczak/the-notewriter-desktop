@@ -28,6 +28,7 @@ import { resolveHtmlPath, normalizePath } from './util';
 import ConfigManager from './config';
 import DatabaseManager from './database';
 import { Query } from '../shared/model/Query';
+import { NoteRef } from '../shared/model/Config';
 
 const config = new ConfigManager();
 const db = new DatabaseManager();
@@ -55,6 +56,16 @@ api.get('/status', (request, response) => {
   response.send({
     Status: 'Running',
   });
+});
+api.post('/find', async (request, response) => {
+  const noteRef = request.body as NoteRef;
+  const result = await db.find(noteRef);
+  response.send(result);
+});
+api.post('/multi-find', async (request, response) => {
+  const noteRefs = request.body as NoteRef[];
+  const results = await db.multiFind(noteRefs);
+  response.send(results);
 });
 api.post('/search', async (request, response) => {
   const query = request.body as Query;

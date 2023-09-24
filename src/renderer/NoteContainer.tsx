@@ -4,6 +4,7 @@ import {
   Rows as ListIcon,
   SquaresFour as GridIcon,
   Stack as FreeIcon,
+  X as CloseIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import RenderedNote from './RenderedNote';
@@ -12,9 +13,14 @@ import { capitalize } from './helpers';
 type NotesContainerProps = {
   notes: Note[] | undefined;
   layout?: string;
+  onClose?: () => void;
 };
 
-function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
+function NotesContainer({
+  notes,
+  layout = 'list',
+  onClose = () => {}, // do nothing
+}: NotesContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -117,6 +123,9 @@ function NotesContainer({ notes, layout = 'list' }: NotesContainerProps) {
                 onClick={() => changeLayout('free')}
               >
                 <FreeIcon />
+              </button>
+              <button type="button" onClick={onClose}>
+                <CloseIcon />
               </button>
             </li>
           </ul>

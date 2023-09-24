@@ -3,9 +3,9 @@
     {
       "id": "24ec6613-0318-4e8d-93e7-e2b0b42085f1",
       "name": "The NoteWriter",
-      "workspaces": "life",
       "root": {
         "id": "469f71c1-45fe-4aa3-9791-0521d7c36b0f",
+        "workspaces": "life",
         "layout": "vertical",
         "elements": [
           {
@@ -21,17 +21,55 @@
             "elements": [
               {
                 "id": "6f70be15-640a-4ad8-b4a4-f39f964e99dd",
+                "layout": "container",
                 "query": "@kind:note path:projects/the-notewriter/",
                 "view": "list"
               },
               {
                 "id": "87115cae-3df4-44b8-851a-2444f20f7c9b",
+                "layout": "container",
                 "query": "@kind:reference path:projects/the-notewriter/",
                 "view": "grid"
               }
             ]
           }
         ]
+      }
+    },
+    {
+      "id": "4560e01f-5718-49b2-8875-cedfb71ebc8b",
+      "name": "Developer Cheatsheet",
+      "root": {
+        "id": "93ef328a-dcad-4ee0-b3ca-4cd5780f3a14",
+        "workspaces": "life",
+        "layout": "vertical",
+        "elements": [
+          {
+            "id": "86c5ad8a-a77e-4a86-9206-1cbf8bfa5b55",
+            "layout": "container",
+            "size": "50%",
+            "query": "@path:skills/programming/go.md",
+            "view": "list"
+          },
+          {
+            "id": "0afa6ad5-0319-4404-b46e-f3f6d25ae30a",
+            "layout": "container",
+            "size": "50%",
+            "query": "@path:skills/programming/typescript.md",
+            "view": "list"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ae9a4ea8-b210-4904-a602-701fb2d1a06f",
+      "name": "Quotes",
+      "root": {
+        "id": "8441dfdb-688c-4b02-87e0-82083c97a7c9",
+        "workspaces": "life",
+        "layout": "container",
+        "query": "@kind:quotes path:references/quotes",
+        "view": "grid"
       }
     }
   ]
