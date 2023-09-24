@@ -103,11 +103,13 @@ export default class DatabaseManager {
         let lastMediaOid: string | undefined;
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
+          let blobTags = [];
+          if (rows.blobTags !== '') blobTags = row.blobTags.split(',');
           if (lastMediaOid === row.oid) {
             medias[medias.length - 1].blobs.push({
               oid: row.blobOid,
               mime: row.blobMime,
-              tags: row.blobTags,
+              tags: blobTags,
             });
           } else {
             lastMediaOid = row.oid;
@@ -118,7 +120,7 @@ export default class DatabaseManager {
                 {
                   oid: row.blobOid,
                   mime: row.blobMime,
-                  tags: row.blobTags.split(','),
+                  tags: blobTags,
                 },
               ],
             });
@@ -467,6 +469,8 @@ export default class DatabaseManager {
   }
 
   #rowToNote(row: any, workspaceSlug: string): Note {
+    let parsedTags = [];
+    if (row.tags !== '') parsedTags = row.tags.split(',');
     return {
       oid: row.oid,
       oidFile: row.file_oid,
@@ -476,7 +480,7 @@ export default class DatabaseManager {
       relativePath: row.relative_path,
       wikilink: row.wikilink,
       attributes: JSON.parse(row.attributes),
-      tags: row.tags.split(','),
+      tags: parsedTags,
       line: row.line,
       title: row.title_html,
       content: row.content_html,

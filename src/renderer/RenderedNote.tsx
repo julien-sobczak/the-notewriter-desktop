@@ -251,6 +251,8 @@ export default function RenderedNote({
     event.stopPropagation();
   };
 
+  console.log(`note ${note.title} has tags ${note.tags.length}`, note.tags);
+
   return (
     <div
       ref={dragElement}
@@ -310,24 +312,26 @@ export default function RenderedNote({
       />
       {metadataVisible && noteHasMetadata && (
         <div className="RenderedNoteMetadata">
-          {showTags && note.tags && (
+          {showTags && note.tags && note.tags.length > 0 && (
             <ul>
               {note.tags.map((tag: string) => {
                 return <li key={tag}>#{tag}</li>;
               })}
             </ul>
           )}
-          {showAttributes && filteredAttributes && (
-            <ul>
-              {Object.entries(filteredAttributes).map(([key, value]: any) => {
-                return (
-                  <li key={key}>
-                    @{key}: {value}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          {showAttributes &&
+            filteredAttributes &&
+            Object.keys(filteredAttributes).length > 0 && (
+              <ul>
+                {Object.entries(filteredAttributes).map(([key, value]: any) => {
+                  return (
+                    <li key={key}>
+                      @{key}: {value}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
         </div>
       )}
       {note.comment && (
