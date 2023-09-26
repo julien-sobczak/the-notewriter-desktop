@@ -8,7 +8,7 @@ import {
   ArrowDown as MoveDownIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Note, Media } from 'shared/model/Note';
+import { Note, Media, Blob } from 'shared/model/Note';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
 
@@ -16,66 +16,125 @@ const { ipcRenderer } = window.electron;
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
-  // Regex to locale links to append target="_blank"
-  // Ex: <a href="www.google.com"> => <a target="_blank" href="www.google.com">
-  // This allows the main process to capture links and redirect to the browser
-  // instead of opening them in the Electron application.
-  const reLinks: RegExp = /<a /g;
-  note.content = note.content.replaceAll(reLinks, '<a target="_blank" ');
-
   // Regex to locate media references
-  const reOids: RegExp = /oid:([a-zA-Z0-9]{40})/g;
+  const reOids: RegExp = /<media oid="([a-zA-Z0-9]{40})".*\/>/g;
   let m: RegExpExecArray | null;
 
+  console.log('formatContent', note.medias);
+  // Create a map of all note medias for quick access
   const mediasByOids = new Map<string, Media>();
   note.medias.forEach((media) => mediasByOids.set(media.oid, media));
 
-  // Find note OIDs
-  const noteOids = [];
+  let result = note.content;
+
+  // Extract <media /> tags
+  const mediaTags = [];
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    m = reOids.exec(note.content);
+    m = reOids.exec(result);
     if (m == null) {
       break;
     }
-    noteOids.push(m[1]);
+    mediaTags.push(m[0]);
   }
 
-  // Replace by valid paths
-  let result = note.content;
-  for (const oid of noteOids) {
-    let found = false;
+  // Parse tags and replace by standard HTML tags
+  for (const mediaTag of mediaTags) {
+    let oid: string = '';
+    let alt: string = '';
+    let title: string = '';
+    const indexOID = mediaTag.indexOf('oid="');
+    const indexAlt = mediaTag.indexOf('alt="');
+    const indexTitle = mediaTag.indexOf('title="');
+    if (indexOID !== -1) {
+      const indexStart = indexOID + 'oid="'.length;
+      const indexEnd = mediaTag.indexOf('"', indexStart);
+      oid = mediaTag.substring(indexStart, indexEnd);
+    }
+    if (indexAlt !== -1) {
+      const indexStart = indexAlt + 'alt="'.length;
+      const indexEnd = mediaTag.indexOf('"', indexStart);
+      alt = mediaTag.substring(indexStart, indexEnd);
+    }
+    if (indexTitle !== -1) {
+      const indexStart = indexAlt + 'title="'.length;
+      const indexEnd = mediaTag.indexOf('"', indexStart);
+      title = mediaTag.substring(indexStart, indexEnd);
+    }
+
+    if (oid === '' || !mediasByOids.has(oid)) {
+      // 404 or dangling media or missing blob
+      console.log(`Missing media ${oid}`, mediasByOids);
+      result = result.replace(
+        mediaTag,
+        `<img src="${NotFound}" width="32" height="32" />`
+      );
+      continue;
+    }
 
     const media = mediasByOids.get(oid);
-    if (media) {
-      // Media exists
-
-      // Try to find a blob matching every tags
-      for (const blob of media.blobs) {
-        if (tags.every((tag) => blob.tags.includes(tag))) {
-          // Found a potential blob
-          const prefix = blob.oid.substring(0, 2);
-          result = result.replace(
-            `oid:${oid}`,
-            `file:${note.workspacePath}/.nt/objects/${prefix}/${blob.oid}`
-          );
-          found = true;
-          break;
-        }
+    if (!media) {
+      // already managed in above condition
+      continue;
+    }
+    // Try to find a blob matching every tags
+    let foundBlob: Blob | null = null;
+    for (const blob of media.blobs) {
+      if (tags.every((tag) => blob.tags.includes(tag))) {
+        // Found a potential blob
+        foundBlob = blob;
+        break;
       }
     }
+    if (!foundBlob) {
+      console.log(`Missing blob for media ${oid} matching "${tags.join(',')}"`);
 
-    if (!found) {
-      // 404 or dangling media or missing blob
-      if (media) {
-        console.log(`Missing media ${oid}`);
-      } else {
-        console.log(
-          `Missing blob for media ${oid} matching "${tags.join(',')}"`
+      // Fallback to the first blob
+      if (media.blobs.length === 0) {
+        result = result.replace(
+          mediaTag,
+          `<img src="${NotFound}" width="32" height="32" />`
         );
+        continue;
       }
-      result = result.replace(`oid:${oid}`, NotFound);
+      foundBlob = media.blobs[0];
     }
+
+    // FIXME for video, ignore for now the blob containing the picture preview
+    const blob = foundBlob;
+    const prefix = blob.oid.substring(0, 2);
+    const blobPath = `${note.workspacePath}/.nt/objects/${prefix}/${blob.oid}`;
+    if (media.kind === 'picture') {
+      result = result.replace(
+        mediaTag,
+        `<img src="file:${blobPath}" alt="${alt}" title="${title}" />`
+      );
+      continue;
+    }
+    if (media.kind === 'audio') {
+      result = result.replace(
+        mediaTag,
+        `<audio controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></audio>`
+      );
+      continue;
+    }
+    if (media.kind === 'video') {
+      result = result.replace(
+        mediaTag,
+        `<video controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></video>`
+      );
+      continue;
+    }
+
+    // Use a standard <a> otherwise to redirect to the raw file otherwise
+    let label = 'link';
+    if (title !== '') {
+      label = 'Document';
+    }
+    result = result.replace(
+      mediaTag,
+      `<a target="_blank" href="file:${blobPath}" alt="${alt}" title="${title}">${label}</a>`
+    );
   }
 
   return result;
@@ -235,9 +294,9 @@ export default function RenderedNote({
     event.stopPropagation();
   };
   const handleMouseOut = (event: React.MouseEvent) => {
-    console.log(
-      `mouseout ${window.innerWidth}x${window.innerHeight} vs ${event.clientX}x${event.clientY}`
-    ); // FIXME remove
+    // console.log(
+    //   `mouseout ${window.innerWidth}x${window.innerHeight} vs ${event.clientX}x${event.clientY}`
+    // ); // FIXME remove
     event.stopPropagation();
   };
 

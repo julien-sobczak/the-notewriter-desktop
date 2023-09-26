@@ -18,7 +18,7 @@ function randomElement(items: string[]): string {
 function extractMediaOIDs(note: Note): string[] {
   const results: string[] = [];
 
-  const re: RegExp = /oid:([a-zA-Z0-9]{40})/g;
+  const re: RegExp = /<media oid="([a-zA-Z0-9]{40})"/g;
   let m: RegExpExecArray | null;
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -161,6 +161,9 @@ export default class DatabaseManager {
 
         // Search for medias
         const foundMedias = await this.searchMedias(mediaOIDs, datasourceName);
+        console.log(
+          `Found ${notes.length} notes, ${foundMedias.length} medias`
+        );
         const mediasByOids = new Map<string, Media>();
         foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
 
@@ -172,7 +175,6 @@ export default class DatabaseManager {
             continue;
           }
 
-          console.log(`Have medias to append for note ${note.oid}`); // FIXME remove
           const referencedMediaOids = notesMediaOIDs.get(note.oid);
           referencedMediaOids?.forEach((mediaOid) => {
             const media = mediasByOids.get(mediaOid);

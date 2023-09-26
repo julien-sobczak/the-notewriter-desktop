@@ -1,5 +1,5 @@
 import { Note } from 'shared/model/Note';
-import { formatContent } from '../renderer/Note';
+import { formatContent } from '../renderer/RenderedNote';
 
 describe('formatContent', () => {
   it('should return the HTML content', () => {
