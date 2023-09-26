@@ -9,11 +9,9 @@ import {
   ArrowDown as MoveDownIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Note, Media, Blob } from 'shared/model/Note';
+import { Note, Media, Blob } from 'shared/Model';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
-
-const { ipcRenderer } = window.electron;
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -67,7 +65,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
       console.log(`Missing media ${oid}`, mediasByOids);
       result = result.replace(
         mediaTag,
-        `<img src="${NotFound}" width="32" height="32" />`
+        `<img src="${NotFound}" class="missing" />`
       );
       continue;
     }
@@ -80,6 +78,10 @@ export function formatContent(note: Note, tags: string[] = []): string {
     // Try to find a blob matching every tags
     let foundBlob: Blob | null = null;
     for (const blob of media.blobs) {
+      if (media.kind === 'video' && blob.mime.startsWith('image/')) {
+        // Ignore for now the blob containing the first frame of videos
+        continue;
+      }
       if (tags.every((tag) => blob.tags.includes(tag))) {
         // Found a potential blob
         foundBlob = blob;
@@ -93,14 +95,17 @@ export function formatContent(note: Note, tags: string[] = []): string {
       if (media.blobs.length === 0) {
         result = result.replace(
           mediaTag,
-          `<img src="${NotFound}" width="32" height="32" />`
+          `<img src="${NotFound}" class="missing" />`
         );
         continue;
       }
       foundBlob = media.blobs[0];
+      if (media.kind === 'video' && foundBlob.mime.startsWith('image/')) {
+        // Ignore for now the blob containing the first frame of videos
+        foundBlob = media.blobs[1];
+      }
     }
 
-    // FIXME for video, ignore for now the blob containing the picture preview
     const blob = foundBlob;
     const prefix = blob.oid.substring(0, 2);
     const blobPath = `${note.workspacePath}/.nt/objects/${prefix}/${blob.oid}`;
@@ -133,7 +138,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
     }
     result = result.replace(
       mediaTag,
-      `<a target="_blank" href="file:${blobPath}" alt="${alt}" title="${title}">${label}</a>`
+      `<a target="_blank" href="file:${blobPath}" title="${title}">${label}</a>`
     );
   }
 
@@ -301,6 +306,7 @@ export default function RenderedNote({
   };
 
   const handleEdit = (event: React.MouseEvent) => {
+    const { ipcRenderer } = window.electron;
     ipcRenderer.sendMessage(
       'edit',
       note.workspaceSlug,

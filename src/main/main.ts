@@ -27,8 +27,7 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath, normalizePath } from './util';
 import ConfigManager from './config';
 import DatabaseManager from './database';
-import { Query } from '../shared/model/Query';
-import { NoteRef } from '../shared/model/Config';
+import { Query, NoteRef } from '../shared/Model';
 
 const config = new ConfigManager();
 const db = new DatabaseManager();

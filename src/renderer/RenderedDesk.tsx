@@ -5,9 +5,7 @@ import {
   ArrowsOutLineVertical,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Desk, Block, NoteRef } from 'shared/model/Config';
-import { Note } from 'shared/model/Note';
-import { Query, QueryResult } from '../shared/model/Query';
+import { Desk, Block, Note, NoteRef, Query, QueryResult } from 'shared/Model';
 import NoteContainer from './NoteContainer';
 import Loader from './Loader';
 import { capitalize } from './helpers';

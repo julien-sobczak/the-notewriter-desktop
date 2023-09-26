@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Note } from 'shared/model/Note';
+import { Note } from 'shared/Model';
 import {
   Rows as ListIcon,
   SquaresFour as GridIcon,

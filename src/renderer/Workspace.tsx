@@ -14,7 +14,7 @@ import {
   X,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Query, QueryResult } from '../shared/model/Query';
+import { Query, QueryResult } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
 import './App.css';

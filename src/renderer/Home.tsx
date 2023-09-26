@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import DailyQuote from './DailyQuote';
-import StaticDesk from './StaticDesk';
 import Workspace from './Workspace';
-import { Query } from '../shared/model/Query';
+import { Query } from '../shared/Model';
 
 export default function Home() {
   // Example to demonstrate how to join the API
@@ -40,7 +39,6 @@ export default function Home() {
         <DailyQuote onClose={() => setShowDailyQuote(false)} />
       )}
       {!showDailyQuote && <Workspace />}
-      {true && false && <StaticDesk />} {/* TODO remove */}
     </>
   );
 }

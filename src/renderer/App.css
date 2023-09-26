@@ -206,6 +206,10 @@ button:focus {
 .RenderedNoteContent a {
   color: black !important; /* Don't put too much emphasis on external links. We want to focus on offline notes. */
 }
+.RenderedNoteContent .missing { /* Used on dangling medias */
+  width: 32px;
+  height: 32px;
+}
 
 .RenderedNoteMetadata {
   background: white;

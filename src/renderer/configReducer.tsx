@@ -2,7 +2,7 @@ import {
   EditorDynamicConfig,
   EditorStaticConfig,
   Desk,
-} from 'shared/model/Config';
+} from 'shared/Model';
 
 export type Config = {
   static: EditorStaticConfig;

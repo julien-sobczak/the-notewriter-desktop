@@ -7,7 +7,7 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   Workspace,
-} from '../shared/model/Config';
+} from '../shared/Model';
 
 export default class ConfigManager {
   editorStaticConfig: EditorStaticConfig;

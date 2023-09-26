@@ -7,8 +7,7 @@ import TreeView, {
   ITreeViewOnNodeSelectProps,
   flattenTree,
 } from 'react-accessible-treeview';
-import { FilesResult, File } from 'shared/model/Query';
-import { Note } from 'shared/model/Note';
+import { FilesResult, File, Note } from 'shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteContainer from './NoteContainer';
 

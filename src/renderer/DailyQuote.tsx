@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Note } from '../shared/model/Note';
+import { Note } from '../shared/Model';
 import useKeyDown from './useKeyDown';
 
 const { ipcRenderer } = window.electron;

@@ -2,9 +2,7 @@ import { Database, verbose as sqlite3Verbose } from 'sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { normalizePath } from './util';
-import { Note, Media } from '../shared/model/Note';
-import { File, FilesResult, Query, QueryResult } from '../shared/model/Query';
-import { Workspace, NoteRef } from '../shared/model/Config';
+import * as Model from '../shared/Model';
 
 sqlite3Verbose();
 
@@ -15,7 +13,7 @@ function randomElement(items: string[]): string {
 }
 
 // Extract medias OIDs from a single note
-function extractMediaOIDs(note: Note): string[] {
+function extractMediaOIDs(note: Model.Note): string[] {
   const results: string[] = [];
 
   const re: RegExp = /<media oid="([a-zA-Z0-9]{40})"/g;
@@ -33,7 +31,7 @@ function extractMediaOIDs(note: Note): string[] {
 }
 
 export default class DatabaseManager {
-  workspaces: Map<string, Workspace>;
+  workspaces: Map<string, Model.Workspace>;
 
   // List of datasources based on workspaces defined in global configuration
   datasources: Map<string, Database>;
@@ -53,7 +51,7 @@ export default class DatabaseManager {
     });
   }
 
-  registerWorkspace(workspace: Workspace): this {
+  registerWorkspace(workspace: Model.Workspace): this {
     this.workspaces.set(workspace.slug, workspace);
 
     const workspacePath = normalizePath(workspace.path);
@@ -79,12 +77,12 @@ export default class DatabaseManager {
     return absolutePath;
   }
 
-  async searchMedias(oids: string[], datasourceName: string): Promise<Media[]> {
+  async searchMedias(oids: string[], datasourceName: string): Promise<Model.Media[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
     }
-    return new Promise<Media[]>((resolve, reject) => {
+    return new Promise<Model.Media[]>((resolve, reject) => {
       const sqlOids = `'${oids.join("','")}'`;
       const sqlQuery = `
         SELECT m.oid, m.kind, b.oid as blobOid, b.mime as blobMime, b.tags as blobTags
@@ -99,7 +97,7 @@ export default class DatabaseManager {
           return;
         }
 
-        const medias: Media[] = [];
+        const medias: Model.Media[] = [];
         let lastMediaOid: string | undefined;
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
@@ -131,12 +129,12 @@ export default class DatabaseManager {
     });
   }
 
-  async searchNotes(q: string, datasourceName: string): Promise<Note[]> {
+  async searchNotes(q: string, datasourceName: string): Promise<Model.Note[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
     }
-    return new Promise<Note[]>((resolve, reject) => {
+    return new Promise<Model.Note[]>((resolve, reject) => {
       const sqlQuery = query2sql(q);
       console.debug(`[${datasourceName}] ${sqlQuery}`);
       db.all(sqlQuery, async (err: any, rows: any) => {
@@ -146,7 +144,7 @@ export default class DatabaseManager {
           return;
         }
 
-        const notes: Note[] = []; // The found notes
+        const notes: Model.Note[] = []; // The found notes
         const mediaOIDs: string[] = []; // The list of all medias found
         const notesMediaOIDs = new Map<string, string[]>(); // The mapping of note <-> medias
 
@@ -164,7 +162,7 @@ export default class DatabaseManager {
         console.log(
           `Found ${notes.length} notes, ${foundMedias.length} medias`
         );
-        const mediasByOids = new Map<string, Media>();
+        const mediasByOids = new Map<string, Model.Media>();
         foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
 
         // Append found medias on notes
@@ -188,7 +186,7 @@ export default class DatabaseManager {
     });
   }
 
-  async searchDailyQuote(query: Query): Promise<Note> {
+  async searchDailyQuote(query: Model.Query): Promise<Model.Note> {
     // Choose a datasource
     let selectedDatasourceName: string;
     if (!query.workspaces || query.workspaces.length === 0) {
@@ -205,7 +203,7 @@ export default class DatabaseManager {
       throw new Error(`No datasource ${selectedDatasourceName} found`);
     }
 
-    return new Promise<Note>((resolve, reject) => {
+    return new Promise<Model.Note>((resolve, reject) => {
       db.all(
         `
           SELECT
@@ -237,13 +235,13 @@ export default class DatabaseManager {
     });
   }
 
-  async find(noteRef: NoteRef): Promise<Note> {
+  async find(noteRef: Model.NoteRef): Promise<Model.Note> {
     const datasourceName = noteRef.workspace;
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
     }
-    return new Promise<Note>((resolve, reject) => {
+    return new Promise<Model.Note>((resolve, reject) => {
       const sqlQuery = `
         SELECT
           oid,
@@ -280,7 +278,7 @@ export default class DatabaseManager {
     });
   }
 
-  async multiFind(noteRefs: NoteRef[]): Promise<Note[]> {
+  async multiFind(noteRefs: Model.NoteRef[]): Promise<Model.Note[]> {
     // Group OID by datasource
     const oidByWorkspace = new Map<string, string[]>();
     for (const noteRef of noteRefs) {
@@ -291,13 +289,13 @@ export default class DatabaseManager {
     }
 
     // Trigger one query per datasource
-    const results: Promise<Note[]>[] = [];
+    const results: Promise<Model.Note[]>[] = [];
     for (const [datasourceName, oids] of oidByWorkspace) {
       const db = this.datasources.get(datasourceName);
       if (!db) {
         throw new Error(`No datasource ${datasourceName} found`);
       }
-      const result = new Promise<Note[]>((resolve, reject) => {
+      const result = new Promise<Model.Note[]>((resolve, reject) => {
         const sqlQuery = `
           SELECT
             oid,
@@ -322,7 +320,7 @@ export default class DatabaseManager {
             return;
           }
 
-          const notes: Note[] = []; // The found notes
+          const notes: Model.Note[] = []; // The found notes
           const mediaOIDs: string[] = []; // The list of all medias found
           const notesMediaOIDs = new Map<string, string[]>(); // The mapping of note <-> medias
 
@@ -340,7 +338,7 @@ export default class DatabaseManager {
             mediaOIDs,
             datasourceName
           );
-          const mediasByOids = new Map<string, Media>();
+          const mediasByOids = new Map<string, Model.Media>();
           foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
 
           // Append found medias on notes
@@ -368,8 +366,8 @@ export default class DatabaseManager {
     }
 
     return Promise.all(results).then((allNotes) => {
-      return new Promise<Note[]>((resolve) => {
-        let returnedNotes: Note[] = [];
+      return new Promise<Model.Note[]>((resolve) => {
+        let returnedNotes: Model.Note[] = [];
         for (const notes of allNotes) {
           returnedNotes = returnedNotes.concat(notes);
         }
@@ -378,8 +376,8 @@ export default class DatabaseManager {
     });
   }
 
-  async search(query: Query): Promise<QueryResult> {
-    const results: Promise<Note[]>[] = [];
+  async search(query: Model.Query): Promise<Model.QueryResult> {
+    const results: Promise<Model.Note[]>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
         !query.workspaces ||
@@ -391,8 +389,8 @@ export default class DatabaseManager {
     }
 
     return Promise.all(results).then((allNotes) => {
-      return new Promise<QueryResult>((resolve) => {
-        let returnedNotes: Note[] = [];
+      return new Promise<Model.QueryResult>((resolve) => {
+        let returnedNotes: Model.Note[] = [];
         for (const notes of allNotes) {
           returnedNotes = returnedNotes.concat(notes);
         }
@@ -404,14 +402,14 @@ export default class DatabaseManager {
     });
   }
 
-  async multiSearch(queries: Query[]): Promise<QueryResult[]> {
-    const results: Promise<QueryResult>[] = [];
+  async multiSearch(queries: Model.Query[]): Promise<Model.QueryResult[]> {
+    const results: Promise<Model.QueryResult>[] = [];
     for (const query of queries) {
       results.push(this.search(query));
     }
 
     return Promise.all(results).then((allResults) => {
-      return new Promise<QueryResult[]>((resolve) => {
+      return new Promise<Model.QueryResult[]>((resolve) => {
         resolve(allResults);
       });
     });
@@ -419,13 +417,13 @@ export default class DatabaseManager {
 
   /* Files Management */
 
-  async listFiles(workspaceSlug: string): Promise<FilesResult> {
+  async listFiles(workspaceSlug: string): Promise<Model.FilesResult> {
     const db = this.datasources.get(workspaceSlug);
     if (!db) {
       throw new Error(`No datasource ${workspaceSlug} found`);
     }
 
-    return new Promise<FilesResult>((resolve, reject) => {
+    return new Promise<Model.FilesResult>((resolve, reject) => {
       db.all(
         `
           SELECT
@@ -439,7 +437,7 @@ export default class DatabaseManager {
             console.log('Error while listing files in database', err);
             reject(err);
           } else {
-            const files: File[] = [];
+            const files: Model.File[] = [];
             for (const row of rows) {
               files.push(this.#rowToFile(row, workspaceSlug));
             }
@@ -456,13 +454,13 @@ export default class DatabaseManager {
   async listNotesInFile(
     workspaceSlug: string,
     relativePath: string
-  ): Promise<Note[]> {
+  ): Promise<Model.Note[]> {
     return this.searchNotes(`path:${relativePath}`, workspaceSlug);
   }
 
   /* Converters */
 
-  #rowToFile(row: any, workspaceSlug: string): File {
+  #rowToFile(row: any, workspaceSlug: string): Model.File {
     return {
       workspacePath: this.#getWorkspacePath(workspaceSlug),
       relativePath: row.relative_path,
@@ -470,7 +468,7 @@ export default class DatabaseManager {
     };
   }
 
-  #rowToNote(row: any, workspaceSlug: string): Note {
+  #rowToNote(row: any, workspaceSlug: string): Model.Note {
     let parsedTags = [];
     if (row.tags !== '') parsedTags = row.tags.split(',');
     return {

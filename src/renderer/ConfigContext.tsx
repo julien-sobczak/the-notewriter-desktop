@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect } from 'react';
 import { useImmerReducer } from 'use-immer';
-import { EditorStaticConfig, EditorDynamicConfig } from 'shared/model/Config';
+import { EditorStaticConfig, EditorDynamicConfig } from 'shared/Model';
 import configReducer from './configReducer';
 
 const { ipcRenderer } = window.electron;

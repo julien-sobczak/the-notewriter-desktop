@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Note } from '../shared/model/Note';
+import { Note } from '../shared/Model';
 
 const { ipcRenderer } = window.electron;
 
