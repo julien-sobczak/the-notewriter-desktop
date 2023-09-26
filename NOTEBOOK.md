@@ -75,7 +75,7 @@ const desk = {
   searchResults // Side panel to quickly find notes even when working on a desk
   notesCache<string, Note[]> // by block ID
   useRef(layouts<string, Block>) // by desk ID
-  
+
   <Desk notesCache={notesCache} desk={desk} onLayoutChange={onLayoutChange} />
     send('multi-search') // or send('search')
     onSave => onLayoutChange(desk.root)

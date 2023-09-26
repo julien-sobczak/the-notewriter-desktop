@@ -26,7 +26,7 @@ import Inspiration from './Inspiration';
 import Revision from './Revision';
 import ZenMode from './ZenMode';
 import RenderedDesk from './RenderedDesk';
-import NotesContainer from './NoteContainer';
+import NoteContainer from './NoteContainer';
 import Journal from './Journal';
 
 const { ipcRenderer } = window.electron;
@@ -247,7 +247,7 @@ function Workspace() {
 
         {showSearchResults && (
           <div className="SearchPanel">
-            <NotesContainer notes={searchResults?.notes} />
+            <NoteContainer notes={searchResults?.notes} />
           </div>
         )}
 

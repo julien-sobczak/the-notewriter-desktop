@@ -10,17 +10,19 @@ import classNames from 'classnames';
 import RenderedNote from './RenderedNote';
 import { capitalize } from './helpers';
 
-type NotesContainerProps = {
+type NoteContainerProps = {
+  name?: string | null | undefined;
   notes: Note[] | undefined;
   layout?: string;
   onClose?: () => void;
 };
 
-function NotesContainer({
+function NoteContainer({
+  name = '',
   notes,
   layout = 'list',
   onClose = () => {}, // do nothing
-}: NotesContainerProps) {
+}: NoteContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -99,37 +101,46 @@ function NotesContainer({
 
   return (
     <div className="NoteContainer">
-      <div className="Actions">
-        <nav>
-          <ul>
-            <li>
-              <button
-                type="button"
-                className={classNames({ selected: selectedLayout === 'list' })}
-                onClick={() => changeLayout('list')}
-              >
-                <ListIcon />
-              </button>
-              <button
-                type="button"
-                className={classNames({ selected: selectedLayout === 'grid' })}
-                onClick={() => changeLayout('grid')}
-              >
-                <GridIcon />
-              </button>
-              <button
-                type="button"
-                className={classNames({ selected: selectedLayout === 'free' })}
-                onClick={() => changeLayout('free')}
-              >
-                <FreeIcon />
-              </button>
-              <button type="button" onClick={onClose}>
-                <CloseIcon />
-              </button>
-            </li>
-          </ul>
-        </nav>
+      <div className="Header">
+        {name && <div className="Name">{name}</div>}
+        <div className="Actions">
+          <nav>
+            <ul>
+              <li>
+                <button
+                  type="button"
+                  className={classNames({
+                    selected: selectedLayout === 'list',
+                  })}
+                  onClick={() => changeLayout('list')}
+                >
+                  <ListIcon />
+                </button>
+                <button
+                  type="button"
+                  className={classNames({
+                    selected: selectedLayout === 'grid',
+                  })}
+                  onClick={() => changeLayout('grid')}
+                >
+                  <GridIcon />
+                </button>
+                <button
+                  type="button"
+                  className={classNames({
+                    selected: selectedLayout === 'free',
+                  })}
+                  onClick={() => changeLayout('free')}
+                >
+                  <FreeIcon />
+                </button>
+                <button type="button" onClick={onClose}>
+                  <CloseIcon />
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
       <div
         className={classNames([
@@ -157,4 +168,4 @@ function NotesContainer({
   );
 }
 
-export default NotesContainer;
+export default NoteContainer;

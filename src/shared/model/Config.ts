@@ -8,6 +8,7 @@ export interface Workspace {
 export interface Block {
   // Unique identifier inside a single desk
   id: string;
+  name: string | null;
   layout: string; // container | horizontal | vertical
   workspaces: string[]; // Workspaces to use by default on queries (recursively)
   view: string | null; // single | grid | list | free

@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { Desk, Block, NoteRef } from 'shared/model/Config';
 import { Note } from 'shared/model/Note';
 import { Query, QueryResult } from '../shared/model/Query';
-import NotesContainer from './NoteContainer';
+import NoteContainer from './NoteContainer';
 import Loader from './Loader';
 import { capitalize } from './helpers';
 
@@ -179,7 +179,7 @@ function PaneContainer({ block, notesCache }: PaneContainerProps) {
         }
       }
     }
-    return <NotesContainer notes={notes} />;
+    return <NoteContainer name={block.name} notes={notes} />;
   }
 
   return (

@@ -10,7 +10,7 @@ import TreeView, {
 import { FilesResult, File } from 'shared/model/Query';
 import { Note } from 'shared/model/Note';
 import { ConfigContext } from './ConfigContext';
-import NotesContainer from './NoteContainer';
+import NoteContainer from './NoteContainer';
 
 const { ipcRenderer } = window.electron;
 
@@ -134,7 +134,7 @@ function Browser() {
 
       {/* The main panel to list notes */}
       <div className="BrowserEditor">
-        <NotesContainer notes={notes} />
+        <NoteContainer notes={notes} />
       </div>
     </div>
   );

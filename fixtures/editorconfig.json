@@ -47,15 +47,17 @@
           {
             "id": "86c5ad8a-a77e-4a86-9206-1cbf8bfa5b55",
             "layout": "container",
+            "name": "Go",
             "size": "50%",
-            "query": "@path:skills/programming/go.md",
+            "query": "path:skills/programming/go.md",
             "view": "list"
           },
           {
             "id": "0afa6ad5-0319-4404-b46e-f3f6d25ae30a",
             "layout": "container",
+            "name": "TypeScript",
             "size": "50%",
-            "query": "@path:skills/programming/typescript.md",
+            "query": "path:skills/programming/typescript.md",
             "view": "list"
           }
         ]
@@ -68,7 +70,7 @@
         "id": "8441dfdb-688c-4b02-87e0-82083c97a7c9",
         "workspaces": "life",
         "layout": "container",
-        "query": "@kind:quotes path:references/quotes",
+        "query": "@kind:quote path:references/quotes",
         "view": "grid"
       }
     }

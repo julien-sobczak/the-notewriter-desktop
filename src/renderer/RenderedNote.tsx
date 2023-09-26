@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
 import React, { useRef } from 'react';
 import {
+  ArrowsOutCardinal as MoveIcon,
   PencilSimple as EditIcon,
   Copy as DragIcon,
   ArrowUp as MoveUpIcon,
@@ -20,7 +21,6 @@ export function formatContent(note: Note, tags: string[] = []): string {
   const reOids: RegExp = /<media oid="([a-zA-Z0-9]{40})".*\/>/g;
   let m: RegExpExecArray | null;
 
-  console.log('formatContent', note.medias);
   // Create a map of all note medias for quick access
   const mediasByOids = new Map<string, Media>();
   note.medias.forEach((media) => mediasByOids.set(media.oid, media));
@@ -310,7 +310,9 @@ export default function RenderedNote({
     event.stopPropagation();
   };
 
-  console.log(`note ${note.title} has tags ${note.tags.length}`, note.tags);
+  const handleMove = (event: React.MouseEvent) => {
+    event?.stopPropagation();
+  };
 
   return (
     <div
@@ -339,6 +341,9 @@ export default function RenderedNote({
         <nav>
           <ul>
             <li>
+              <button type="button" onClick={handleMove}>
+                <MoveIcon />
+              </button>
               <button type="button" onClick={handleDragClick}>
                 <DragIcon />
               </button>

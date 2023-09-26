@@ -9,6 +9,10 @@
   --desktop-layout-radius: 0;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 /*
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
@@ -149,6 +153,8 @@ button:focus {
   background: white;
   margin: 0.5rem;
   overflow: hidden;
+}
+.LayoutGrid .RenderedNote {
   flex-grow: 1; /* use all available space */
 }
 
@@ -175,6 +181,32 @@ button:focus {
   font-size: 0.8rem;
   overflow: auto; /* show scrollbar only when needed */
 }
+.RenderedNoteContent pre {
+  background-color: #FAFAFA;
+  overflow-x: scroll;
+  /* padding: 0.5rem; FIXME bug the parent container exceed the size of its parent. */
+}
+.RenderedNoteContent blockquote {
+  position: relative;
+  padding-left: 3em;
+  font-style: italic;
+}
+.RenderedNoteContent blockquote::before {
+  font-family: Arial;
+  content: "\201C";
+  color: black;
+  font-size: 4em;
+  position: absolute;
+  left: 10px;
+  top: -20px;
+}
+.RenderedNoteContent figcaption {
+  padding-left: 3em;
+}
+.RenderedNoteContent a {
+  color: black !important; /* Don't put too much emphasis on external links. We want to focus on offline notes. */
+}
+
 .RenderedNoteMetadata {
   background: white;
 }
@@ -221,10 +253,10 @@ button:focus {
   flex-grow: 1; /* Fill space equally */
 }
 .Grid, .Container, .VerticalPane {
-  flex-direction: column;
+  flex-direction: row;
 }
 .HorizontalPane {
-  flex-direction: row;
+  flex-direction: column;
 }
 .Grid > * {
   resize: horizontal;
@@ -341,6 +373,18 @@ button:focus {
 
 /* NoteContainer */
 
+.NoteContainer .Header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end; /* Ensure .Actions floats to the right */
+}
+.NoteContainer .Name {
+  flex-grow: 2;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text-dimmed);
+}
+
 .NoteContainer .Content {
   display: flex;
   position: relative;
@@ -387,6 +431,7 @@ button:focus {
 
 .DeskContainer {
   width: 100%;
+  overflow: scroll;
 }
 
 /* The menu listing all opened desks */
