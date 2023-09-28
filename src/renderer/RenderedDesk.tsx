@@ -85,6 +85,10 @@ function extractQueriesFromBlock(
   return results;
 }
 
+// TODO handle split/close buttons
+// TODO now save icon when a desk is updated
+// TODO now move note between container (add unlock icon)
+
 type RenderedDeskProps = {
   desk: Desk;
   selected: boolean;

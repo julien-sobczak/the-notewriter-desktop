@@ -31,6 +31,17 @@ import Journal from './Journal';
 
 const { ipcRenderer } = window.electron;
 
+/*
+ * TODO Cmd+K
+ *
+ * open desk ${name}
+ * show reminders
+ * hi/hello/bonjour
+ * bye
+ * open file
+ * launch zen mode
+ */
+
 function Workspace() {
   const { config, dispatch } = useContext(ConfigContext);
 

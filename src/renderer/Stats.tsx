@@ -3,6 +3,8 @@ import { Note } from '../shared/Model';
 
 const { ipcRenderer } = window.electron;
 
+// Check https://github.com/sgratzl/chartjs-chart-geo for the world map
+
 function Stats() {
   useEffect(() => {
     // Retrieve a random quote
