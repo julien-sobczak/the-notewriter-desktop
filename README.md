@@ -40,3 +40,11 @@ npm run package
 [github-tag-url]: https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest
 
 
+## How to
+
+### Inspect the SQLite database
+
+```shell
+$ open -a "DB Browser for SQLite" ./fixtures/life/.nt/database.db
+```
+

@@ -90,6 +90,7 @@
     "react": "^18.2.0",
     "react-accessible-treeview": "^2.6.3",
     "react-dom": "^18.2.0",
+    "react-google-charts": "^4.0.1",
     "react-router-dom": "^6.11.2",
     "sqlite": "^4.2.1",
     "use-immer": "^0.9.0",

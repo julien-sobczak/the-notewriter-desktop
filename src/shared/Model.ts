@@ -146,3 +146,11 @@ export interface FilesResult {
   workspaceSlug: string;
   files: File[];
 }
+
+export interface Statistics {
+  // Count of notes according the nationality of the author
+  countNotesPerNationality: Map<string, number>;
+
+  // Count of notes by kind
+  countNotesPerKind: Map<string, number>;
+}

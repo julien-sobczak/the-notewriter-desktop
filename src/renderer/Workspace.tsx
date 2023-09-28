@@ -317,7 +317,7 @@ function Workspace() {
         {activity === 'zen' && <ZenMode />}
 
         {/* Stats */}
-        {activity === 'stats' && <Stats />}
+        {activity === 'stats' && <Stats workspaces={selectedWorkspaceSlugs} />}
       </div>
     </div>
   );

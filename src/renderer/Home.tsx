@@ -12,14 +12,14 @@ export default function Home() {
       .then((response) => response.json())
       .then((data) => console.log('HTTP status', data))
       .catch((error) => console.log('Error:', error));
+
+    // Example 2
     const query: Query = {
       q: 'go',
       workspaces: [],
       blockId: undefined,
       deskId: undefined,
     };
-
-    // Example 2
     fetch('http://localhost:3000/search', {
       method: 'POST',
       headers: {

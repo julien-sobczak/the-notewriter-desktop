@@ -77,7 +77,10 @@ export default class DatabaseManager {
     return absolutePath;
   }
 
-  async searchMedias(oids: string[], datasourceName: string): Promise<Model.Media[]> {
+  async searchMedias(
+    oids: string[],
+    datasourceName: string
+  ): Promise<Model.Media[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
@@ -182,6 +185,135 @@ export default class DatabaseManager {
           });
         }
         resolve(notes);
+      });
+    });
+  }
+
+  async countNotesPerNationality(
+    workspaceSlugs: string[]
+  ): Promise<Map<string, number>> {
+    const workspaceResults: Promise<Map<string, number>>[] = [];
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        workspaceSlugs.length === 0 ||
+        workspaceSlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        workspaceResults.push(
+          new Promise<Map<string, number>>((resolve, reject) => {
+            db.all(
+              `
+                SELECT tt.value as nationality, count(*) as count_notes FROM (
+                  SELECT j.key AS attribute, j.value
+                  FROM note t, json_each(t.attributes) j
+                  WHERE j.key = "nationality"
+                ) AS tt
+                GROUP BY tt.value
+              `,
+              (err: any, rows: any) => {
+                if (err) {
+                  console.log(
+                    'Error while searching for statistics about nationalities',
+                    err
+                  );
+                  reject(err);
+                } else {
+                  const result: Map<string, number> = new Map();
+                  for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const nationality = row.nationality;
+                    const count = row.count_notes;
+                    result.set(nationality, count);
+                  }
+                  resolve(result);
+                }
+              }
+            );
+          })
+        );
+      }
+    }
+
+    return Promise.all(workspaceResults).then((allWorkspaceResults) => {
+      return new Promise<Map<string, number>>((resolve) => {
+        const result: Map<string, number> = new Map();
+        for (const workspaceResult of allWorkspaceResults) {
+          for (const [key, value] of workspaceResult) {
+            if (!result.has(key)) {
+              result.set(key, 0);
+            }
+            const prevValue = result.get(key) || 0;
+            result.set(key, prevValue + value);
+          }
+        }
+        resolve(result);
+      });
+    });
+  }
+
+  async countNotesPerKind(
+    workspaceSlugs: string[]
+  ): Promise<Map<string, number>> {
+    const workspaceResults: Promise<Map<string, number>>[] = [];
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        workspaceSlugs.length === 0 ||
+        workspaceSlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        workspaceResults.push(
+          new Promise<Map<string, number>>((resolve, reject) => {
+            db.all(
+              `
+                SELECT n.kind as kind, count(*) as count_notes
+                FROM note n
+                GROUP BY n.kind
+              `,
+              (err: any, rows: any) => {
+                if (err) {
+                  console.log(
+                    'Error while searching for statistics about kinds',
+                    err
+                  );
+                  reject(err);
+                } else {
+                  const result: Map<string, number> = new Map();
+                  for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const kind = row.kind;
+                    const count = row.count_notes;
+                    result.set(kind, count);
+                  }
+                  resolve(result);
+                }
+              }
+            );
+          })
+        );
+      }
+    }
+
+    return Promise.all(workspaceResults).then((allWorkspaceResults) => {
+      return new Promise<Map<string, number>>((resolve) => {
+        const result: Map<string, number> = new Map();
+        for (const workspaceResult of allWorkspaceResults) {
+          for (const [key, value] of workspaceResult) {
+            if (!result.has(key)) {
+              result.set(key, 0);
+            }
+            const prevValue = result.get(key) || 0;
+            result.set(key, prevValue + value);
+          }
+        }
+        resolve(result);
       });
     });
   }

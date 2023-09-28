@@ -27,7 +27,7 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath, normalizePath } from './util';
 import ConfigManager from './config';
 import DatabaseManager from './database';
-import { Query, NoteRef } from '../shared/Model';
+import { Query, NoteRef, Statistics } from '../shared/Model';
 
 const config = new ConfigManager();
 const db = new DatabaseManager();
@@ -220,6 +220,18 @@ ipcMain.on('get-daily-quote', async (event) => {
   };
   const note = await db.searchDailyQuote(query);
   event.reply('get-daily-quote', note);
+});
+
+ipcMain.on('get-statistics', async (event, workspaceSlugs) => {
+  const statistics: Statistics = {
+    countNotesPerKind: new Map<string, number>(),
+    countNotesPerNationality: new Map<string, number>(),
+  };
+  statistics.countNotesPerNationality = await db.countNotesPerNationality(
+    workspaceSlugs
+  );
+  statistics.countNotesPerKind = await db.countNotesPerKind(workspaceSlugs);
+  event.reply('get-statistics', statistics);
 });
 
 ipcMain.on('window-is-closing', async (event, dynamicConfig) => {
