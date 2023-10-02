@@ -347,23 +347,35 @@ export default function RenderedNote({
         <nav>
           <ul>
             <li>
-              <button type="button" onClick={handleMove}>
+              <button type="button" onClick={handleMove} title="Move inside">
                 <MoveIcon />
               </button>
-              <button type="button" onClick={handleDragClick}>
+              <button
+                type="button"
+                onClick={handleDragClick}
+                title="Drag outside"
+              >
                 <DragIcon />
               </button>
               {layout === 'free' && (
-                <button type="button" onClick={handleMoveUp}>
+                <button type="button" onClick={handleMoveUp} title="Layer up">
                   <MoveUpIcon />
                 </button>
               )}
               {layout === 'free' && (
-                <button type="button" onClick={handleMoveDown}>
+                <button
+                  type="button"
+                  onClick={handleMoveDown}
+                  title="Layer down"
+                >
                   <MoveDownIcon />
                 </button>
               )}
-              <button type="button" onClick={handleEdit}>
+              <button
+                type="button"
+                onClick={handleEdit}
+                title="Edit in external editor"
+              >
                 <EditIcon />
               </button>
             </li>

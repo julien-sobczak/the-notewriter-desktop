@@ -11,6 +11,7 @@ import {
   Lightbulb,
   HandsPraying,
   ChartBar,
+  CornersOut,
   X,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
@@ -54,6 +55,8 @@ function Workspace() {
   const [searchQuery, setSearchQuery] = useState<string>(''); // last search value
   const [searchResults, setSearchResults] = useState<QueryResult | null>(null); // last search value results
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // display the aside panel with search results
+  const [expandSearchResults, setExpandSearchResults] =
+    useState<boolean>(false); // display the search panel in large
 
   // Activities
   const [activity, setActivity] = useState<string>('desktop');
@@ -63,7 +66,13 @@ function Workspace() {
   );
 
   const handleSearch = (event: any) => {
-    setSearchQuery(inputQuery);
+    if (inputQuery === searchQuery) {
+      // Query hasn't changed but results could have been collapsed
+      setShowSearchResults(true);
+    } else {
+      // Trigger a new search
+      setSearchQuery(inputQuery);
+    }
     event.preventDefault();
   };
 
@@ -82,6 +91,7 @@ function Workspace() {
       blockId: null,
       deskId: null,
     };
+    // TODO use REST API instead?
     ipcRenderer.sendMessage('search', query);
     ipcRenderer.on('search', (arg) => {
       const result = arg as QueryResult;
@@ -91,6 +101,7 @@ function Workspace() {
       if (!result.query.blockId) {
         // global search
         setSearchResults(result);
+        console.log(result);
         setShowSearchResults(true);
       }
     });
@@ -257,8 +268,26 @@ function Workspace() {
         </div>
 
         {showSearchResults && (
-          <div className="SearchPanel">
-            <NoteContainer notes={searchResults?.notes} />
+          <div
+            className={classNames({
+              SearchPanel: true,
+              expanded: expandSearchResults,
+            })}
+          >
+            <button
+              className="top-left"
+              type="button"
+              onClick={() => setExpandSearchResults(!expandSearchResults)}
+              title="Expand search panel"
+            >
+              <CornersOut />
+            </button>
+            <NoteContainer
+              notes={searchResults?.notes}
+              layout="list"
+              layoutSelectable={false}
+              onClose={() => setShowSearchResults(false)}
+            />
           </div>
         )}
 
@@ -317,7 +346,7 @@ function Workspace() {
         {activity === 'zen' && <ZenMode />}
 
         {/* Stats */}
-        {activity === 'stats' && <Stats workspaces={selectedWorkspaceSlugs} />}
+        {activity === 'stats' && <Stats />}
       </div>
     </div>
   );

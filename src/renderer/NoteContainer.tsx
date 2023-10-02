@@ -14,6 +14,7 @@ type NoteContainerProps = {
   name?: string | null | undefined;
   notes: Note[] | undefined;
   layout?: string;
+  layoutSelectable?: boolean;
   onClose?: () => void;
 };
 
@@ -21,6 +22,7 @@ function NoteContainer({
   name = '',
   notes,
   layout = 'list',
+  layoutSelectable = true,
   onClose = () => {}, // do nothing
 }: NoteContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout);
@@ -107,34 +109,43 @@ function NoteContainer({
           <nav>
             <ul>
               <li>
-                <button
-                  type="button"
-                  className={classNames({
-                    selected: selectedLayout === 'list',
-                  })}
-                  onClick={() => changeLayout('list')}
-                >
-                  <ListIcon />
-                </button>
-                <button
-                  type="button"
-                  className={classNames({
-                    selected: selectedLayout === 'grid',
-                  })}
-                  onClick={() => changeLayout('grid')}
-                >
-                  <GridIcon />
-                </button>
-                <button
-                  type="button"
-                  className={classNames({
-                    selected: selectedLayout === 'free',
-                  })}
-                  onClick={() => changeLayout('free')}
-                >
-                  <FreeIcon />
-                </button>
-                <button type="button" onClick={onClose}>
+                {layoutSelectable && (
+                  <button
+                    type="button"
+                    className={classNames({
+                      selected: selectedLayout === 'list',
+                    })}
+                    onClick={() => changeLayout('list')}
+                    title="List layout"
+                  >
+                    <ListIcon />
+                  </button>
+                )}
+                {layoutSelectable && (
+                  <button
+                    type="button"
+                    className={classNames({
+                      selected: selectedLayout === 'grid',
+                    })}
+                    onClick={() => changeLayout('grid')}
+                    title="Grid layout"
+                  >
+                    <GridIcon />
+                  </button>
+                )}
+                {layoutSelectable && (
+                  <button
+                    type="button"
+                    className={classNames({
+                      selected: selectedLayout === 'free',
+                    })}
+                    onClick={() => changeLayout('free')}
+                    title="Free layout"
+                  >
+                    <FreeIcon />
+                  </button>
+                )}
+                <button type="button" onClick={onClose} title="Close panel">
                   <CloseIcon />
                 </button>
               </li>
