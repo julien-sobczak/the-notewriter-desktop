@@ -15,6 +15,7 @@ import {
   X,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
+import { Command } from 'cmdk';
 import { Query, QueryResult } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
@@ -32,22 +33,29 @@ import Journal from './Journal';
 
 const { ipcRenderer } = window.electron;
 
-/*
- * TODO Cmd+K
- *
- * open desk ${name}
- * show reminders
- * hi/hello/bonjour
- * bye
- * open file
- * launch zen mode
- */
-
 function Workspace() {
   const { config, dispatch } = useContext(ConfigContext);
 
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
+
+  // Cmd+K
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [menuSearch, setMenuSearch] = useState<string>('');
+  const [menuPages, setMenuPages] = useState<string[]>([]);
+  const menuPage = menuPages[menuPages.length - 1];
+
+  // Toggle the menu when ⌘K is pressed
+  useEffect(() => {
+    const down = (e: any) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setMenuOpen((isCurrentlyOpen) => !isCurrentlyOpen);
+      }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
 
   // Global search
   const inputElement = useRef<HTMLInputElement>(null);
@@ -101,7 +109,6 @@ function Workspace() {
       if (!result.query.blockId) {
         // global search
         setSearchResults(result);
-        console.log(result);
         setShowSearchResults(true);
       }
     });
@@ -150,6 +157,90 @@ function Workspace() {
           </nav>
         </form>
       </header>
+
+      <Command.Dialog
+        className="CmdK"
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        label="Global Command Menu"
+        onKeyDown={(e) => {
+          // Escape goes to previous page
+          // Backspace goes to previous page when search is empty
+          if (e.key === 'Escape' || (e.key === 'Backspace' && !menuSearch)) {
+            e.preventDefault();
+            setMenuPages((pages) => pages.slice(0, -1));
+          }
+        }}
+      >
+        <Command.Input
+          value={menuSearch}
+          onValueChange={setMenuSearch}
+          autoFocus
+          placeholder="Type a command or search..."
+        />
+        <Command.List>
+          <Command.Empty>No results found.</Command.Empty>
+
+          <Command.Group heading="Commands">
+            {!menuPage && <Command.Item>Hello</Command.Item>}
+            {!menuPage && <Command.Item>Bye</Command.Item>}
+
+            <Command.Separator />
+
+            {!menuPage && (
+              <Command.Item
+                onSelect={() => setMenuPages([...menuPages, 'workspaces'])}
+              >
+                Toggle workspace...
+              </Command.Item>
+            )}
+            {menuPage === 'workspaces' && (
+              <>
+                {staticConfig.workspaces.map((workspace) => (
+                  <Command.Item>{workspace.name}</Command.Item>
+                ))}
+              </>
+            )}
+
+            <Command.Separator />
+
+            {!menuPage && <Command.Item>Open file...</Command.Item>}
+            {!menuPage && <Command.Item>Open desk...</Command.Item>}
+
+            <Command.Separator />
+
+            {!menuPage && <Command.Item>Study</Command.Item>}
+            {!menuPage && <Command.Item>Study deck...</Command.Item>}
+
+            <Command.Separator />
+
+            {!menuPage && <Command.Item>Launch Zen Mode</Command.Item>}
+
+            <Command.Separator />
+
+            {!menuPage && <Command.Item>Show reminders</Command.Item>}
+            {!menuPage && (
+              <Command.Item
+                onSelect={() => {
+                  setActivity('stats');
+                  setMenuOpen(false);
+                }}
+              >
+                Show statistics
+              </Command.Item>
+            )}
+          </Command.Group>
+          <Command.Group heading="Favorites">
+            {/* TODO populate from pinned notes */}
+            <Command.Item>
+              Milestones
+              <span className="CommandItemMeta">
+                <code>todo/milestone.md</code>
+              </span>
+            </Command.Item>
+          </Command.Group>
+        </Command.List>
+      </Command.Dialog>
 
       <div className="Main">
         <div className="ActivityBar">
