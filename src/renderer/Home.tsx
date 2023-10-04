@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import DailyQuote from './DailyQuote';
-import Workspace from './Workspace';
+import Main from './Main';
 import { Query } from '../shared/Model';
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
       {showDailyQuote && (
         <DailyQuote onClose={() => setShowDailyQuote(false)} />
       )}
-      {!showDailyQuote && <Workspace />}
+      {!showDailyQuote && <Main />}
     </>
   );
 }

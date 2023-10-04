@@ -1,8 +1,4 @@
-import {
-  EditorDynamicConfig,
-  EditorStaticConfig,
-  Desk,
-} from 'shared/Model';
+import { EditorDynamicConfig, EditorStaticConfig, Desk } from 'shared/Model';
 
 export type Config = {
   static: EditorStaticConfig;
@@ -24,7 +20,7 @@ export default function configReducer(draft: Config, action: Action): any {
     }
     case 'toggleWorkspaceSelected': {
       for (const workspace of draft.static.workspaces) {
-        if (workspace.name === action.payload) {
+        if (workspace.slug === action.payload) {
           workspace.selected = !workspace.selected;
         }
       }
