@@ -17,7 +17,7 @@ import {
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Command } from 'cmdk';
-import { Desk, Query, QueryResult, Workspace } from '../shared/Model';
+import { Deck, Desk, Query, QueryResult, Workspace } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
 import './App.css';
@@ -38,18 +38,22 @@ const { ipcRenderer } = window.electron;
 type CommandMenuProps = {
   // Style
   workspaces: Workspace[];
-  desks: Desk[];
+  desks: Desk[] | null | undefined;
+  decks: Deck[] | null | undefined;
   onActivitySelected?: (activity: string) => void;
   onWorkspaceToggled?: (workspace: Workspace) => void;
   onDeskSelected?: (desk: Desk) => void;
+  onDeckSelected?: (desk: Deck) => void;
 };
 
 function CommandMenu({
   workspaces,
   desks,
+  decks,
   onActivitySelected = () => {},
   onWorkspaceToggled = () => {},
   onDeskSelected = () => {},
+  onDeckSelected = () => {},
 }: CommandMenuProps) {
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
@@ -87,6 +91,13 @@ function CommandMenu({
   const handleDeskSelected = (desk: Desk) => {
     onDeskSelected(desk);
     closeMenu();
+    onActivitySelected('desktop');
+  };
+
+  const handleDeckSelected = (deck: Deck) => {
+    onDeckSelected(deck);
+    closeMenu();
+    onActivitySelected('study');
   };
 
   return (
@@ -164,7 +175,7 @@ function CommandMenu({
               Open desk...
             </Command.Item>
           )}
-          {page === 'desks' && (
+          {page === 'desks' && desks && (
             <>
               {desks.map((desk: Desk) => (
                 <Command.Item
@@ -185,8 +196,29 @@ function CommandMenu({
               Study
             </Command.Item>
           )}
-          {!page && <Command.Item>Study deck...</Command.Item>}
-          {/* TODO implement */}
+          {!page && (
+            <Command.Item
+              onSelect={() => {
+                setPages([...pages, 'decks']);
+                setSearch('');
+              }}
+            >
+              Study deck...
+            </Command.Item>
+          )}
+          {page === 'decks' && decks && (
+            <>
+              {decks.map((deck: Deck) => (
+                <Command.Item
+                  key={deck.name}
+                  value={deck.name}
+                  onSelect={() => handleDeckSelected(deck)}
+                >
+                  Study deck <em>{deck.name}</em>
+                </Command.Item>
+              ))}
+            </>
+          )}
 
           <Command.Separator />
 
@@ -256,6 +288,9 @@ function Main() {
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
     undefined
   );
+
+  // Study
+  const [selectedDeck, setSelectedDeck] = useState<Deck | undefined>();
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -328,6 +363,10 @@ function Main() {
 
   const handleDeskClick = (id: string) => {
     setSelectedDeskId(id);
+  };
+
+  const handleDeckSelected = (deck: Deck) => {
+    setSelectedDeck(deck);
   };
 
   const activities: Activity[] = [
@@ -409,11 +448,13 @@ function Main() {
       <CommandMenu
         workspaces={staticConfig.workspaces}
         desks={dynamicConfig.desks}
+        decks={staticConfig.study?.decks}
         onActivitySelected={(activitySlug) => setActivity(activitySlug)}
         onWorkspaceToggled={(workspace) =>
           handleWorkspaceToggle(workspace.slug)
         }
         onDeskSelected={handleDeskSelected}
+        onDeckSelected={handleDeckSelected}
       />
 
       <div className="Main">
@@ -496,7 +537,7 @@ function Main() {
                     ))}
                   </ul>
                 </nav>
-                {dynamicConfig.desks.map((desk) => (
+                {openedDesks.map((desk) => (
                   <RenderedDesk
                     key={desk.id}
                     desk={desk}
@@ -512,7 +553,7 @@ function Main() {
         {activity === 'journal' && <Journal />}
 
         {/* Study */}
-        {activity === 'study' && <Revision />}
+        {activity === 'study' && <Revision deck={selectedDeck} />}
 
         {/* Tasks */}
         {activity === 'tasks' && <Planner />}

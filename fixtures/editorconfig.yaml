@@ -18,3 +18,10 @@ inspirations:
   - name: Art
     query: "path:references @kind:artwork"
     workspaces: [life]
+
+study:
+  decks:
+  - name: General
+    query: "path:skills/learning"
+  - name: Programming
+    query: "path:skills/programming"

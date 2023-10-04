@@ -7,6 +7,7 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   Workspace,
+  DailyQuote,
 } from '../shared/Model';
 
 export default class ConfigManager {
@@ -62,6 +63,7 @@ export default class ConfigManager {
       // Define default configuration
       return {
         desks: [],
+        favorites: [],
       } as EditorDynamicConfig;
     }
 
@@ -83,12 +85,21 @@ export default class ConfigManager {
         }
       }
     }
+
+    const defaultDailyQuote: DailyQuote = {
+      query: `@kind:quote`, // any quote
+      workspaces: [], // any workspace
+    };
+
+    if (!config.inspirations) {
+      config.inspirations = {
+        dailyQuote: defaultDailyQuote,
+        categories: [],
+      };
+    }
     // Define default daily quote
     if (!config.inspirations.dailyQuote) {
-      config.inspirations.dailyQuote = {
-        query: `@kind:quote`, // any quote
-        workspaces: [], // any workspace
-      };
+      config.inspirations.dailyQuote = defaultDailyQuote;
     }
 
     return config;

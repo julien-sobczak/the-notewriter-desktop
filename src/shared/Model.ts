@@ -26,7 +26,7 @@ export interface Block {
 }
 
 export interface NoteRef {
-  id: string;
+  oid: string;
   workspace: string;
 }
 
@@ -57,10 +57,34 @@ export interface Inspiration {
 export interface EditorStaticConfig {
   workspaces: Workspace[];
   inspirations: Inspiration | null;
+  study: Study | null;
+}
+
+export interface Study {
+  decks: Deck[] | null;
+}
+
+export interface Deck {
+  name: string;
+  query: string;
+  // TODO add SRS-algorithm parameters
 }
 
 export interface EditorDynamicConfig {
-  desks: Desk[];
+  favorites: Favorite[] | null;
+  desks: Desk[] | null;
+}
+
+export interface Favorite {
+  // Identify the note
+  workspaceSlug: string;
+  noteOID: string;
+  // Copy some attributes to make easy to list favorites and jump to to them
+  noteSlug: string;
+  noteKind: string;
+  noteTitle: string;
+  notePath: string;
+  noteLine: number;
 }
 
 export interface Blob {
@@ -113,10 +137,10 @@ export interface Note {
 }
 
 export interface Relation {
-  source_oid: string;
-  source_kind: string;
-  target_oid: string;
-  target_kind: string;
+  sourceOID: string;
+  sourceKind: string;
+  targetOID: string;
+  targetKind: string;
   relationType: string;
 }
 

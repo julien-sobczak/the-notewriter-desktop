@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
-import { Note } from '../shared/Model';
+import { Deck, Note } from '../shared/Model';
 
 const { ipcRenderer } = window.electron;
 
-function Revision() {
+type RevisionProps = {
+  deck: Deck | undefined | null;
+};
+
+function Revision({ deck }: RevisionProps) {
   useEffect(() => {
     // Retrieve a random quote
     ipcRenderer.sendMessage('get-daily-quote', []);
@@ -16,7 +20,10 @@ function Revision() {
 
   return (
     <div className="Revision">
-      <h1>Flashcards!</h1>
+      <h1>
+        Study
+        {deck && deck.name}
+      </h1>
     </div>
   );
 }
