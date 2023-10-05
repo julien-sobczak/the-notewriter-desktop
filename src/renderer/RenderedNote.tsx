@@ -1,15 +1,17 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import {
   ArrowsOutCardinal as MoveIcon,
   PencilSimple as EditIcon,
   Copy as DragIcon,
   ArrowUp as MoveUpIcon,
   ArrowDown as MoveDownIcon,
+  Star,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Note, Media, Blob } from 'shared/Model';
+import { Note, Media, Blob, Bookmark } from 'shared/Model';
+import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
 
@@ -182,6 +184,8 @@ export default function RenderedNote({
   onMouseStart = () => {},
   onMouseEnd = () => {},
 }: RenderedNoteProps) {
+  const { config, dispatch } = useContext(ConfigContext);
+
   const dragElement = useRef<HTMLDivElement>(null);
   const dragInProgress = useRef<boolean>(false);
   const lastPosition = useRef<LastPosition>({
@@ -320,6 +324,29 @@ export default function RenderedNote({
     event?.stopPropagation();
   };
 
+  const handleBookmark = () => {
+    const bookmark: Bookmark = {
+      workspaceSlug: note.workspaceSlug,
+      noteOID: note.oid,
+      noteKind: note.kind,
+      noteTitle: note.title,
+      noteRelativePath: note.relativePath,
+      noteLine: note.line,
+    };
+    dispatch({
+      type: 'add-bookmark',
+      payload: bookmark,
+    });
+  };
+
+  let bookmarked = false;
+  if (config.dynamic && config.dynamic.bookmarks) {
+    bookmarked =
+      config.dynamic.bookmarks.filter(
+        (bookmark) => bookmark.noteOID === note.oid
+      ).length > 0;
+  }
+
   return (
     <div
       ref={dragElement}
@@ -347,6 +374,9 @@ export default function RenderedNote({
         <nav>
           <ul>
             <li>
+              <button type="button" onClick={handleBookmark} title="Bookmark">
+                <Star weight={bookmarked ? 'fill' : 'thin'} />
+              </button>
               <button type="button" onClick={handleMove} title="Move inside">
                 <MoveIcon />
               </button>

@@ -368,7 +368,7 @@ export default class DatabaseManager {
   }
 
   async find(noteRef: Model.NoteRef): Promise<Model.Note> {
-    const datasourceName = noteRef.workspace;
+    const datasourceName = noteRef.workspaceSlug;
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
@@ -388,10 +388,10 @@ export default class DatabaseManager {
           content_html,
           comment_html
         FROM note
-        WHERE id = '?'
+        WHERE oid = ?
       `;
       console.debug(`[${datasourceName}] ${sqlQuery}`);
-      db.get(sqlQuery, [noteRef.id], async (err: any, row: any) => {
+      db.get(sqlQuery, [noteRef.oid], async (err: any, row: any) => {
         if (err) {
           console.log('Error while searching for note by id', err);
           reject(err);
@@ -414,10 +414,10 @@ export default class DatabaseManager {
     // Group OID by datasource
     const oidByWorkspace = new Map<string, string[]>();
     for (const noteRef of noteRefs) {
-      if (!oidByWorkspace.has(noteRef.workspace)) {
-        oidByWorkspace.set(noteRef.workspace, []);
+      if (!oidByWorkspace.has(noteRef.workspaceSlug)) {
+        oidByWorkspace.set(noteRef.workspaceSlug, []);
       }
-      oidByWorkspace.get(noteRef.workspace)?.push(noteRef.id);
+      oidByWorkspace.get(noteRef.workspaceSlug)?.push(noteRef.oid);
     }
 
     // Trigger one query per datasource
@@ -442,7 +442,7 @@ export default class DatabaseManager {
             content_html,
             comment_html
           FROM note
-          WHERE id IN ?
+          WHERE oid IN ?
         `;
         console.debug(`[${datasourceName}] ${sqlQuery}`);
         db.all(sqlQuery, [oids], async (err: any, rows: any) => {

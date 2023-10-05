@@ -27,7 +27,7 @@ export interface Block {
 
 export interface NoteRef {
   oid: string;
-  workspace: string;
+  workspaceSlug: string;
 }
 
 export interface Desk {
@@ -71,19 +71,18 @@ export interface Deck {
 }
 
 export interface EditorDynamicConfig {
-  favorites: Favorite[] | null;
+  bookmarks: Bookmark[] | null;
   desks: Desk[] | null;
 }
 
-export interface Favorite {
+export interface Bookmark {
   // Identify the note
   workspaceSlug: string;
   noteOID: string;
   // Copy some attributes to make easy to list favorites and jump to to them
-  noteSlug: string;
   noteKind: string;
   noteTitle: string;
-  notePath: string;
+  noteRelativePath: string;
   noteLine: number;
 }
 

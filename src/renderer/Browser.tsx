@@ -88,7 +88,7 @@ function Browser() {
   return (
     <div className="Browser">
       {/* The left panel to select a file */}
-      <div className="BrowserTree">
+      <div className="LeftPanel">
         <select
           value={selectedWorkspace}
           onChange={(e) => setSelectedWorkspace(e.target.value)}

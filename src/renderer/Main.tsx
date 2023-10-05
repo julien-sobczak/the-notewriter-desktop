@@ -1,5 +1,6 @@
+/* eslint-disable react/no-danger */
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 // import { v4 as uuidv4 } from 'uuid'; // uuidv4()
 import {
   HandWaving,
@@ -14,15 +15,24 @@ import {
   CornersOut,
   X,
   Icon,
+  Bookmark as BookmarkIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Command } from 'cmdk';
-import { Deck, Desk, Query, QueryResult, Workspace } from '../shared/Model';
+import {
+  Deck,
+  Desk,
+  Query,
+  QueryResult,
+  Workspace,
+  Bookmark,
+} from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
 import './App.css';
 import Hi from './Hi';
 import Browser from './Browser';
+import Bookmarker from './Bookmarker';
 import Planner from './Planner';
 import Stats from './Stats';
 import Inspiration from './Inspiration';
@@ -32,6 +42,7 @@ import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
 import Journal from './Journal';
 import Reminders from './Reminders';
+import NoteKind from './NoteKind';
 
 const { ipcRenderer } = window.electron;
 
@@ -40,20 +51,24 @@ type CommandMenuProps = {
   workspaces: Workspace[];
   desks: Desk[] | null | undefined;
   decks: Deck[] | null | undefined;
+  bookmarks: Bookmark[] | null | undefined;
   onActivitySelected?: (activity: string) => void;
   onWorkspaceToggled?: (workspace: Workspace) => void;
   onDeskSelected?: (desk: Desk) => void;
   onDeckSelected?: (desk: Deck) => void;
+  onBookmarkSelected?: (bookmark: Bookmark) => void;
 };
 
 function CommandMenu({
   workspaces,
   desks,
   decks,
+  bookmarks,
   onActivitySelected = () => {},
   onWorkspaceToggled = () => {},
   onDeskSelected = () => {},
   onDeckSelected = () => {},
+  onBookmarkSelected = () => {},
 }: CommandMenuProps) {
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
@@ -98,6 +113,12 @@ function CommandMenu({
     onDeckSelected(deck);
     closeMenu();
     onActivitySelected('study');
+  };
+
+  const handleBookmarkSelected = (bookmark: Bookmark) => {
+    onBookmarkSelected(bookmark);
+    closeMenu();
+    onActivitySelected('bookmarker');
   };
 
   return (
@@ -241,15 +262,24 @@ function CommandMenu({
             </Command.Item>
           )}
         </Command.Group>
-        {!page && (
-          <Command.Group heading="Favorites">
-            {/* TODO populate from pinned notes */}
-            <Command.Item>
-              Milestones
-              <span className="CommandItemMeta">
-                <code>todo/milestone.md</code>
-              </span>
-            </Command.Item>
+        {!page && bookmarks && (
+          <Command.Group heading="Bookmarks">
+            {bookmarks.map((savedBookmark: Bookmark) => (
+              <Command.Item
+                key={savedBookmark.noteOID}
+                onSelect={() => handleBookmarkSelected(savedBookmark)}
+              >
+                <NoteKind value={savedBookmark.noteKind} />
+                &nbsp;
+                <span
+                  className="BookmarkTitle"
+                  dangerouslySetInnerHTML={{ __html: savedBookmark.noteTitle }}
+                />
+                <span className="CommandItemMeta">
+                  <code>{savedBookmark.noteRelativePath}</code>
+                </span>
+              </Command.Item>
+            ))}
           </Command.Group>
         )}
       </Command.List>
@@ -288,6 +318,9 @@ function Main() {
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
     undefined
   );
+
+  // Notes
+  const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>();
 
   // Study
   const [selectedDeck, setSelectedDeck] = useState<Deck | undefined>();
@@ -369,11 +402,20 @@ function Main() {
     setSelectedDeck(deck);
   };
 
+  const handleBookmarkSelected = (bookmark: Bookmark) => {
+    setSelectedBookmark(bookmark);
+  };
+
   const activities: Activity[] = [
     {
       slug: 'hi',
       name: 'Hi',
       icon: HandWaving,
+    },
+    {
+      slug: 'bookmarker',
+      name: 'Bookmarker',
+      icon: BookmarkIcon,
     },
     {
       slug: 'browse',
@@ -449,12 +491,14 @@ function Main() {
         workspaces={staticConfig.workspaces}
         desks={dynamicConfig.desks}
         decks={staticConfig.study?.decks}
+        bookmarks={dynamicConfig.bookmarks}
         onActivitySelected={(activitySlug) => setActivity(activitySlug)}
         onWorkspaceToggled={(workspace) =>
           handleWorkspaceToggle(workspace.slug)
         }
         onDeskSelected={handleDeskSelected}
         onDeckSelected={handleDeckSelected}
+        onBookmarkSelected={handleBookmarkSelected}
       />
 
       <div className="Main">
@@ -510,6 +554,11 @@ function Main() {
 
         {/* Hi */}
         {activity === 'hi' && <Hi />}
+
+        {/* Bookmarks */}
+        {activity === 'bookmarker' && (
+          <Bookmarker bookmark={selectedBookmark} />
+        )}
 
         {/* Browse */}
         {activity === 'browse' && <Browser />}
