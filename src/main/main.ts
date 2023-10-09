@@ -1,3 +1,4 @@
+/* eslint-disable promise/no-nesting */
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 
 /**
@@ -20,6 +21,9 @@ import {
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import installExtension, {
+  REACT_DEVELOPER_TOOLS,
+} from 'electron-devtools-installer';
 import { spawn } from 'child_process';
 import express from 'express';
 
@@ -56,24 +60,41 @@ api.get('/status', (request, response) => {
     Status: 'Running',
   });
 });
+api.post('/list-files', async (request, response) => {
+  const workspaceSlugs = request.body as string[];
+  console.debug(`POST /list-files received for workspaces ${workspaceSlugs}`);
+  const results = await db.listFiles(workspaceSlugs);
+  console.debug(
+    `Found ${results.length} files for workspaces ${workspaceSlugs}`
+  );
+  response.send(results);
+});
 api.post('/find', async (request, response) => {
   const noteRef = request.body as NoteRef;
+  console.debug(`POST /find received for note ref ${noteRef.oid}`);
   const result = await db.find(noteRef);
+  console.debug(`Found note for ref ${noteRef.oid}`);
   response.send(result);
 });
 api.post('/multi-find', async (request, response) => {
   const noteRefs = request.body as NoteRef[];
+  console.debug(`POST /multi-find received for ${noteRefs.length} note ref(s)`);
   const results = await db.multiFind(noteRefs);
+  console.debug(`Found ${results.length} note(s)`);
   response.send(results);
 });
 api.post('/search', async (request, response) => {
   const query = request.body as Query;
+  console.debug(`POST /search received for query ${query.q}`);
   const result = await db.search(query);
+  console.debug(`Found ${result.notes.length} note(s)`);
   response.send(result);
 });
 api.post('/multi-search', async (request, response) => {
   const queries = request.body as Query[];
+  console.debug(`POST /multi-search received for ${queries.length} queries`);
   const results = await db.multiSearch(queries);
+  console.debug(`Found ${results.length} note(s)`);
   response.send(results);
 });
 api.listen(port, () => {
@@ -85,12 +106,6 @@ api.listen(port, () => {
  */
 
 let mainWindow: BrowserWindow | null = null;
-
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
 
 ipcMain.on('edit', (event, workspaceSlug, relativePath, line) => {
   let relativeFileReference = relativePath;
@@ -126,6 +141,7 @@ ipcMain.on('edit', (event, workspaceSlug, relativePath, line) => {
 ipcMain.on('copy', (event, text) => {
   // 1. Use the clipboard API
   clipboard.writeText(text);
+  console.log('Text copied to clipboard');
 
   // 2. Minimize the window
   const webContents = event.sender;
@@ -142,8 +158,8 @@ ipcMain.on('copyText', (event, text) => {
 
 ipcMain.on('list-files', async (event, workspaceSlug: string) => {
   console.debug(`Listing files in workspace ${workspaceSlug}`);
-  const result = await db.listFiles(workspaceSlug);
-  console.debug(`Found ${result.files.length} files`);
+  const result = await db.listFiles([workspaceSlug]);
+  console.debug(`Found ${result.length} files`);
   event.reply('list-files', result);
 });
 ipcMain.on(
@@ -153,7 +169,9 @@ ipcMain.on(
       `Listing note in file ${relativePath} in workspace ${workspaceSlug}`
     );
     const result = await db.listNotesInFile(workspaceSlug, relativePath);
-    console.debug(`Found ${result.length} notes`);
+    console.debug(
+      `Found ${result.length} notes for file ${relativePath} in workspace ${workspaceSlug}`
+    );
     event.reply('list-notes-in-file', result);
   }
 );
@@ -353,6 +371,10 @@ const createWindow = async () => {
 app
   .whenReady()
   .then(() => {
+    installExtension(REACT_DEVELOPER_TOOLS)
+      .then((name) => console.log(`Added Extension:  ${name}`))
+      .catch((err) => console.log('An error occurred: ', err));
+
     // Global shortcut are activated even when the window has not the focus
     globalShortcut.register('Alt+Space', () => {
       // I observed a beep when pressing a global shortcut using some combinations (ex: Control+CommandOrControl+F)

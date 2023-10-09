@@ -549,37 +549,55 @@ export default class DatabaseManager {
 
   /* Files Management */
 
-  async listFiles(workspaceSlug: string): Promise<Model.FilesResult> {
-    const db = this.datasources.get(workspaceSlug);
-    if (!db) {
-      throw new Error(`No datasource ${workspaceSlug} found`);
+  async listFiles(workspaceSlugs: string[]): Promise<Model.File[]> {
+    const workspaceResults: Promise<Model.File[]>[] = [];
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        workspaceSlugs.length === 0 ||
+        workspaceSlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        workspaceResults.push(
+          new Promise<Model.File[]>((resolve, reject) => {
+            db.all(
+              `
+                SELECT
+                  file.oid as oid,
+                  note.relative_path as relative_path,
+                  count(*) as count_notes
+                FROM note JOIN file on note.file_oid = file.oid
+                GROUP BY file.relative_path
+                ORDER BY file.relative_path ASC`,
+              (err: any, rows: any) => {
+                if (err) {
+                  console.log('Error while listing files in database', err);
+                  reject(err);
+                } else {
+                  const files: Model.File[] = [];
+                  for (const row of rows) {
+                    files.push(this.#rowToFile(row, datasourceName));
+                  }
+                  resolve(files);
+                }
+              }
+            );
+          })
+        );
+      }
     }
 
-    return new Promise<Model.FilesResult>((resolve, reject) => {
-      db.all(
-        `
-          SELECT
-            relative_path,
-            count(*) as count_notes
-          FROM note
-          GROUP BY relative_path
-          ORDER BY relative_path ASC`,
-        (err: any, rows: any) => {
-          if (err) {
-            console.log('Error while listing files in database', err);
-            reject(err);
-          } else {
-            const files: Model.File[] = [];
-            for (const row of rows) {
-              files.push(this.#rowToFile(row, workspaceSlug));
-            }
-            resolve({
-              workspaceSlug,
-              files,
-            });
-          }
+    return Promise.all(workspaceResults).then((allWorkspaceResults) => {
+      return new Promise<Model.File[]>((resolve) => {
+        const result: Model.File[] = [];
+        for (const workspaceResult of allWorkspaceResults) {
+          result.push(...workspaceResult);
         }
-      );
+        resolve(result);
+      });
     });
   }
 
@@ -594,6 +612,8 @@ export default class DatabaseManager {
 
   #rowToFile(row: any, workspaceSlug: string): Model.File {
     return {
+      oid: row.oid,
+      workspaceSlug,
       workspacePath: this.#getWorkspacePath(workspaceSlug),
       relativePath: row.relative_path,
       countNotes: row.count_notes,

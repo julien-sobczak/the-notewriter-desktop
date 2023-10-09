@@ -175,7 +175,7 @@ function PaneContainer({ block, notesCache }: PaneContainerProps) {
     }
     if (block.noteRefs) {
       for (const noteRef of block.noteRefs) {
-        const foundNotes = notesCache.get(noteRef.id);
+        const foundNotes = notesCache.get(noteRef.oid);
         if (foundNotes && foundNotes.length > 0) {
           notes.push(foundNotes[0]);
         }

@@ -160,14 +160,11 @@ export interface QueryResult {
 }
 
 export interface File {
+  oid: string;
+  workspaceSlug: string;
   workspacePath: string;
   relativePath: string;
   countNotes: number;
-}
-
-export interface FilesResult {
-  workspaceSlug: string;
-  files: File[];
 }
 
 export interface Statistics {

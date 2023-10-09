@@ -7,60 +7,107 @@ import TreeView, {
   ITreeViewOnNodeSelectProps,
   flattenTree,
 } from 'react-accessible-treeview';
-import { FilesResult, File, Note } from 'shared/Model';
+import { File, Note, Workspace } from 'shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteContainer from './NoteContainer';
 
 const { ipcRenderer } = window.electron;
 
-function Browser() {
+function dirname(path: string): string {
+  const matches = path.match(/(.*)[/\\]/);
+  if (matches) {
+    return matches[1];
+  }
+  return '';
+}
+
+type BrowserProps = {
+  file?: File;
+};
+
+function Browser({ file }: BrowserProps) {
+  /*
+   * TODO fix a bug in TreeView rendering when switching to a new file from cmd+K.
+   * The menu seems to expand with the right node selected and then collapses immediately.
+   */
+
   const { config } = useContext(ConfigContext);
 
   // Read configured workspaces (useful to populate the dropdown)
   const { workspaces } = config.static;
 
-  // Which workspace?
-  let defaultWorkspaceSlug;
-  if (workspaces.length > 0) defaultWorkspaceSlug = workspaces[0].slug;
+  // Currently selected workspace
   const [selectedWorkspace, setSelectedWorkspace] = useState<
     string | undefined
-  >(defaultWorkspaceSlug);
+  >(getDefaultWorkspaceSlug(file, workspaces));
 
   // Files in selectedWorkspace
   const [files, setFiles] = useState<File[]>([]);
   // Which file?
   const [selectedFile, setSelectedFile] = useState<string | undefined>(
-    undefined
+    file ? file.relativePath : undefined
   );
+  const [selectedDir, setSelectedDir] = useState<string | undefined>(
+    file ? dirname(file.relativePath) : undefined
+  );
+
   // Notes in selectedFile
   const [notes, setNotes] = useState<Note[]>([]);
 
+  // Refresh when props are updated (ex: cmd+k)
+  useEffect(() => {
+    if (!file) return;
+    setSelectedWorkspace(file.workspaceSlug);
+    setSelectedFile(file.relativePath);
+    setSelectedDir(dirname(file.relativePath));
+  }, [file]);
+
+  // Load files when switching to a new workspace
   useEffect(() => {
     if (!selectedWorkspace) return;
-
-    // Retrieve all files every time the selected workspace change
+    setFiles([]);
     ipcRenderer.sendMessage('list-files', selectedWorkspace);
+  }, [selectedWorkspace]);
+  // + listen for answers
+  useEffect(() => {
     ipcRenderer.on('list-files', (arg) => {
-      // TODO bug? should be executed only once?
-      const result = arg as FilesResult;
-      // console.log(files);
-      const filteredFiles = result.files.filter(
-        (file) => !file.relativePath.startsWith('journal')
+      const result = arg as File[];
+      // console.log(result);
+      // TODO keep filtering journal files to force the use f the Journal viewer?
+      const filteredFiles = result.filter(
+        (foundFile) => !foundFile.relativePath.startsWith('journal')
       );
-      // setFiles(result.files);
       setFiles(filteredFiles);
     });
-  }, [selectedWorkspace]);
+  }, []);
 
+  // Load notes when selecting a file
+  useEffect(() => {
+    if (!selectedFile) return;
+
+    setNotes([]);
+    ipcRenderer.sendMessage(
+      'list-notes-in-file',
+      selectedWorkspace,
+      selectedFile
+    );
+  }, [selectedFile]);
+  // + Listen for answers
   useEffect(() => {
     ipcRenderer.on('list-notes-in-file', (arg) => {
       const result = arg as Note[];
-      // console.log(results);
       setNotes(result);
     });
   }, []);
 
-  // See https://dgreene1.github.io/react-accessible-treeview/docs/examples-DirectoryTree
+  const handleWorkspaceChange = (workspaceSlug: string) => {
+    setSelectedFile(undefined);
+    setSelectedDir(undefined);
+    setSelectedWorkspace(workspaceSlug);
+  };
+
+  // Build the tree representation.
+  // Check https://dgreene1.github.io/react-accessible-treeview/docs/examples-DirectoryTree
   const folder = filesToFolder(files);
   const data = flattenTree(folder);
 
@@ -73,17 +120,10 @@ function Browser() {
     if (!selectedRelativePath) return;
 
     setSelectedFile(selectedRelativePath);
-
-    ipcRenderer.sendMessage(
-      'list-notes-in-file',
-      selectedWorkspace,
-      selectedRelativePath
-    );
+    setSelectedDir(dirname(selectedRelativePath));
   };
 
-  if (selectedFile) {
-    console.log(`Rendering notes for file ${selectedFile}...`);
-  }
+  console.log('<Browser>', selectedWorkspace, selectedDir, selectedFile); // FIXME remove
 
   return (
     <div className="Browser">
@@ -91,7 +131,7 @@ function Browser() {
       <div className="LeftPanel">
         <select
           value={selectedWorkspace}
-          onChange={(e) => setSelectedWorkspace(e.target.value)}
+          onChange={(e) => handleWorkspaceChange(e.target.value)}
         >
           {workspaces.map((workspace) => (
             <option key={workspace.slug} value={workspace.slug}>
@@ -105,6 +145,10 @@ function Browser() {
             <TreeView
               data={data}
               aria-label="directory tree"
+              // NB: We use relativePath as ids in TreeView which makes easy to
+              // reference nodes in the tree without having to find a random id
+              selectedIds={selectedFile ? [selectedFile] : []}
+              expandedIds={selectedDir ? [selectedDir] : []}
               onNodeSelect={handleTreeViewSelect}
               nodeRenderer={({
                 element,
@@ -143,9 +187,10 @@ export interface TreeNode {
   id: string | number;
   name: string;
   children: TreeNode[];
+  metadata: Record<string, string>;
 }
 
-function filesToFolder(files: File[]): any {
+function filesToFolder(files: File[]): TreeNode {
   // Example of expected structure */
   /*
   const folder = {
@@ -182,6 +227,7 @@ function filesToFolder(files: File[]): any {
     name: '.',
     id: '.',
     children: [],
+    metadata: { relativePath: '' },
   };
 
   for (let i = 0; i < files.length; i++) {
@@ -204,6 +250,7 @@ function filesToFolder(files: File[]): any {
           id: relativePath,
           name: part,
           children: [],
+          metadata: { relativePath },
         };
         node.children.push(newNode);
         node = newNode;
@@ -232,6 +279,20 @@ function FileIcon({ filename }: any) {
     default:
       return null;
   }
+}
+
+// Return the default workspace to use.
+function getDefaultWorkspaceSlug(
+  file: File | undefined,
+  workspaces: Workspace[]
+): string | undefined {
+  if (file) {
+    return file.workspaceSlug;
+  }
+  if (workspaces.length > 0) {
+    return workspaces[0].slug;
+  }
+  return undefined;
 }
 
 export default Browser;

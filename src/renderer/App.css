@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&family=Poiret+One&family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 :root {
   --color-separator: #DDD;
@@ -186,7 +187,6 @@ button:focus {
   border-radius: var(--desktop-layout-radius) var(--desktop-layout-radius) 0 var(--desktop-layout-radius);
   background: white;
   margin: 0.5rem;
-  overflow: hidden;
 }
 .LayoutGrid .RenderedNote {
   flex-grow: 1; /* use all available space */
@@ -207,12 +207,15 @@ button:focus {
   padding: 0.5em 1em;
 }
 .RenderedNoteTitle h1 {
+  display: inline-block;
   font-size: 1rem;
 }
 
 .RenderedNoteContent {
-  max-height: 20em;
   font-size: 0.8rem;
+}
+.RenderedNoteContent.Preview {
+  max-height: 20em;
   overflow: auto; /* show scrollbar only when needed */
 }
 .RenderedNoteContent pre {
@@ -376,8 +379,11 @@ button:focus {
 /* Browser */
 
 .Browser .LeftPanel select {
-  float: right;
   border: none;
+  width: 100%;
+  text-align: right;
+  padding: 0.25rem;
+  border-bottom: 1px solid var(--color-separator);
 }
 .Browser .LeftPanel .directory {
   width: 250px; /* to avoid resizing when switching between mode */
@@ -700,7 +706,9 @@ button:focus {
 .NoteKind {
   /* Simply display a small rounded shape */
   display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
+  border: 1px solid black;
+  width: 0.6rem;
+  height: 0.6rem;
   border-radius: 50%;
+  margin-right: 0.5rem;
 }

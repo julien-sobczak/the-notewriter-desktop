@@ -10,7 +10,7 @@ import {
   Brain,
   Kanban,
   Lightbulb,
-  HandsPraying,
+  FlowerLotus,
   ChartBar,
   CornersOut,
   X,
@@ -26,6 +26,7 @@ import {
   QueryResult,
   Workspace,
   Bookmark,
+  File,
 } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
@@ -52,11 +53,13 @@ type CommandMenuProps = {
   desks: Desk[] | null | undefined;
   decks: Deck[] | null | undefined;
   bookmarks: Bookmark[] | null | undefined;
+  files: File[] | null | undefined;
   onActivitySelected?: (activity: string) => void;
   onWorkspaceToggled?: (workspace: Workspace) => void;
   onDeskSelected?: (desk: Desk) => void;
   onDeckSelected?: (desk: Deck) => void;
   onBookmarkSelected?: (bookmark: Bookmark) => void;
+  onFileSelected?: (file: File) => void;
 };
 
 function CommandMenu({
@@ -64,12 +67,20 @@ function CommandMenu({
   desks,
   decks,
   bookmarks,
+  files,
   onActivitySelected = () => {},
   onWorkspaceToggled = () => {},
   onDeskSelected = () => {},
   onDeckSelected = () => {},
   onBookmarkSelected = () => {},
+  onFileSelected = () => {},
 }: CommandMenuProps) {
+  /*
+   * Implementation based on project https://cmdk.paco.me/ (https://github.com/pacocoursey/cmdk)
+   * Examples are available in GitHub. The linear style was used as the baseline:
+   * - TypeScript: https://github.com/pacocoursey/cmdk/blob/main/website/components/cmdk/linear.tsx
+   * - CSS: https://github.com/pacocoursey/cmdk/blob/main/website/styles/cmdk/linear.scss
+   */
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
   const [pages, setPages] = useState<string[]>([]);
@@ -119,6 +130,12 @@ function CommandMenu({
     onBookmarkSelected(bookmark);
     closeMenu();
     onActivitySelected('bookmarker');
+  };
+
+  const handleFileSelected = (file: File) => {
+    onFileSelected(file);
+    closeMenu();
+    onActivitySelected('browser');
   };
 
   return (
@@ -184,8 +201,38 @@ function CommandMenu({
 
           <Command.Separator />
 
-          {!page && <Command.Item>Open file...</Command.Item>}
-          {/* TODO implement */}
+          {!page && (
+            <Command.Item
+              onSelect={() => {
+                setPages([...pages, 'files']);
+                setSearch('');
+              }}
+            >
+              Open file...
+            </Command.Item>
+          )}
+          {/* Show results after a few characters */}
+          {page === 'files' && files && search && search.length > 3 && (
+            <>
+              {files.map((file: File) => {
+                // Filter files
+                if (!file.relativePath.includes(search)) return null;
+                return (
+                  <Command.Item
+                    key={file.oid}
+                    value={file.relativePath}
+                    onSelect={() => handleFileSelected(file)}
+                  >
+                    Open file&nbsp;
+                    <em>
+                      <code>{file.relativePath}</code>
+                    </em>
+                  </Command.Item>
+                );
+              })}
+            </>
+          )}
+
           {!page && (
             <Command.Item
               onSelect={() => {
@@ -319,11 +366,31 @@ function Main() {
     undefined
   );
 
-  // Notes
-  const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>();
+  // Files
+  const [files, setFiles] = useState<File[]>([]);
 
-  // Study
+  // Selection
+  const [selectedFile, setSelectedFile] = useState<File | undefined>();
+  const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>();
   const [selectedDeck, setSelectedDeck] = useState<Deck | undefined>();
+
+  useEffect(() => {
+    // Load all files to provide them in cmd+k
+    const workspaceSlugs: string[] = staticConfig.workspaces.map((w) => w.slug);
+    fetch('http://localhost:3000/list-files', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(workspaceSlugs),
+    })
+      .then((response) => response.json())
+      .then((results: File[]) => {
+        setFiles(results);
+        return null;
+      })
+      .catch((error: any) => console.log('Error:', error));
+  }, [staticConfig.workspaces]);
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -406,6 +473,11 @@ function Main() {
     setSelectedBookmark(bookmark);
   };
 
+  const handleFileSelected = (file: File) => {
+    console.log('[Main] select file', file.relativePath); // FIXME remove
+    setSelectedFile(file);
+  };
+
   const activities: Activity[] = [
     {
       slug: 'hi',
@@ -418,8 +490,8 @@ function Main() {
       icon: BookmarkIcon,
     },
     {
-      slug: 'browse',
-      name: 'Browse',
+      slug: 'browser',
+      name: 'Browser',
       icon: FileSearch,
     },
     {
@@ -450,7 +522,7 @@ function Main() {
     {
       slug: 'zen',
       name: 'Zen Mode',
-      icon: HandsPraying,
+      icon: FlowerLotus,
     },
     {
       slug: 'stats',
@@ -488,10 +560,13 @@ function Main() {
       </header>
 
       <CommandMenu
+        // Data
         workspaces={staticConfig.workspaces}
         desks={dynamicConfig.desks}
         decks={staticConfig.study?.decks}
         bookmarks={dynamicConfig.bookmarks}
+        files={files}
+        // Events
         onActivitySelected={(activitySlug) => setActivity(activitySlug)}
         onWorkspaceToggled={(workspace) =>
           handleWorkspaceToggle(workspace.slug)
@@ -499,6 +574,7 @@ function Main() {
         onDeskSelected={handleDeskSelected}
         onDeckSelected={handleDeckSelected}
         onBookmarkSelected={handleBookmarkSelected}
+        onFileSelected={handleFileSelected}
       />
 
       <div className="Main">
@@ -561,7 +637,7 @@ function Main() {
         )}
 
         {/* Browse */}
-        {activity === 'browse' && <Browser />}
+        {activity === 'browser' && <Browser file={selectedFile} />}
 
         {/* Desktop */}
         {activity === 'desktop' && (

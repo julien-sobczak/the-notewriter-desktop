@@ -14,6 +14,7 @@ import { Note, Media, Blob, Bookmark } from 'shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
+import NoteKind from './NoteKind';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -412,11 +413,15 @@ export default function RenderedNote({
           </ul>
         </nav>
       </div>
-      <div
-        className="RenderedNoteTitle"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: note.title }}
-      />
+      <div className="RenderedNoteTitle">
+        <NoteKind value={note.kind} />
+        <span
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: note.title,
+          }}
+        />
+      </div>
       <div
         className="RenderedNoteContent"
         // eslint-disable-next-line react/no-danger
