@@ -223,10 +223,7 @@ ipcMain.on('multi-search', async (event, queries: Query[]) => {
 });
 
 ipcMain.on('get-daily-quote', async (event) => {
-  if (!config.editorStaticConfig.inspirations) {
-    throw new Error('No daily quote found');
-  }
-  const { dailyQuote } = config.editorStaticConfig.inspirations;
+  const { dailyQuote } = config.editorStaticConfig;
   if (!dailyQuote) {
     throw new Error('No daily quote found');
   }
@@ -235,6 +232,8 @@ ipcMain.on('get-daily-quote', async (event) => {
     workspaces: dailyQuote.workspaces,
     blockId: undefined,
     deskId: undefined,
+    limit: 0,
+    shuffle: false,
   };
   const note = await db.searchDailyQuote(query);
   event.reply('get-daily-quote', note);

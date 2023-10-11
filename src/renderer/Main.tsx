@@ -348,6 +348,8 @@ function Main() {
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
 
+  console.log('<Main>', staticConfig, dynamicConfig); // FIXME DEBUG WHY work is selected
+
   // Global search
   const inputElement = useRef<HTMLInputElement>(null);
   const [inputQuery, setInputQuery] = useState<string>(''); // current input value
@@ -417,6 +419,8 @@ function Main() {
       workspaces: selectedWorkspaceSlugs,
       blockId: null,
       deskId: null,
+      limit: 0,
+      shuffle: false,
     };
     // TODO use REST API instead?
     ipcRenderer.sendMessage('search', query);

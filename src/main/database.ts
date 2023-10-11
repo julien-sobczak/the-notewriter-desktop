@@ -81,6 +81,13 @@ export default class DatabaseManager {
     oids: string[],
     datasourceName: string
   ): Promise<Model.Media[]> {
+    // Nothing to search
+    if (oids.length === 0) {
+      return new Promise<Model.Media[]>((resolve) => {
+        resolve([]);
+      });
+    }
+
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
@@ -132,13 +139,18 @@ export default class DatabaseManager {
     });
   }
 
-  async searchNotes(q: string, datasourceName: string): Promise<Model.Note[]> {
+  async searchNotes(
+    q: string,
+    datasourceName: string,
+    limit: number,
+    shuffle: boolean
+  ): Promise<Model.Note[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
     }
     return new Promise<Model.Note[]>((resolve, reject) => {
-      const sqlQuery = query2sql(q);
+      const sqlQuery = query2sql(q, limit, shuffle);
       console.debug(`[${datasourceName}] ${sqlQuery}`);
       db.all(sqlQuery, async (err: any, rows: any) => {
         if (err) {
@@ -411,6 +423,13 @@ export default class DatabaseManager {
   }
 
   async multiFind(noteRefs: Model.NoteRef[]): Promise<Model.Note[]> {
+    // Nothing to search
+    if (noteRefs.length === 0) {
+      return new Promise<Model.Note[]>((resolve) => {
+        resolve([]);
+      });
+    }
+
     // Group OID by datasource
     const oidByWorkspace = new Map<string, string[]>();
     for (const noteRef of noteRefs) {
@@ -516,7 +535,9 @@ export default class DatabaseManager {
         query.workspaces.length === 0 ||
         query.workspaces.includes(datasourceName)
       ) {
-        results.push(this.searchNotes(query.q, datasourceName));
+        results.push(
+          this.searchNotes(query.q, datasourceName, query.limit, query.shuffle)
+        );
       }
     }
 
@@ -605,7 +626,7 @@ export default class DatabaseManager {
     workspaceSlug: string,
     relativePath: string
   ): Promise<Model.Note[]> {
-    return this.searchNotes(`path:${relativePath}`, workspaceSlug);
+    return this.searchNotes(`path:${relativePath}`, workspaceSlug, 0, false);
   }
 
   /* Converters */
@@ -775,7 +796,7 @@ function queryPart2sql(q: string): string {
 }
 
 // eslint-disable-next-line import/prefer-default-export
-export function query2sql(q: string): string {
+export function query2sql(q: string, limit: number, shuffle: boolean): string {
   let whereContent = queryPart2sql(q);
   // Fix a bug in logic as we systematically append 'AND' when the query is not
   // completely parsed even if the following keyword is 'OR'
@@ -785,6 +806,12 @@ export function query2sql(q: string): string {
   let sql = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`;
   if (whereContent) {
     sql += ` WHERE ${whereContent}`;
+  }
+  if (shuffle) {
+    sql += ` ORDER BY RANDOM()`;
+  }
+  if (limit > 0) {
+    sql += ` LIMIT ${limit}`;
   }
   sql += ';';
   return sql;

@@ -64,6 +64,7 @@ export default class ConfigManager {
       return {
         desks: [],
         favorites: [],
+        bookmarks: [],
       } as EditorDynamicConfig;
     }
 
@@ -75,31 +76,55 @@ export default class ConfigManager {
   static #applyDefaultStaticConfig(
     config: EditorStaticConfig
   ): EditorStaticConfig {
+    const selectedWorkspaceSlugs: string[] = [];
+
     // Select workspaces by default
     if (config.workspaces) {
       for (let i = 0; i < config.workspaces.length; i++) {
         const workspace = config.workspaces[i];
-        if (workspace.selected == null) {
+        if (workspace.selected === undefined) {
           // Workspaces are selected by default
           workspace.selected = true;
+        }
+        if (workspace.selected) {
+          selectedWorkspaceSlugs.push(workspace.slug);
         }
       }
     }
 
+    // Define default daily quote
     const defaultDailyQuote: DailyQuote = {
       query: `@kind:quote`, // any quote
-      workspaces: [], // any workspace
+      workspaces: selectedWorkspaceSlugs, // default workspace(s)
     };
-
-    if (!config.inspirations) {
-      config.inspirations = {
-        dailyQuote: defaultDailyQuote,
-        categories: [],
-      };
+    if (!config.dailyQuote) {
+      config.dailyQuote = defaultDailyQuote;
     }
-    // Define default daily quote
-    if (!config.inspirations.dailyQuote) {
-      config.inspirations.dailyQuote = defaultDailyQuote;
+
+    // Use default selected workspaces when none are specified
+    if (config.zenMode) {
+      for (let i = 0; i < config.zenMode.queries.length; i++) {
+        const query = config.zenMode.queries[i];
+        if (!query.workspaces) {
+          query.workspaces = selectedWorkspaceSlugs;
+        }
+      }
+    }
+    if (config.study) {
+      for (let i = 0; i < config.study.decks.length; i++) {
+        const deck = config.study.decks[i];
+        if (!deck.workspaces) {
+          deck.workspaces = selectedWorkspaceSlugs;
+        }
+      }
+    }
+    if (config.inspirations) {
+      for (let i = 0; i < config.inspirations.length; i++) {
+        const inspiration = config.inspirations[i];
+        if (!inspiration.workspaces) {
+          inspiration.workspaces = selectedWorkspaceSlugs;
+        }
+      }
     }
 
     return config;

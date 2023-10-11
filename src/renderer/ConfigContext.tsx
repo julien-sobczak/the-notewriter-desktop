@@ -4,8 +4,6 @@ import { useImmerReducer } from 'use-immer';
 import { EditorStaticConfig, EditorDynamicConfig } from 'shared/Model';
 import configReducer from './configReducer';
 
-const { ipcRenderer } = window.electron;
-
 // Useful Resources:
 // - https://blog.isquaredsoftware.com/2021/01/context-redux-differences/
 // - https://dev.to/elisealcala/react-context-with-usereducer-and-typescript-4obm
@@ -18,7 +16,7 @@ type ConfigContextType = {
 const initialState: ConfigContextType = {
   static: {
     workspaces: [],
-    inspirations: null,
+    inspirations: [],
   },
   dynamic: {
     desks: [],
@@ -38,6 +36,8 @@ export function ConfigContextProvider({ children }: any) {
   const [config, dispatch] = useImmerReducer(configReducer, initialState);
 
   useEffect(() => {
+    if (!window.electron) return;
+    const { ipcRenderer } = window.electron;
     ipcRenderer.on('configuration-loaded', (arg) => {
       const existingConfig = arg;
       dispatch({

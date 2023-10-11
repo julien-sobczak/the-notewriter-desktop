@@ -80,6 +80,10 @@ button:focus {
 
 /* Common */
 
+.hidden {
+  display: none;
+}
+
 .Screen {
   width: 100%;
 }
@@ -197,6 +201,7 @@ button:focus {
   line-height: 1;
 }
 
+.ZenMode .Actions,
 .RenderedNote .Actions {
   /* Move the button on the same line as the title to reduce space */
   float: right;
@@ -711,4 +716,10 @@ button:focus {
   height: 0.6rem;
   border-radius: 50%;
   margin-right: 0.5rem;
+}
+
+/* ZenMode */
+
+.SpeedAction {
+  font-size: 0.7rem;
 }

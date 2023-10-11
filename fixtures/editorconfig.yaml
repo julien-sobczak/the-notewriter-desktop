@@ -7,17 +7,23 @@ workspaces:
   path: "$PWD/fixtures/work"
   selected: false
 
+dailyQuote:
+  query: "path:references @kind:quote"
+  workspaces: [life]
+
 inspirations:
-  dailyQuote:
-    query: "path:references @kind:quote"
+- name: Life
+  query: "path:references/persons (#life or #purpose) @kind:quote"
+  workspaces: [life]
+- name: Art
+  query: "path:references @kind:artwork"
+  workspaces: [life]
+
+zenMode:
+  queries:
+  - query: "path:references @kind:quote"
     workspaces: [life]
-  categories:
-  - name: Life
-    query: "path:references/persons (#life or #purpose) @kind:quote"
-    workspaces: [life]
-  - name: Art
-    query: "path:references @kind:artwork"
-    workspaces: [life]
+  - query: "path:thoughts"
 
 study:
   decks:

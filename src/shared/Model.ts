@@ -1,8 +1,75 @@
+/* Config */
+
+export interface EditorStaticConfig {
+  workspaces: Workspace[];
+  dailyQuote?: DailyQuoteConfig;
+  inspirations?: InspirationConfig[];
+  zenMode?: ZenConfig;
+  study?: StudyConfig;
+}
+
 export interface Workspace {
   name: string;
   slug: string;
   path: string;
-  selected: boolean | null;
+  selected?: boolean;
+}
+
+export interface DailyQuoteConfig {
+  query: string;
+  workspaces: string[];
+}
+
+export interface InspirationConfig {
+  name: string;
+  workspaces: string[];
+  query: string;
+}
+
+export interface ZenConfig {
+  queries: ZenQuery[];
+}
+
+export interface ZenQuery {
+  query: string;
+  workspaces?: string[];
+}
+
+export interface StudyConfig {
+  decks: Deck[];
+}
+
+export interface Deck {
+  name: string;
+  query: string;
+  workspaces?: string[];
+  // TODO add SRS-algorithm parameters
+}
+
+/* Dynamic Config */
+
+export interface EditorDynamicConfig {
+  bookmarks?: Bookmark[];
+  desks?: Desk[];
+}
+
+export interface Bookmark {
+  // Identify the note
+  workspaceSlug: string;
+  noteOID: string;
+  // Copy some attributes to make easy to list favorites and jump to to them
+  noteKind: string;
+  noteTitle: string;
+  noteRelativePath: string;
+  noteLine: number;
+}
+
+export interface Desk {
+  id: string;
+  // Name of the desk
+  name: string;
+  // Layout
+  root: Block;
 }
 
 export interface Block {
@@ -25,66 +92,22 @@ export interface Block {
   noteRefs: NoteRef[];
 }
 
+/* UI Model */
+
 export interface NoteRef {
   oid: string;
   workspaceSlug: string;
 }
 
-export interface Desk {
-  id: string;
-  // Name of the desk
-  name: string;
-  // Layout
-  root: Block;
+export interface Statistics {
+  // Count of notes according the nationality of the author
+  countNotesPerNationality: Map<string, number>;
+
+  // Count of notes by kind
+  countNotesPerKind: Map<string, number>;
 }
 
-export interface DailyQuote {
-  query: string;
-  workspaces: string[];
-}
-
-export interface InspirationCategory {
-  name: string;
-  workspaces: string[];
-  query: string;
-}
-
-export interface Inspiration {
-  dailyQuote: DailyQuote | null;
-  categories: InspirationCategory[];
-}
-
-export interface EditorStaticConfig {
-  workspaces: Workspace[];
-  inspirations: Inspiration | null;
-  study: Study | null;
-}
-
-export interface Study {
-  decks: Deck[] | null;
-}
-
-export interface Deck {
-  name: string;
-  query: string;
-  // TODO add SRS-algorithm parameters
-}
-
-export interface EditorDynamicConfig {
-  bookmarks: Bookmark[] | null;
-  desks: Desk[] | null;
-}
-
-export interface Bookmark {
-  // Identify the note
-  workspaceSlug: string;
-  noteOID: string;
-  // Copy some attributes to make easy to list favorites and jump to to them
-  noteKind: string;
-  noteTitle: string;
-  noteRelativePath: string;
-  noteLine: number;
-}
+/* DB Model */
 
 export interface Blob {
   oid: string;
@@ -152,6 +175,8 @@ export interface Query {
   deskId: string | null | undefined;
   // The block where the query originated
   blockId: string | null | undefined;
+  limit: number; // Use 0 to not limit
+  shuffle: boolean;
 }
 
 export interface QueryResult {
@@ -165,12 +190,4 @@ export interface File {
   workspacePath: string;
   relativePath: string;
   countNotes: number;
-}
-
-export interface Statistics {
-  // Count of notes according the nationality of the author
-  countNotesPerNationality: Map<string, number>;
-
-  // Count of notes by kind
-  countNotesPerKind: Map<string, number>;
 }
