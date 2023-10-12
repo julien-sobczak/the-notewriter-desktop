@@ -164,6 +164,9 @@ type RenderedNoteProps = {
   layout?: string;
   showTags?: boolean;
   showAttributes?: boolean;
+  showTitle?: boolean;
+  showActions?: boolean;
+  showComment?: boolean;
   // Container
   draggable?: boolean;
   onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -178,6 +181,9 @@ export default function RenderedNote({
   layout = 'default',
   showTags = true,
   showAttributes = true,
+  showTitle = true,
+  showActions = true,
+  showComment = true,
   draggable = false,
   onDragStart = () => {},
   onDrag = () => {},
@@ -362,66 +368,70 @@ export default function RenderedNote({
       onDrag={onDrag}
       onDragEnd={onDragEnd}
     >
-      <div
-        className="Actions"
-        // Support basic drag to move notes inside a free container.
-        // We listen on actions panel to keep the note content easily selectable.
-        // We use standard mouse events to drag freely notes without the ghosting effect
-        // See https://blog.coderfy.io/creating-a-draggable-and-resizable-box
-        onMouseDown={handleMouseStart}
-        onMouseUp={handleMouseEnd}
-        onMouseOut={handleMouseOut} // FIXME BUG we need to stop drag when the mouse is released outside the viewport. This solution doesn't seem to work...
-      >
-        <nav>
-          <ul>
-            <li>
-              <button type="button" onClick={handleBookmark} title="Bookmark">
-                <Star weight={bookmarked ? 'fill' : 'thin'} />
-              </button>
-              <button type="button" onClick={handleMove} title="Move inside">
-                <MoveIcon />
-              </button>
-              <button
-                type="button"
-                onClick={handleDragClick}
-                title="Drag outside"
-              >
-                <DragIcon />
-              </button>
-              {layout === 'free' && (
-                <button type="button" onClick={handleMoveUp} title="Layer up">
-                  <MoveUpIcon />
+      {showActions && (
+        <div
+          className="Actions"
+          // Support basic drag to move notes inside a free container.
+          // We listen on actions panel to keep the note content easily selectable.
+          // We use standard mouse events to drag freely notes without the ghosting effect
+          // See https://blog.coderfy.io/creating-a-draggable-and-resizable-box
+          onMouseDown={handleMouseStart}
+          onMouseUp={handleMouseEnd}
+          onMouseOut={handleMouseOut} // FIXME BUG we need to stop drag when the mouse is released outside the viewport. This solution doesn't seem to work...
+        >
+          <nav>
+            <ul>
+              <li>
+                <button type="button" onClick={handleBookmark} title="Bookmark">
+                  <Star weight={bookmarked ? 'fill' : 'thin'} />
                 </button>
-              )}
-              {layout === 'free' && (
+                <button type="button" onClick={handleMove} title="Move inside">
+                  <MoveIcon />
+                </button>
                 <button
                   type="button"
-                  onClick={handleMoveDown}
-                  title="Layer down"
+                  onClick={handleDragClick}
+                  title="Drag outside"
                 >
-                  <MoveDownIcon />
+                  <DragIcon />
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={handleEdit}
-                title="Edit in external editor"
-              >
-                <EditIcon />
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </div>
-      <div className="RenderedNoteTitle">
-        <NoteKind value={note.kind} />
-        <span
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{
-            __html: note.title,
-          }}
-        />
-      </div>
+                {layout === 'free' && (
+                  <button type="button" onClick={handleMoveUp} title="Layer up">
+                    <MoveUpIcon />
+                  </button>
+                )}
+                {layout === 'free' && (
+                  <button
+                    type="button"
+                    onClick={handleMoveDown}
+                    title="Layer down"
+                  >
+                    <MoveDownIcon />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  title="Edit in external editor"
+                >
+                  <EditIcon />
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      )}
+      {showTitle && (
+        <div className="RenderedNoteTitle">
+          <NoteKind value={note.kind} />
+          <span
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{
+              __html: note.title,
+            }}
+          />
+        </div>
+      )}
       <div
         className="RenderedNoteContent"
         // eslint-disable-next-line react/no-danger
@@ -451,7 +461,7 @@ export default function RenderedNote({
             )}
         </div>
       )}
-      {note.comment && (
+      {showComment && note.comment && (
         <div
           className="RenderedNoteComment"
           // eslint-disable-next-line react/no-danger

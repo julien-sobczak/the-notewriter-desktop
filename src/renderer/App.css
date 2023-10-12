@@ -107,12 +107,12 @@ button:focus {
   padding: 4rem;
 }
 
-.Workspace {
+.Main {
   width: 100%;
   height: 100vh;
 }
 
-.Main {
+.MainMenu {
   position: relative;
   display: flex;
   height: 100%;
@@ -720,6 +720,98 @@ button:focus {
 
 /* ZenMode */
 
+/* The class .ZenModeEnabled is appended on root element only when the zen mode is chosen */
+.ZenModeEnabled .TopBar,
+.ZenModeEnabled .ActivityBar {
+  /* Make sure only the zen mode is visible */
+  display: none;
+}
+.ZenMode {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.ZenMode .Actions {
+  flex-grow: 0;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+.ZenMode .Content {
+  flex-grow: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.ZenMode .Footer {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  color: var(--color-text-dimmed);
+  text-align: right;
+  font-size: 0.7rem;
+}
+.ZenMode .Footer > div {
+  padding: 0.5rem;
+}
+.ZenMode .Footer h1 {
+  display: inline-block;
+  font-size: 0.7rem;
+}
+
+.ZenMode .RenderedNote {
+  border: none !important;
+}
+.ZenMode .RenderedNoteContent {
+  font-size: 1.2rem;
+}
 .SpeedAction {
   font-size: 0.7rem;
+}
+
+/* Timer */
+
+.Timer {
+  background: -webkit-linear-gradient(left, var(--color-separator-dark) 50%, white 50%); /* TODO find a way to avoid -webkit */
+  border-radius: 100%;
+  height: calc(var(--size) * 1px);
+  width: calc(var(--size) * 1px);
+  position: relative;
+  animation: time calc(var(--duration) * 1s) steps(1000, start) infinite;
+
+}
+.Timer .mask {
+  border-radius: 100% 0 0 100% / 50% 0 0 50%;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 50%;
+  animation: mask calc(var(--duration) * 1s) steps(500, start) infinite;
+  transform-origin: 100% 50%;
+}
+@keyframes time {
+  100% {
+      transform: rotate(360deg);
+  }
+}
+@keyframes mask {
+  0% {
+      background: white;
+      transform: rotate(0deg);
+  }
+  50% {
+      background: white;
+      transform: rotate(-180deg);
+  }
+  50.01% {
+      background: var(--color-separator-dark);
+      transform: rotate(0deg);
+  }
+  100% {
+      background: var(--color-separator-dark);
+      transform: rotate(-180deg);
+  }
 }

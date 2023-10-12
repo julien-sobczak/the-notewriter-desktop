@@ -361,6 +361,12 @@ function Main() {
 
   // Activities
   const [activity, setActivity] = useState<string>('desktop');
+  const previousActivity = useRef<string>();
+  // Use this method to memorize the last activity (useful for example to come back when you left after the zen mode)
+  const switchActivity = (newActivity: string) => {
+    previousActivity.current = activity;
+    setActivity(newActivity);
+  };
 
   // Desks
   const [openedDesks, setOpenedDesks] = useState<Desk[]>([]);
@@ -482,6 +488,14 @@ function Main() {
     setSelectedFile(file);
   };
 
+  const handleZenModeClose = () => {
+    if (previousActivity.current) {
+      setActivity(previousActivity.current);
+    } else {
+      switchActivity('hi');
+    }
+  };
+
   const activities: Activity[] = [
     {
       slug: 'hi',
@@ -536,7 +550,12 @@ function Main() {
   ];
 
   return (
-    <div className="Workspace">
+    <div
+      className={classNames({
+        Main,
+        ZenModeEnabled: activity === 'zen',
+      })}
+    >
       {/* Search bar */}
       <header className="TopBar">
         <form onSubmit={handleSearch}>
@@ -571,7 +590,7 @@ function Main() {
         bookmarks={dynamicConfig.bookmarks}
         files={files}
         // Events
-        onActivitySelected={(activitySlug) => setActivity(activitySlug)}
+        onActivitySelected={(activitySlug) => switchActivity(activitySlug)}
         onWorkspaceToggled={(workspace) =>
           handleWorkspaceToggle(workspace.slug)
         }
@@ -581,7 +600,7 @@ function Main() {
         onFileSelected={handleFileSelected}
       />
 
-      <div className="Main">
+      <div className="MainMenu">
         <div className="ActivityBar">
           <ul>
             {activities.map((currentActivity) => (
@@ -593,7 +612,7 @@ function Main() {
               >
                 <button
                   type="button"
-                  onClick={() => setActivity(currentActivity.slug)}
+                  onClick={() => switchActivity(currentActivity.slug)}
                   aria-label={currentActivity.name}
                 >
                   <currentActivity.icon
@@ -691,7 +710,7 @@ function Main() {
         {activity === 'inspiration' && <Inspiration />}
 
         {/* Zen */}
-        {activity === 'zen' && <ZenMode />}
+        {activity === 'zen' && <ZenMode onClose={handleZenModeClose} />}
 
         {/* Stats */}
         {activity === 'stats' && <Stats />}
