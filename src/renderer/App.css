@@ -726,21 +726,25 @@ button:focus {
   /* Make sure only the zen mode is visible */
   display: none;
 }
-.ZenMode {
+.ZenMode, .Inspiration {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
 }
-.ZenMode .Actions {
+.ZenMode .Actions,
+.Inspiration .Actions {
   flex-grow: 0;
   display: flex;
   justify-content: flex-end;
   width: 100%;
 }
-.ZenMode .Content {
+.ZenMode .Content,
+.Inspiration .Content {
+  width: 100%;
   flex-grow: 2;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -761,14 +765,35 @@ button:focus {
   font-size: 0.7rem;
 }
 
-.ZenMode .RenderedNote {
+.ZenMode .RenderedNote,
+.Inspiration .RenderedNote {
   border: none !important;
 }
 .ZenMode .RenderedNoteContent {
   font-size: 1.2rem;
 }
+
 .SpeedAction {
   font-size: 0.7rem;
+}
+
+.instruction {
+  font-weight: 100;
+}
+
+ul.categories {
+  list-style-type: none;
+  display: flex;
+  flex: row;
+  margin: 0;
+  padding: 0;
+}
+ul.categories li {
+  border: 1px solid black;
+  border-radius: 50vh;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  cursor: pointer;
 }
 
 /* Timer */

@@ -1,22 +1,153 @@
-import { useEffect } from 'react';
-import { Note } from '../shared/Model';
+import { useContext, useState } from 'react';
+import {
+  Eraser,
+  SkipBack,
+  SkipForward,
+  SmileyXEyes,
+} from '@phosphor-icons/react';
+import { InspirationConfig, Note, Query, QueryResult } from '../shared/Model';
+import { ConfigContext } from './ConfigContext';
+import RenderedNote from './RenderedNote';
+import useKeyDown from './useKeyDown';
 
-const { ipcRenderer } = window.electron;
+function extractQuery(inspiration: InspirationConfig): Query {
+  // Convert all queries configured into valid Query
+  const result: Query = {
+    q: inspiration.query,
+    workspaces: inspiration.workspaces ? inspiration.workspaces : [],
+    deskId: undefined,
+    blockId: undefined,
+    limit: 1000, // 1000 notes must be enough
+    shuffle: true, // Important!
+  };
+  return result;
+}
 
 function Inspiration() {
-  useEffect(() => {
-    // Retrieve a random quote
-    ipcRenderer.sendMessage('get-daily-quote', []);
+  const { config } = useContext(ConfigContext);
+  const { inspirations } = config.static;
 
-    ipcRenderer.on('get-daily-quote', (arg) => {
-      const note = arg as Note;
-      console.log(note);
-    });
-  }, []);
+  const [selectedCategory, setSelectedCategory] = useState<string>();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [index, setIndex] = useState<number>(0); // 0 <= index < note.length
+
+  // Support navigation using keys
+  useKeyDown(() => {
+    handlePrevious();
+  }, ['ArrowLeft']);
+  useKeyDown(() => {
+    handleNext();
+  }, ['ArrowRight']);
+
+  // Not defined in configuration
+  if (!inspirations) {
+    return <SmileyXEyes size={48} />;
+  }
+
+  // Triggered when a user select a category among the configured ones
+  const handleCategorySelected = (inspiration: InspirationConfig) => {
+    setSelectedCategory(inspiration.name);
+
+    // Load random notes
+    const query = extractQuery(inspiration);
+    console.info(`Searching for ${inspiration.name}...`);
+    fetch('http://localhost:3000/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(query),
+    })
+      .then((response) => response.json())
+      .then((results: QueryResult) => {
+        console.info(`Found ${results.notes.length} note(s)...`);
+        setNotes(results.notes);
+        return null;
+      })
+      .catch((error: any) => console.log('Error:', error));
+  };
+
+  // Triggered when the user move between notes
+  const handlePrevious = () => {
+    setIndex(Math.min(index - 1, 0)); // Stay at the beginning if moving backwards
+  };
+  const handleNext = () => {
+    setIndex((index + 1) % notes.length); // Go back to first note at the end
+  };
+
+  // The current note to display (in any)
+  const note: Note | undefined = notes.length ? notes[index] : undefined;
 
   return (
-    <div className="Inspiration">
-      <h1>Inspiration!</h1>
+    <div className="Screen Inspiration">
+      {!selectedCategory && (
+        <div className="Content">
+          <h2 className="instruction">Choose a category</h2>
+          <ul className="categories">
+            {inspirations?.map((inspiration: InspirationConfig) => (
+              <li
+                key={inspiration.name}
+                onClick={() => handleCategorySelected(inspiration)}
+              >
+                {inspiration.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {selectedCategory && (
+        <>
+          <div className="Actions">
+            <nav>
+              <ul>
+                {notes.length > 1 && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handlePrevious()}
+                      title="Next"
+                    >
+                      <SkipBack />
+                    </button>
+                  </li>
+                )}
+                {notes.length > 1 && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNext()}
+                      title="Previous"
+                    >
+                      <SkipForward />
+                    </button>
+                  </li>
+                )}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory(undefined)}
+                    title="Reset"
+                  >
+                    <Eraser />
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+          <div className="Content">
+            {!note && <SmileyXEyes size={48} />}
+            {note && (
+              <RenderedNote
+                note={note}
+                showAttributes={false}
+                showTags={false}
+                showActions={false}
+                showTitle={false}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

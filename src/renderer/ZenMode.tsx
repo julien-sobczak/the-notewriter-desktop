@@ -12,6 +12,7 @@ import {
 import { ConfigContext } from './ConfigContext';
 import { Note, ZenConfig, Query, QueryResult } from '../shared/Model';
 import RenderedNote from './RenderedNote';
+import useKeyDown from './useKeyDown';
 
 function extractQueries(zenMode: ZenConfig | undefined): Query[] {
   if (!zenMode) return [];
@@ -101,20 +102,9 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
   }, [config.static.zenMode]);
 
   // Exit Zen Mode on pressing ESC
-  useEffect(() => {
-    const keyDownHandler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', keyDownHandler);
-
-    // Clean up event listener
-    return () => {
-      document.removeEventListener('keydown', keyDownHandler);
-    };
-  }, []);
+  useKeyDown(() => {
+    onClose();
+  }, ['Escape']);
 
   // Clear interval when component is unmounted
   useEffect(() => {
