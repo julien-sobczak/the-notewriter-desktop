@@ -1,0 +1,24 @@
+
+[core]
+extensions=["md", "markdown"]
+maxObjectsPerPackfile=100
+
+[medias]
+command="ffmpeg"
+parallel=1
+preset="medium"
+
+[search.quotes]
+q="-#ignore @kind:quote"
+name="Favorite Quotes"
+
+[deck.general]
+name = "General"
+path = "path:skills/learning"
+newFlashcardsPerDay = 5
+
+[deck.learning]
+name = "Programming"
+path = "path:skills/programming"
+newFlashcardsPerDay = 10
+boostFactor = 120

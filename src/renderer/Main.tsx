@@ -24,7 +24,7 @@ import {
   Desk,
   Query,
   QueryResult,
-  Workspace,
+  WorkspaceConfig,
   Bookmark,
   File,
 } from '../shared/Model';
@@ -49,13 +49,13 @@ const { ipcRenderer } = window.electron;
 
 type CommandMenuProps = {
   // Style
-  workspaces: Workspace[];
+  workspaces: WorkspaceConfig[];
   desks: Desk[] | null | undefined;
   decks: Deck[] | null | undefined;
   bookmarks: Bookmark[] | null | undefined;
   files: File[] | null | undefined;
   onActivitySelected?: (activity: string) => void;
-  onWorkspaceToggled?: (workspace: Workspace) => void;
+  onWorkspaceToggled?: (workspace: WorkspaceConfig) => void;
   onDeskSelected?: (desk: Desk) => void;
   onDeckSelected?: (desk: Deck) => void;
   onBookmarkSelected?: (bookmark: Bookmark) => void;
@@ -109,7 +109,7 @@ function CommandMenu({
     closeMenu();
   };
 
-  const handleWorkspaceToggled = (workspace: Workspace) => {
+  const handleWorkspaceToggled = (workspace: WorkspaceConfig) => {
     onWorkspaceToggled(workspace);
     closeMenu();
   };
@@ -187,7 +187,7 @@ function CommandMenu({
           )}
           {page === 'workspaces' && (
             <>
-              {workspaces.map((workspace: Workspace) => (
+              {workspaces.map((workspace: WorkspaceConfig) => (
                 <Command.Item
                   key={workspace.slug}
                   value={workspace.name}

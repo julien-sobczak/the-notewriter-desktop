@@ -31,7 +31,7 @@ function extractMediaOIDs(note: Model.Note): string[] {
 }
 
 export default class DatabaseManager {
-  workspaces: Map<string, Model.Workspace>;
+  workspaces: Map<string, Model.WorkspaceConfig>;
 
   // List of datasources based on workspaces defined in global configuration
   datasources: Map<string, Database>;
@@ -51,7 +51,7 @@ export default class DatabaseManager {
     });
   }
 
-  registerWorkspace(workspace: Model.Workspace): this {
+  registerWorkspace(workspace: Model.WorkspaceConfig): this {
     this.workspaces.set(workspace.slug, workspace);
 
     const workspacePath = normalizePath(workspace.path);

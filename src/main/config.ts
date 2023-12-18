@@ -2,22 +2,30 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import YAML from 'yaml';
+import { load as loadTOML } from 'js-toml';
 
 import {
   EditorStaticConfig,
   EditorDynamicConfig,
-  Workspace,
-  DailyQuote,
+  WorkspaceConfig,
+  DailyQuoteConfig,
+  CollectionConfig,
 } from '../shared/Model';
+import { normalizePath } from './util';
 
 export default class ConfigManager {
   editorStaticConfig: EditorStaticConfig;
 
   editorDynamicConfig: EditorDynamicConfig;
 
+  collectionConfigs: CollectionConfig[];
+
   constructor() {
     this.editorStaticConfig = ConfigManager.#readStaticConfig();
     this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
+    this.collectionConfigs = ConfigManager.#readCollectionConfigs(
+      this.editorStaticConfig
+    );
   }
 
   // Returns the home directory except if the environment variable $NT_HOME is set.
@@ -72,6 +80,23 @@ export default class ConfigManager {
     return JSON.parse(data) as EditorDynamicConfig;
   }
 
+  static #readCollectionConfigs(
+    staticConfig: EditorStaticConfig
+  ): CollectionConfig[] {
+    const results: CollectionConfig[] = [];
+    for (const workspace of staticConfig.workspaces) {
+      const workspacePath = normalizePath(workspace.path);
+      const workspaceConfigPath = path.join(workspacePath, '.nt/config');
+      if (!fs.existsSync(workspaceConfigPath)) {
+        throw new Error(`Missing configuration ${workspaceConfigPath}`);
+      }
+      const data = fs.readFileSync(workspaceConfigPath, 'utf8');
+      const collectionConfig = loadTOML(data) as CollectionConfig;
+      results.push(collectionConfig);
+    }
+    return results;
+  }
+
   // Traverse the static configuration to apply default values.
   static #applyDefaultStaticConfig(
     config: EditorStaticConfig
@@ -93,7 +118,7 @@ export default class ConfigManager {
     }
 
     // Define default daily quote
-    const defaultDailyQuote: DailyQuote = {
+    const defaultDailyQuote: DailyQuoteConfig = {
       query: `@kind:quote`, // any quote
       workspaces: selectedWorkspaceSlugs, // default workspace(s)
     };
@@ -131,12 +156,12 @@ export default class ConfigManager {
   }
 
   // Returns all declared workspaces.
-  workspaces(): Workspace[] {
+  workspaces(): WorkspaceConfig[] {
     return this.editorStaticConfig.workspaces;
   }
 
   // Returns only workspaces selected by default.
-  selectedWorkspaces(): Workspace[] {
+  selectedWorkspaces(): WorkspaceConfig[] {
     return this.editorStaticConfig.workspaces.filter(
       (workspace) => workspace.selected
     );

@@ -72,6 +72,8 @@ function extractQueriesFromBlock(
       blockId: block.id,
       q: block.query,
       workspaces: selectedWorkspaces,
+      limit: 0,
+      shuffle: false,
     });
   } else if (block.layout === 'horizontal' || block.layout === 'vertical') {
     if (!block.elements) return results;

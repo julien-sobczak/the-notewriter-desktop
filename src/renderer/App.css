@@ -281,6 +281,14 @@ button:focus {
   color: var(--color-text-dimmed);
 }
 
+.RenderedNoteComment {
+  padding: 0.25em 0.5em;
+  font-family: 'Pacifico', cursive;
+  font-size: 90%;
+
+}
+
+
 .Hello {
   background-color: black;
   display: none; /* FIXME remove, only keep there to have an example of how to include an image */

@@ -1,14 +1,14 @@
 /* Config */
 
 export interface EditorStaticConfig {
-  workspaces: Workspace[];
+  workspaces: WorkspaceConfig[];
   dailyQuote?: DailyQuoteConfig;
   inspirations?: InspirationConfig[];
   zenMode?: ZenConfig;
   study?: StudyConfig;
 }
 
-export interface Workspace {
+export interface WorkspaceConfig {
   name: string;
   slug: string;
   path: string;
@@ -90,6 +90,32 @@ export interface Block {
   // for container blocks
   query: string | null;
   noteRefs: NoteRef[];
+}
+
+/* The NoteWriter Config */
+
+// .nt/config
+export interface CollectionConfig {
+  core: ConfigCore | null;
+  deck: { [key: string]: ConfigDeck };
+  search: { [key: string]: ConfigSearch };
+}
+export interface ConfigCore {
+  extensions: string[];
+  maxObjectsPerPackFile: number;
+}
+export interface ConfigDeck {
+  name: string;
+  query: string;
+  boostFactor: number;
+  newFlashcardsPerDay: number;
+  maxFlashcardsPerDay: number;
+  algorithm: string;
+  algorithmSettings: { [key: string]: any };
+}
+export interface ConfigSearch {
+  q: string;
+  name: string;
 }
 
 /* UI Model */

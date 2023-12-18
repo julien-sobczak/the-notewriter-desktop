@@ -29,5 +29,6 @@ npm-debug.log.*
 *.scss.d.ts
 
 # fixtures
-/fixtures/*/.nt/
+/fixtures/*/.nt/*
+!/fixtures/*/.nt/config
 /fixtures/*/.ntignore

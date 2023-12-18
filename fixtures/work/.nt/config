@@ -1,0 +1,13 @@
+
+[core]
+extensions=["md", "markdown"]
+maxObjectsPerPackfile=100
+
+[medias]
+command="ffmpeg"
+parallel=1
+preset="medium"
+
+[deck.work]
+name = "Work"
+newFlashcardsPerDay = 1

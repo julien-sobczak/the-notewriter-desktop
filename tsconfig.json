@@ -15,5 +15,11 @@
     "allowJs": true,
     "outDir": ".erb/dll"
   },
+  "ts-node": {
+    // these options are overrides used only by ts-node
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
   "exclude": ["test", "release/build", "release/app/dist", ".erb/dll"]
 }

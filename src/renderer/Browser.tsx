@@ -7,7 +7,7 @@ import TreeView, {
   ITreeViewOnNodeSelectProps,
   flattenTree,
 } from 'react-accessible-treeview';
-import { File, Note, Workspace } from 'shared/Model';
+import { File, Note, WorkspaceConfig } from 'shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteContainer from './NoteContainer';
 
@@ -284,7 +284,7 @@ function FileIcon({ filename }: any) {
 // Return the default workspace to use.
 function getDefaultWorkspaceSlug(
   file: File | undefined,
-  workspaces: Workspace[]
+  workspaces: WorkspaceConfig[]
 ): string | undefined {
   if (file) {
     return file.workspaceSlug;
