@@ -20,11 +20,11 @@ import {
 import classNames from 'classnames';
 import { Command } from 'cmdk';
 import {
-  Deck,
   Desk,
   Query,
   QueryResult,
   WorkspaceConfig,
+  DeckRef,
   Bookmark,
   File,
 } from '../shared/Model';
@@ -37,7 +37,7 @@ import Bookmarker from './Bookmarker';
 import Planner from './Planner';
 import Stats from './Stats';
 import Inspiration from './Inspiration';
-import Revision from './Revision';
+import Decks from './Decks';
 import ZenMode from './ZenMode';
 import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
@@ -51,13 +51,13 @@ type CommandMenuProps = {
   // Style
   workspaces: WorkspaceConfig[];
   desks: Desk[] | null | undefined;
-  decks: Deck[] | null | undefined;
+  decks: DeckRef[] | null | undefined;
   bookmarks: Bookmark[] | null | undefined;
   files: File[] | null | undefined;
   onActivitySelected?: (activity: string) => void;
   onWorkspaceToggled?: (workspace: WorkspaceConfig) => void;
   onDeskSelected?: (desk: Desk) => void;
-  onDeckSelected?: (desk: Deck) => void;
+  onDeckSelected?: (desk: DeckRef) => void;
   onBookmarkSelected?: (bookmark: Bookmark) => void;
   onFileSelected?: (file: File) => void;
 };
@@ -120,10 +120,10 @@ function CommandMenu({
     onActivitySelected('desktop');
   };
 
-  const handleDeckSelected = (deck: Deck) => {
+  const handleDeckSelected = (deck: DeckRef) => {
     onDeckSelected(deck);
     closeMenu();
-    onActivitySelected('study');
+    onActivitySelected('decks');
   };
 
   const handleBookmarkSelected = (bookmark: Bookmark) => {
@@ -260,7 +260,7 @@ function CommandMenu({
           <Command.Separator />
 
           {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('study')}>
+            <Command.Item onSelect={() => handleActivitySelected('decks')}>
               Study
             </Command.Item>
           )}
@@ -276,7 +276,7 @@ function CommandMenu({
           )}
           {page === 'decks' && decks && (
             <>
-              {decks.map((deck: Deck) => (
+              {decks.map((deck: DeckRef) => (
                 <Command.Item
                   key={deck.name}
                   value={deck.name}
@@ -347,6 +347,22 @@ function Main() {
 
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
+  const collectionConfigs = config.collections;
+  const deckRefs = Object.keys(collectionConfigs)
+    .map((workspaceSlug: string): DeckRef[] => {
+      const collectionConfig = collectionConfigs[workspaceSlug];
+      const results: DeckRef[] = [];
+      for (const deckKey of Object.keys(collectionConfig.deck)) {
+        const deckConfig = collectionConfig.deck[deckKey];
+        results.push({
+          workspaceSlug,
+          key: deckKey,
+          name: deckConfig.name,
+        });
+      }
+      return results;
+    })
+    .flat();
 
   console.log('<Main>', staticConfig, dynamicConfig); // FIXME DEBUG WHY work is selected
 
@@ -380,7 +396,7 @@ function Main() {
   // Selection
   const [selectedFile, setSelectedFile] = useState<File | undefined>();
   const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>();
-  const [selectedDeck, setSelectedDeck] = useState<Deck | undefined>();
+  const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>();
 
   useEffect(() => {
     // Load all files to provide them in cmd+k
@@ -475,7 +491,7 @@ function Main() {
     setSelectedDeskId(id);
   };
 
-  const handleDeckSelected = (deck: Deck) => {
+  const handleDeckSelected = (deck: DeckRef) => {
     setSelectedDeck(deck);
   };
 
@@ -523,7 +539,7 @@ function Main() {
       icon: Notebook,
     },
     {
-      slug: 'study',
+      slug: 'decks',
       name: 'Study',
       icon: Brain,
     },
@@ -586,7 +602,7 @@ function Main() {
         // Data
         workspaces={staticConfig.workspaces}
         desks={dynamicConfig.desks}
-        decks={staticConfig.study?.decks}
+        decks={deckRefs}
         bookmarks={dynamicConfig.bookmarks}
         files={files}
         // Events
@@ -701,7 +717,7 @@ function Main() {
         {activity === 'journal' && <Journal />}
 
         {/* Study */}
-        {activity === 'study' && <Revision deck={selectedDeck} />}
+        {activity === 'decks' && <Decks deck={selectedDeck} />}
 
         {/* Tasks */}
         {activity === 'tasks' && <Planner />}

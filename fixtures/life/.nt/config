@@ -12,13 +12,14 @@ preset="medium"
 q="-#ignore @kind:quote"
 name="Favorite Quotes"
 
-[deck.general]
-name = "General"
-path = "path:skills/learning"
-newFlashcardsPerDay = 5
-
 [deck.learning]
-name = "Programming"
-path = "path:skills/programming"
+name = "Learning"
+query = "path:skills/learning"
 newFlashcardsPerDay = 10
-boostFactor = 120
+algorithmSettings.easeFactor = 2.5
+
+[deck.programmming]
+name = "Programming"
+query = "#programming"
+newFlashcardsPerDay = 5
+algorithmSettings.easeFactor = 1.5

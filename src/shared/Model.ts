@@ -5,7 +5,6 @@ export interface EditorStaticConfig {
   dailyQuote?: DailyQuoteConfig;
   inspirations?: InspirationConfig[];
   zenMode?: ZenConfig;
-  study?: StudyConfig;
 }
 
 export interface WorkspaceConfig {
@@ -33,17 +32,6 @@ export interface ZenConfig {
 export interface ZenQuery {
   query: string;
   workspaces?: string[];
-}
-
-export interface StudyConfig {
-  decks: Deck[];
-}
-
-export interface Deck {
-  name: string;
-  query: string;
-  workspaces?: string[];
-  // TODO add SRS-algorithm parameters
 }
 
 /* Dynamic Config */
@@ -96,15 +84,15 @@ export interface Block {
 
 // .nt/config
 export interface CollectionConfig {
-  core: ConfigCore | null;
-  deck: { [key: string]: ConfigDeck };
-  search: { [key: string]: ConfigSearch };
+  core: CoreConfig | null;
+  deck: { [key: string]: DeckConfig };
+  search: { [key: string]: SearchConfig };
 }
-export interface ConfigCore {
+export interface CoreConfig {
   extensions: string[];
   maxObjectsPerPackFile: number;
 }
-export interface ConfigDeck {
+export interface DeckConfig {
   name: string;
   query: string;
   boostFactor: number;
@@ -113,12 +101,60 @@ export interface ConfigDeck {
   algorithm: string;
   algorithmSettings: { [key: string]: any };
 }
-export interface ConfigSearch {
+export interface SearchConfig {
   q: string;
   name: string;
 }
 
+/* API */
+
+export interface Deck {
+  workspaceSlug: string;
+  key: string;
+  config: DeckConfig;
+  stats: StatsDeck;
+}
+export interface StatsDeck {
+  due: number;
+  new: number;
+}
+export interface DeckRef {
+  workspaceSlug: string;
+  key: string;
+  name: string;
+}
+export interface Review {
+  feedback: string; // easy | good | again | hard | too-easy | too-hard
+  durationInMs: number;
+  completedAt: Date;
+}
+
 /* UI Model */
+
+export interface Flashcard {
+  // Flashcards are related to their note and many attributes or properties on the note
+  // are interesting when working with a flashcard. (ex: the note line to edit)
+
+  oid: string;
+  oidFile: string;
+  oidNote: string;
+
+  // Note-specific attributes
+  noteRelativePath: string;
+  noteLine: number;
+  noteShortTitle: string;
+  noteTags: string[];
+  noteAttributes: { [name: string]: any };
+
+  // Content in HTML
+  front: string;
+  back: string;
+
+  // SRS
+  dueAt: string; // ISO Format (TODO use type Date instead?), empty if never studied
+  studiedAt: string; // ISO Format (TODO use type Date instead?), empty if never studied
+  settings: { [name: string]: any };
+}
 
 export interface NoteRef {
   oid: string;

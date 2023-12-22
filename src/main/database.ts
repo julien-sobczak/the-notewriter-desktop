@@ -629,6 +629,165 @@ export default class DatabaseManager {
     return this.searchNotes(`path:${relativePath}`, workspaceSlug, 0, false);
   }
 
+  /* Deck Management */
+
+  async getDeckStats(
+    workspaceSlug: string,
+    deckConfig: Model.DeckConfig
+  ): Promise<Model.StatsDeck> {
+    const db = this.datasources.get(workspaceSlug);
+    if (!db) {
+      throw new Error(`No datasource ${workspaceSlug} found`);
+    }
+
+    return new Promise<Model.StatsDeck>((resolve, reject) => {
+      let sql = `
+        SELECT
+          COUNT(CASE WHEN flashcard.due_at IS NOT '' AND flashcard.due_at < '?' THEN 1 END) as count_due,
+          COUNT(CASE WHEN flashcard.due_at IS NULL OR flashcard.due_at = '' THEN 1 END) as count_new
+        FROM note_fts JOIN note on note.oid = note_fts.oid
+        JOIN flashcard on flashcard.note_oid = note.oid WHERE note.kind='flashcard' AND `;
+      const whereContent = queryPart2sql(deckConfig.query);
+      if (whereContent) {
+        sql += ` AND ${whereContent}`;
+      }
+      sql += ';';
+
+      db.get(sql, calculateDueDate(), (err: any, row: any) => {
+        if (err) {
+          console.log('Error while searching for due flashcards', err);
+          reject(err);
+        } else {
+          resolve({
+            due: row.count_due,
+            new: row.count_new,
+          });
+        }
+      });
+    });
+  }
+
+  async getTodayFlashcards(
+    workspaceSlug: string,
+    deckConfig: Model.DeckConfig
+  ): Promise<Model.Flashcard[]> {
+    const db = this.datasources.get(workspaceSlug);
+    if (!db) {
+      throw new Error(`No datasource ${workspaceSlug} found`);
+    }
+
+    return new Promise<Model.Flashcard[]>((resolve, reject) => {
+      const sql = `
+        SELECT
+          flashcard.oid,
+          flashcard.file_oid,
+          flashcard.note_oid,
+          note.relative_path,
+          note.line,
+          note.short_title,
+          note.tags,
+          note.attributes,
+          flashcard.front_html,
+          flashcard.back_html,
+          flashcard.due_at,
+          flashcard.studied_at,
+          flashcard.settings
+        FROM note_fts JOIN note on note.oid = note_fts.oid
+        JOIN flashcard on flashcard.note_oid = note.oid
+        WHERE note.kind='flashcard'
+        AND flashcard.due_at IS NOT '' AND flashcard.due_at < '${calculateDueDate()}'
+        AND ${queryPart2sql(deckConfig.query)}
+
+        UNION
+
+        SELECT
+          flashcard.oid,
+          flashcard.file_oid,
+          flashcard.note_oid,
+          note.relative_path,
+          note.line,
+          note.short_title,
+          note.tags,
+          note.attributes,
+          flashcard.front_html,
+          flashcard.back_html,
+          flashcard.due_at,
+          flashcard.studied_at,
+          flashcard.settings
+        FROM note_fts JOIN note on note.oid = note_fts.oid
+        JOIN flashcard on flashcard.note_oid = note.oid
+        WHERE note.kind='flashcard'
+        AND flashcard.due_at IS NULL OR flashcard.due_at = ''
+        AND ${queryPart2sql(deckConfig.query)}
+        `;
+
+      db.all(sql, calculateDueDate(), (err: any, rows: any[]) => {
+        if (err) {
+          console.log('Error while searching for due flashcards', err);
+          reject(err);
+          return;
+        }
+
+        const results: Model.Flashcard[] = [];
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const flashcard: Model.Flashcard = {
+            oid: row.oid,
+            oidFile: row.file_oid,
+            oidNote: row.note_oid,
+            noteRelativePath: row.relative_path,
+            noteLine: row.line,
+            noteShortTitle: row.short_title,
+            noteTags: row.tags.split(','),
+            noteAttributes: JSON.parse(row.attributes),
+            front: row.front_html,
+            back: row.back_html,
+            dueAt: row.due_at,
+            studiedAt: row.studied_at,
+            settings: JSON.parse(row.settings),
+          };
+          results.push(flashcard);
+        }
+        resolve(results);
+      });
+    });
+  }
+
+  async updateFlashcard(
+    workspaceSlug: string,
+    deckConfig: Model.DeckConfig,
+    flashcard: Model.Flashcard
+  ): Promise<Model.Flashcard> {
+    const db = this.datasources.get(workspaceSlug);
+    if (!db) {
+      throw new Error(`No datasource ${workspaceSlug} found`);
+    }
+
+    return new Promise<Model.Flashcard>((resolve, reject) => {
+      // The NoteWriter Desktop only updates SRS fields.
+      const data = [
+        flashcard.dueAt,
+        flashcard.studiedAt,
+        JSON.stringify(flashcard.settings),
+        flashcard.oid,
+      ];
+      const sql = `UPDATE flashcard
+                  SET
+                    due_at = ?,
+                    studied_at = ?,
+                    settings = ?
+                  WHERE oid = ?`;
+      db.run(sql, data, (err: any) => {
+        if (err) {
+          console.log('Error while searching for due flashcards', err);
+          reject(err);
+        } else {
+          resolve(flashcard);
+        }
+      });
+    });
+  }
+
   /* Converters */
 
   #rowToFile(row: any, workspaceSlug: string): Model.File {
@@ -705,102 +864,107 @@ export function readStringValue(q: string): [string, string] {
   return [value, q.substring(nextSpaceIndex + 1).trim()];
 }
 
-function queryPart2sql(q: string): string {
-  const query = q.trim();
+function queryPart2sql(qParent: string): string {
+  const queryPart2sqlInner = (q: string): string => {
+    const query = q.trim();
 
-  if (query.startsWith('(')) {
-    // Find closing parenthesis
-    let countOpening = 0;
-    for (let i = 0; i < query.length; i++) {
-      if (query.charAt(i) === '(') {
-        countOpening++;
-      } else if (query.charAt(i) === ')') {
-        countOpening--;
-        if (countOpening === 0) {
-          let sql = `(${queryPart2sql(query.substring(1, i))})`;
-          if (i < query.length - 1) {
-            sql += ` AND ${queryPart2sql(query.substring(i + 1))}`;
+    if (query.startsWith('(')) {
+      // Find closing parenthesis
+      let countOpening = 0;
+      for (let i = 0; i < query.length; i++) {
+        if (query.charAt(i) === '(') {
+          countOpening++;
+        } else if (query.charAt(i) === ')') {
+          countOpening--;
+          if (countOpening === 0) {
+            let sql = `(${queryPart2sqlInner(query.substring(1, i))})`;
+            if (i < query.length - 1) {
+              sql += ` AND ${queryPart2sqlInner(query.substring(i + 1))}`;
+            }
+            return sql;
           }
-          return sql;
         }
       }
+      throw new Error("missing ')' in query");
     }
-    throw new Error("missing ')' in query");
-  }
 
-  if (query.startsWith('#')) {
-    const i = query.indexOf(' ');
-    if (i === -1) {
-      return `note.tags LIKE '%${query.substring(1)}%'`;
+    if (query.startsWith('#')) {
+      const i = query.indexOf(' ');
+      if (i === -1) {
+        return `note.tags LIKE '%${query.substring(1)}%'`;
+      }
+      // eslint-disable-next-line prettier/prettier
+      return `note.tags LIKE '%${query.substring(1, i)}%' AND ${queryPart2sqlInner(query.substring(i + 1))}`;
     }
-    // eslint-disable-next-line prettier/prettier
-    return `note.tags LIKE '%${query.substring(1, i)}%' AND ${queryPart2sql(query.substring(i + 1))}`;
-  }
 
-  if (query.startsWith('OR ') || query.startsWith('or ')) {
-    return `OR ${queryPart2sql(query.substring(3))}`;
-  }
-  if (query.startsWith('AND ') || query.startsWith('and ')) {
-    return `AND ${queryPart2sql(query.substring(3))}`;
-  }
+    if (query.startsWith('OR ') || query.startsWith('or ')) {
+      return `OR ${queryPart2sqlInner(query.substring(3))}`;
+    }
+    if (query.startsWith('AND ') || query.startsWith('and ')) {
+      return `AND ${queryPart2sqlInner(query.substring(3))}`;
+    }
 
-  if (query.startsWith('path:')) {
-    const subQuery = query.substring('path:'.length);
-    const [value, remainingQuery] = readStringValue(subQuery);
-    let sql = `note.relative_path LIKE '${value}%'`;
+    if (query.startsWith('path:')) {
+      const subQuery = query.substring('path:'.length);
+      const [value, remainingQuery] = readStringValue(subQuery);
+      let sql = `note.relative_path LIKE '${value}%'`;
+      if (remainingQuery) {
+        sql += ` AND ${queryPart2sqlInner(remainingQuery)}`;
+      }
+      return sql;
+    }
+
+    if (query.startsWith('@kind:')) {
+      const nextSpaceIndex = query.indexOf(' ');
+      let kind = '';
+      let remainingQuery;
+      if (nextSpaceIndex === -1) {
+        kind = query.substring('@kind:'.length);
+      } else {
+        kind = query.substring('@kind:'.length, nextSpaceIndex);
+        remainingQuery = query.substring(nextSpaceIndex);
+      }
+      let sql = `note.kind='${kind}'`;
+      if (remainingQuery) {
+        sql += ` AND ${queryPart2sqlInner(remainingQuery)}`;
+      }
+      return sql;
+    }
+
+    if (query.startsWith('@')) {
+      const nextColonIndex = query.indexOf(':');
+      if (nextColonIndex === -1) {
+        throw new Error(`missing ':' in query`);
+      }
+      const name = query.substring(1, nextColonIndex);
+      const subQuery = query.substring(nextColonIndex + 1);
+      const [value, remainingQuery] = readStringValue(subQuery);
+      let sql = `json_extract(note.attributes, "$.${name}") = "${value}"`;
+      if (remainingQuery) {
+        sql += ` AND ${queryPart2sqlInner(remainingQuery)}`;
+      }
+      return sql;
+    }
+
+    // Or just a text to match
+    const [value, remainingQuery] = readStringValue(query);
+    let sql = `note_fts MATCH '${value}'`;
     if (remainingQuery) {
-      sql += ` AND ${queryPart2sql(remainingQuery)}`;
+      sql += ` AND ${queryPart2sqlInner(remainingQuery)}`;
     }
     return sql;
-  }
+  };
 
-  if (query.startsWith('@kind:')) {
-    const nextSpaceIndex = query.indexOf(' ');
-    let kind = '';
-    let remainingQuery;
-    if (nextSpaceIndex === -1) {
-      kind = query.substring('@kind:'.length);
-    } else {
-      kind = query.substring('@kind:'.length, nextSpaceIndex);
-      remainingQuery = query.substring(nextSpaceIndex);
-    }
-    let sql = `note.kind='${kind}'`;
-    if (remainingQuery) {
-      sql += ` AND ${queryPart2sql(remainingQuery)}`;
-    }
-    return sql;
-  }
-
-  if (query.startsWith('@')) {
-    const nextColonIndex = query.indexOf(':');
-    if (nextColonIndex === -1) {
-      throw new Error(`missing ':' in query`);
-    }
-    const name = query.substring(1, nextColonIndex);
-    const subQuery = query.substring(nextColonIndex + 1);
-    const [value, remainingQuery] = readStringValue(subQuery);
-    let sql = `json_extract(note.attributes, "$.${name}") = "${value}"`;
-    if (remainingQuery) {
-      sql += ` AND ${queryPart2sql(remainingQuery)}`;
-    }
-    return sql;
-  }
-
-  // Or just a text to match
-  const [value, remainingQuery] = readStringValue(query);
-  let sql = `note_fts MATCH '${value}'`;
-  if (remainingQuery) {
-    sql += ` AND ${queryPart2sql(remainingQuery)}`;
-  }
-  return sql;
+  let result = queryPart2sqlInner(qParent);
+  // Fix a bug in logic as we systematically append 'AND' when the query is not
+  // completely parsed even if the following keyword is 'OR'
+  result = result.replace('AND OR', 'OR');
+  return result;
 }
 
 // eslint-disable-next-line import/prefer-default-export
 export function query2sql(q: string, limit: number, shuffle: boolean): string {
-  let whereContent = queryPart2sql(q);
-  // Fix a bug in logic as we systematically append 'AND' when the query is not
-  // completely parsed even if the following keyword is 'OR'
-  whereContent = whereContent.replace('AND OR', 'OR');
+  const whereContent = queryPart2sql(q);
   const fields =
     'note.oid, note.file_oid, note.kind, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title_html, note.content_html, note.comment_html';
   let sql = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`;
@@ -815,4 +979,11 @@ export function query2sql(q: string, limit: number, shuffle: boolean): string {
   }
   sql += ';';
   return sql;
+}
+
+export function calculateDueDate(): string {
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
+  const dueDate = now.toDateString(); // Ex: "2006-01-02T15:04:05.999999999Z07:00"
+  return dueDate;
 }

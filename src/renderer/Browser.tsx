@@ -36,7 +36,7 @@ function Browser({ file }: BrowserProps) {
   // Read configured workspaces (useful to populate the dropdown)
   const { workspaces } = config.static;
 
-  // Currently selected workspace
+  // Currently selected workspace(s)
   const [selectedWorkspace, setSelectedWorkspace] = useState<
     string | undefined
   >(getDefaultWorkspaceSlug(file, workspaces));

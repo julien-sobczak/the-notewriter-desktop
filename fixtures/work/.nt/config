@@ -8,6 +8,6 @@ command="ffmpeg"
 parallel=1
 preset="medium"
 
-[deck.work]
-name = "Work"
-newFlashcardsPerDay = 1
+[search.quotes]
+q="-#ignore @kind:quote"
+name="Favorite Quotes"

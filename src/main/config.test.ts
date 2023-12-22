@@ -5,11 +5,7 @@ import { load } from 'js-toml';
 import { CollectionConfig } from 'shared/Model';
 import ConfigManager from './config';
 
-beforeEach(() => {});
-
-afterEach(() => {});
-
-// Learnign test to demonstrate js-toml working
+// Learning test to demonstrate js-toml working
 test('js-toml', () => {
   const data = load(`
 [core]

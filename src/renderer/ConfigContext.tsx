@@ -1,7 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect } from 'react';
 import { useImmerReducer } from 'use-immer';
-import { EditorStaticConfig, EditorDynamicConfig } from 'shared/Model';
+import {
+  EditorStaticConfig,
+  EditorDynamicConfig,
+  CollectionConfig,
+} from 'shared/Model';
 import configReducer from './configReducer';
 
 // Useful Resources:
@@ -11,6 +15,7 @@ import configReducer from './configReducer';
 type ConfigContextType = {
   static: EditorStaticConfig;
   dynamic: EditorDynamicConfig;
+  collections: { [key: string]: CollectionConfig };
 };
 
 const initialState: ConfigContextType = {
@@ -21,6 +26,7 @@ const initialState: ConfigContextType = {
   dynamic: {
     desks: [],
   },
+  collections: {},
 };
 
 export const ConfigContext = createContext<{

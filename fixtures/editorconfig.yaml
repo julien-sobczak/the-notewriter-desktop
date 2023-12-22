@@ -24,10 +24,3 @@ zenMode:
   - query: "path:references @kind:quote"
     workspaces: [life]
   - query: "path:thoughts"
-
-study:
-  decks:
-  - name: General
-    query: "path:skills/learning"
-  - name: Programming
-    query: "path:skills/programming"

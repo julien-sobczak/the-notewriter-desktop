@@ -18,14 +18,15 @@ export default class ConfigManager {
 
   editorDynamicConfig: EditorDynamicConfig;
 
-  collectionConfigs: CollectionConfig[];
+  collectionConfigs: { [key: string]: CollectionConfig } = {};
 
   constructor() {
     this.editorStaticConfig = ConfigManager.#readStaticConfig();
     this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
-    this.collectionConfigs = ConfigManager.#readCollectionConfigs(
-      this.editorStaticConfig
-    );
+    for (const workspaceConfig of this.editorStaticConfig.workspaces) {
+      this.collectionConfigs[workspaceConfig.slug] =
+        ConfigManager.#readCollectionConfig(workspaceConfig);
+    }
   }
 
   // Returns the home directory except if the environment variable $NT_HOME is set.
@@ -80,21 +81,16 @@ export default class ConfigManager {
     return JSON.parse(data) as EditorDynamicConfig;
   }
 
-  static #readCollectionConfigs(
-    staticConfig: EditorStaticConfig
-  ): CollectionConfig[] {
-    const results: CollectionConfig[] = [];
-    for (const workspace of staticConfig.workspaces) {
-      const workspacePath = normalizePath(workspace.path);
-      const workspaceConfigPath = path.join(workspacePath, '.nt/config');
-      if (!fs.existsSync(workspaceConfigPath)) {
-        throw new Error(`Missing configuration ${workspaceConfigPath}`);
-      }
-      const data = fs.readFileSync(workspaceConfigPath, 'utf8');
-      const collectionConfig = loadTOML(data) as CollectionConfig;
-      results.push(collectionConfig);
+  static #readCollectionConfig(workspace: WorkspaceConfig): CollectionConfig {
+    const workspacePath = normalizePath(workspace.path);
+    const workspaceConfigPath = path.join(workspacePath, '.nt/config');
+    if (!fs.existsSync(workspaceConfigPath)) {
+      throw new Error(`Missing configuration ${workspaceConfigPath}`);
     }
-    return results;
+    const data = fs.readFileSync(workspaceConfigPath, 'utf8');
+    const collectionConfig = loadTOML(data) as CollectionConfig;
+    console.log('Found collection config', collectionConfig);
+    return collectionConfig;
   }
 
   // Traverse the static configuration to apply default values.
@@ -132,14 +128,6 @@ export default class ConfigManager {
         const query = config.zenMode.queries[i];
         if (!query.workspaces) {
           query.workspaces = selectedWorkspaceSlugs;
-        }
-      }
-    }
-    if (config.study) {
-      for (let i = 0; i < config.study.decks.length; i++) {
-        const deck = config.study.decks[i];
-        if (!deck.workspaces) {
-          deck.workspaces = selectedWorkspaceSlugs;
         }
       }
     }

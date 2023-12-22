@@ -3,13 +3,13 @@
 # Move into fixtures directory
 cd $1
 
-# Iterate dynamically over subdirectories
+# Iterate over subdirectories
 for subdir in $(find . -mindepth 1 -maxdepth 1 -type d); do
   echo "📁 Moving to $PWD/$subdir...";
   cd $PWD/$subdir;
 
   if [[ $PWD =~ "fixtures" ]]; then
-    rm -Rf $PWD/.nt
+    rm -Rf $PWD/.nt/{objects,refs,.gitignore,database.db,index}
     echo "🗑️ Trashed $PWD/.nt";
   fi
 

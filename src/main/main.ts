@@ -31,7 +31,14 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath, normalizePath } from './util';
 import ConfigManager from './config';
 import DatabaseManager from './database';
-import { Query, NoteRef, Statistics } from '../shared/Model';
+import {
+  Query,
+  NoteRef,
+  Statistics,
+  Deck,
+  DeckRef,
+  Flashcard,
+} from '../shared/Model';
 
 const config = new ConfigManager();
 const db = new DatabaseManager();
@@ -96,6 +103,61 @@ api.post('/multi-search', async (request, response) => {
   const results = await db.multiSearch(queries);
   console.debug(`Found ${results.length} note(s)`);
   response.send(results);
+});
+api.post('/list-decks', async (request, response) => {
+  const workspaceSlugs = request.body as string[];
+  console.debug(`POST /list-decks received for workspaces ${workspaceSlugs}`);
+  const decks: Deck[] = [];
+  for (const workspaceSlug of workspaceSlugs) {
+    const collectionConfig = config.collectionConfigs[workspaceSlug];
+    const deckKeys = Object.keys(collectionConfig.deck);
+    const deckConfigs = Object.keys(collectionConfig.deck).map(
+      (deckKey) => collectionConfig.deck[deckKey]
+    );
+    deckConfigs.forEach(async (deckConfig, index) => {
+      const deckStats = await db.getDeckStats(workspaceSlug, deckConfig);
+      decks.push({
+        workspaceSlug,
+        key: deckKeys[index],
+        config: deckConfig,
+        stats: deckStats,
+      });
+    });
+  }
+  console.debug(`Found ${decks.length} decks for workspaces ${workspaceSlugs}`);
+  response.send(decks);
+});
+api.post('/list-today-flashcards', async (request, response) => {
+  const deckRef = request.body as DeckRef;
+  console.debug(
+    `POST /list-today-flashcards received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`
+  );
+  const collectionConfig = config.collectionConfigs[deckRef.workspaceSlug];
+  const deckConfig = collectionConfig.deck[deckRef.key];
+  const flashcards = await db.getTodayFlashcards(
+    deckRef.workspaceSlug,
+    deckConfig
+  );
+  console.debug(
+    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`
+  );
+  response.send(flashcards);
+});
+api.post('/update-flashcard', async (request, response) => {
+  const { deckRef, flashcard } = request.body as {
+    deckRef: DeckRef;
+    flashcard: Flashcard;
+  };
+  console.debug(
+    `POST /update-flashcard received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`
+  );
+  const collectionConfig = config.collectionConfigs[deckRef.workspaceSlug];
+  const deckConfig = collectionConfig.deck[deckRef.key];
+  await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
+  console.debug(
+    `Flashcard ${flashcard.noteShortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`
+  );
+  response.send(flashcard);
 });
 api.listen(port, () => {
   console.log(`Server Listening on PORT: ${port}`);
