@@ -9,12 +9,12 @@ for subdir in $(find . -mindepth 1 -maxdepth 1 -type d); do
   cd $PWD/$subdir;
 
   if [[ $PWD =~ "fixtures" ]]; then
-    rm -Rf $PWD/.nt/{objects,refs,.gitignore,database.db,index}
-    echo "🗑️ Trashed $PWD/.nt";
+    rm -Rf $PWD/.nt/{objects,refs,database.db,index}
+    echo "🗑️ Cleaned $PWD/.nt";
   fi
 
-  nt init
-  echo "✅ 'nt init' completed successfully";
+  # Fixtures are already configured
+  # No need to run "nt init"
 
   nt add .
   echo "✅ 'nt add' completed successfully";

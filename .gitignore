@@ -31,4 +31,5 @@ npm-debug.log.*
 # fixtures
 /fixtures/*/.nt/*
 !/fixtures/*/.nt/config
-/fixtures/*/.ntignore
+!/fixtures/*/.nt/.gitignore
+!/fixtures/*/.ntignore
