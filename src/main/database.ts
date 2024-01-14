@@ -643,17 +643,17 @@ export default class DatabaseManager {
     return new Promise<Model.StatsDeck>((resolve, reject) => {
       let sql = `
         SELECT
-          COUNT(CASE WHEN flashcard.due_at IS NOT '' AND flashcard.due_at < '?' THEN 1 END) as count_due,
+          COUNT(CASE WHEN flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}' THEN 1 END) as count_due,
           COUNT(CASE WHEN flashcard.due_at IS NULL OR flashcard.due_at = '' THEN 1 END) as count_new
         FROM note_fts JOIN note on note.oid = note_fts.oid
-        JOIN flashcard on flashcard.note_oid = note.oid WHERE note.kind='flashcard' AND `;
+        JOIN flashcard on flashcard.note_oid = note.oid WHERE note.kind='flashcard'`;
       const whereContent = queryPart2sql(deckConfig.query);
       if (whereContent) {
         sql += ` AND ${whereContent}`;
       }
       sql += ';';
 
-      db.get(sql, calculateDueDate(), (err: any, row: any) => {
+      db.get(sql, (err: any, row: any) => {
         if (err) {
           console.log('Error while searching for due flashcards', err);
           reject(err);
@@ -695,7 +695,7 @@ export default class DatabaseManager {
         FROM note_fts JOIN note on note.oid = note_fts.oid
         JOIN flashcard on flashcard.note_oid = note.oid
         WHERE note.kind='flashcard'
-        AND flashcard.due_at IS NOT '' AND flashcard.due_at < '${calculateDueDate()}'
+        AND flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}'
         AND ${queryPart2sql(deckConfig.query)}
 
         UNION
@@ -984,6 +984,6 @@ export function query2sql(q: string, limit: number, shuffle: boolean): string {
 export function calculateDueDate(): string {
   const now = new Date();
   now.setHours(23, 59, 59, 999);
-  const dueDate = now.toDateString(); // Ex: "2006-01-02T15:04:05.999999999Z07:00"
+  const dueDate = now.toISOString(); // Ex: "2006-01-02T15:04:05.999999999Z07:00"
   return dueDate;
 }

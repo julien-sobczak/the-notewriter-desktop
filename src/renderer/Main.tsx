@@ -344,15 +344,16 @@ export interface Activity {
 
 function Main() {
   const { config, dispatch } = useContext(ConfigContext);
+  console.log('<Main>', config.static.workspaces); // FIXME remove
 
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
   const collectionConfigs = config.collections;
-  const deckRefs = Object.keys(collectionConfigs)
+  const deckRefs = Object.keys(collectionConfigs || {})
     .map((workspaceSlug: string): DeckRef[] => {
       const collectionConfig = collectionConfigs[workspaceSlug];
       const results: DeckRef[] = [];
-      for (const deckKey of Object.keys(collectionConfig.deck)) {
+      for (const deckKey of Object.keys(collectionConfig.deck || {})) {
         const deckConfig = collectionConfig.deck[deckKey];
         results.push({
           workspaceSlug,
@@ -363,8 +364,6 @@ function Main() {
       return results;
     })
     .flat();
-
-  console.log('<Main>', staticConfig, dynamicConfig); // FIXME DEBUG WHY work is selected
 
   // Global search
   const inputElement = useRef<HTMLInputElement>(null);

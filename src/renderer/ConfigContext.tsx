@@ -45,6 +45,7 @@ export function ConfigContextProvider({ children }: any) {
     if (!window.electron) return;
     const { ipcRenderer } = window.electron;
     ipcRenderer.on('configuration-loaded', (arg) => {
+      console.log('Received [configuration-loaded]');
       const existingConfig = arg;
       dispatch({
         type: 'init',

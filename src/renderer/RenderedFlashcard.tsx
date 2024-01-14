@@ -3,7 +3,7 @@ import { Flashcard, Review } from '../shared/Model';
 
 type RenderedFlashcardProps = {
   flashcard: Flashcard;
-  onReviewed?: (answer: Review) => void;
+  onReviewed?: (review: Review) => void;
 };
 
 function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
@@ -17,7 +17,7 @@ function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
     onReviewed({
       feedback,
       durationInMs: completionTime.getTime() - startTime.getTime(),
-      completedAt: completionTime,
+      completedAt: completionTime.toISOString,
     });
   };
 

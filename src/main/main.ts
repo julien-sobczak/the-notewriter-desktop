@@ -38,6 +38,7 @@ import {
   Deck,
   DeckRef,
   Flashcard,
+  Review,
 } from '../shared/Model';
 
 const config = new ConfigManager();
@@ -107,23 +108,30 @@ api.post('/multi-search', async (request, response) => {
 api.post('/list-decks', async (request, response) => {
   const workspaceSlugs = request.body as string[];
   console.debug(`POST /list-decks received for workspaces ${workspaceSlugs}`);
+
   const decks: Deck[] = [];
   for (const workspaceSlug of workspaceSlugs) {
     const collectionConfig = config.collectionConfigs[workspaceSlug];
     const deckKeys = Object.keys(collectionConfig.deck);
-    const deckConfigs = Object.keys(collectionConfig.deck).map(
+    console.log('Searching into decks', collectionConfig.deck, deckKeys); // FIXME remove
+    const deckConfigs = deckKeys.map(
       (deckKey) => collectionConfig.deck[deckKey]
     );
-    deckConfigs.forEach(async (deckConfig, index) => {
+    for (let i = 0; i < deckConfigs.length; i++) {
+      const deckConfig = deckConfigs[i];
+      // TODO find a better syntax to retrieve stats in parallel
+      // eslint-disable-next-line no-await-in-loop
       const deckStats = await db.getDeckStats(workspaceSlug, deckConfig);
       decks.push({
         workspaceSlug,
-        key: deckKeys[index],
+        key: deckKeys[i],
         config: deckConfig,
         stats: deckStats,
       });
-    });
+    }
   }
+
+  console.log('Outer=', decks.length); // FIXME remove
   console.debug(`Found ${decks.length} decks for workspaces ${workspaceSlugs}`);
   response.send(decks);
 });
@@ -147,13 +155,20 @@ api.post('/update-flashcard', async (request, response) => {
   const { deckRef, flashcard } = request.body as {
     deckRef: DeckRef;
     flashcard: Flashcard;
+    review: Review;
   };
   console.debug(
     `POST /update-flashcard received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`
   );
+
+  // 1. Update in DB
   const collectionConfig = config.collectionConfigs[deckRef.workspaceSlug];
   const deckConfig = collectionConfig.deck[deckRef.key];
   await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
+
+  // 2. Append review to local study
+  
+
   console.debug(
     `Flashcard ${flashcard.noteShortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`
   );
@@ -389,6 +404,7 @@ const createWindow = async () => {
     mainWindow.webContents.send('configuration-loaded', {
       static: config.editorStaticConfig,
       dynamic: config.editorDynamicConfig,
+      collections: config.collectionConfigs,
     });
 
     if (process.env.START_MINIMIZED) {

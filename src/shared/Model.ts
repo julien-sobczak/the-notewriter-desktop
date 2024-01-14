@@ -123,11 +123,6 @@ export interface DeckRef {
   key: string;
   name: string;
 }
-export interface Review {
-  feedback: string; // easy | good | again | hard | too-easy | too-hard
-  durationInMs: number;
-  completedAt: Date;
-}
 
 /* UI Model */
 
@@ -252,4 +247,50 @@ export interface File {
   workspacePath: string;
   relativePath: string;
   countNotes: number;
+}
+
+export interface Study {
+  oid: string;
+  startedAt: string;
+  endedAt: string;
+  reviews: Review[];
+}
+
+export interface Review {
+  flashcardOID: string;
+  feedback: string; // easy | good | again | hard | too-easy | too-hard
+  durationInMs: number;
+  completedAt: string;
+  dueAt: string;
+  settings: { [key: string]: any };
+}
+
+export interface CommitGraph {
+  updatedAt: string;
+  commits: Commit[];
+}
+export interface Commit {
+  oid: string;
+  ctime: string;
+  mtime: string;
+  packFiles: PackFileRef[];
+}
+export interface PackFileRef {
+  oid: string;
+  ctime: string;
+  mtime: string;
+}
+export interface PackFile {
+  oid: string;
+  ctime: string;
+  mtime: string;
+  packObjects: PackObject[];
+}
+export interface PackObject {
+  oid: string;
+  kind: string;
+  state: string;
+  mtime: string;
+  description: string;
+  data: string;
 }
