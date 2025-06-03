@@ -1,25 +1,18 @@
 {
   "compilerOptions": {
     "incremental": true,
-    "target": "es2021",
-    "module": "commonjs",
-    "lib": ["dom", "es2021"],
+    "target": "es2022",
+    "module": "node16",
+    "lib": ["dom", "es2022"],
     "jsx": "react-jsx",
     "strict": true,
     "sourceMap": true,
-    "baseUrl": "./src",
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "allowJs": true,
     "outDir": ".erb/dll"
-  },
-  "ts-node": {
-    // these options are overrides used only by ts-node
-    "compilerOptions": {
-      "module": "commonjs"
-    }
   },
   "exclude": ["test", "release/build", "release/app/dist", ".erb/dll"]
 }

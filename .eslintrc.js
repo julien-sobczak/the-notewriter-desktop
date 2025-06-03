@@ -13,31 +13,18 @@ module.exports = {
     '@typescript-eslint/no-shadow': 'error',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
-    // Overrides:
-    // - Misc
-    'no-plusplus': 'off',
-    'no-restricted-syntax': 'off',
-    'no-use-before-define': 'off',
-    'no-console': 'off',
-    'no-continue': 'off',
-    'prefer-destructuring': 'off',
-    // - Accessibility
-    'jsx-a11y/click-events-have-key-events': 'off',
-    'jsx-a11y/no-noninteractive-element-interactions': 'off',
-    // - React
-    'react/require-default-props': 'off', // DefaultProps are mostly obsolete
   },
   parserOptions: {
-    ecmaVersion: 2020,
+    ecmaVersion: 2022,
     sourceType: 'module',
-    project: './tsconfig.json',
-    tsconfigRootDir: __dirname,
-    createDefaultProgram: true,
   },
   settings: {
     'import/resolver': {
       // See https://github.com/benmosher/eslint-plugin-import/issues/1396#issuecomment-575727774 for line below
-      node: {},
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        moduleDirectory: ['node_modules', 'src/'],
+      },
       webpack: {
         config: require.resolve('./.erb/configs/webpack.config.eslint.ts'),
       },

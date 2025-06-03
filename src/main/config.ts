@@ -269,23 +269,24 @@ export default class ConfigManager {
         mtime: now.toISOString(),
         data: `TODO`, // TODO now
       });
+      /*
+      Each object is self-containing through the `data` attribute and compressed using zlib and encoded in Base 64. You can easily retrieve the uncompressed content:
+
+      ```shell
+      # On MacOS
+      $ brew install qpdf
+      $ echo "<value>" | base64 -d | zlib-flate -uncompress
+      oid: 6ee8a962
+      file_oid: d19a2bba
+      kind: reference
+      relative_path: hello.md
+      wikilink: 'hello#Reference: Hello'
+      content_raw: Coucou
+      content_hash: b70f7d0e2acef2e0fa1c6f117e3c11e0d7082232
+      ...
+      ```
+    */
     }
-
-    Each object is self-containing through the `data` attribute and compressed using zlib and encoded in Base 64. You can easily retrieve the uncompressed content:
-
-```shell
-# On MacOS
-$ brew install qpdf
-$ echo "<value>" | base64 -d | zlib-flate -uncompress
-oid: 6ee8a962
-file_oid: d19a2bba
-kind: reference
-relative_path: hello.md
-wikilink: 'hello#Reference: Hello'
-content_raw: Coucou
-content_hash: b70f7d0e2acef2e0fa1c6f117e3c11e0d7082232
-...
-```
 
     // Create a new commit
     const commit: Commit = {
