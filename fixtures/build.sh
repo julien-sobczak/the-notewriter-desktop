@@ -19,7 +19,7 @@ for subdir in $(find . -mindepth 1 -maxdepth 1 -type d); do
   nt add .
   echo "✅ 'nt add' completed successfully";
 
-  nt commit -m 'Initial commit'
+  nt commit
   echo "✅ 'nt commit' completed successfully";
 
   cd $1
