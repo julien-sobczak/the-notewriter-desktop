@@ -4,7 +4,7 @@ import { useImmerReducer } from 'use-immer';
 import {
   EditorStaticConfig,
   EditorDynamicConfig,
-  CollectionConfig,
+  RepositoryConfig,
 } from 'shared/Model';
 import configReducer from './configReducer';
 
@@ -15,7 +15,7 @@ import configReducer from './configReducer';
 type ConfigContextType = {
   static: EditorStaticConfig;
   dynamic: EditorDynamicConfig;
-  collections: { [key: string]: CollectionConfig };
+  repositories: { [key: string]: RepositoryConfig };
 };
 
 const initialState: ConfigContextType = {
@@ -26,7 +26,7 @@ const initialState: ConfigContextType = {
   dynamic: {
     desks: [],
   },
-  collections: {},
+  repositories: {},
 };
 
 export const ConfigContext = createContext<{

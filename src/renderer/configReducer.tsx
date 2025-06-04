@@ -1,7 +1,7 @@
 import {
   EditorDynamicConfig,
   EditorStaticConfig,
-  CollectionConfig,
+  RepositoryConfig,
   Desk,
   Bookmark,
 } from 'shared/Model';
@@ -9,7 +9,7 @@ import {
 export type Config = {
   static: EditorStaticConfig;
   dynamic: EditorDynamicConfig;
-  collections: { [key: string]: CollectionConfig };
+  repositories: { [key: string]: RepositoryConfig };
 };
 
 export type Action = {
@@ -23,7 +23,7 @@ export default function configReducer(draft: Config, action: Action): any {
     case 'init': {
       draft.static = action.payload.static;
       draft.dynamic = action.payload.dynamic;
-      draft.collections = action.payload.collections;
+      draft.repositories = action.payload.repositories;
       break;
     }
     case 'toggleWorkspaceSelected': {

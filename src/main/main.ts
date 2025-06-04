@@ -73,7 +73,7 @@ api.post('/list-files', async (request, response) => {
   console.debug(`POST /list-files received for workspaces ${workspaceSlugs}`);
   const results = await db.listFiles(workspaceSlugs);
   console.debug(
-    `Found ${results.length} files for workspaces ${workspaceSlugs}`
+    `Found ${results.length} files for workspaces ${workspaceSlugs}`,
   );
   response.send(results);
 });
@@ -111,11 +111,11 @@ api.post('/list-decks', async (request, response) => {
 
   const decks: Deck[] = [];
   for (const workspaceSlug of workspaceSlugs) {
-    const collectionConfig = config.collectionConfigs[workspaceSlug];
-    const deckKeys = Object.keys(collectionConfig.deck);
-    console.log('Searching into decks', collectionConfig.deck, deckKeys); // FIXME remove
+    const repositoryConfig = config.repositoryConfigs[workspaceSlug];
+    const deckKeys = Object.keys(repositoryConfig.deck);
+    console.log('Searching into decks', repositoryConfig.deck, deckKeys); // FIXME remove
     const deckConfigs = deckKeys.map(
-      (deckKey) => collectionConfig.deck[deckKey]
+      (deckKey) => repositoryConfig.deck[deckKey],
     );
     for (let i = 0; i < deckConfigs.length; i++) {
       const deckConfig = deckConfigs[i];
@@ -138,16 +138,16 @@ api.post('/list-decks', async (request, response) => {
 api.post('/list-today-flashcards', async (request, response) => {
   const deckRef = request.body as DeckRef;
   console.debug(
-    `POST /list-today-flashcards received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`
+    `POST /list-today-flashcards received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
   );
-  const collectionConfig = config.collectionConfigs[deckRef.workspaceSlug];
-  const deckConfig = collectionConfig.deck[deckRef.key];
+  const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
+  const deckConfig = repositoryConfig.deck[deckRef.key];
   const flashcards = await db.getTodayFlashcards(
     deckRef.workspaceSlug,
-    deckConfig
+    deckConfig,
   );
   console.debug(
-    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`
+    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
   );
   response.send(flashcards);
 });
@@ -158,19 +158,17 @@ api.post('/update-flashcard', async (request, response) => {
     review: Review;
   };
   console.debug(
-    `POST /update-flashcard received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`
+    `POST /update-flashcard received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
   );
 
   // 1. Update in DB
-  const collectionConfig = config.collectionConfigs[deckRef.workspaceSlug];
-  const deckConfig = collectionConfig.deck[deckRef.key];
+  const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
+  const deckConfig = repositoryConfig.deck[deckRef.key];
   await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
 
   // 2. Append review to local study
-  
-
   console.debug(
-    `Flashcard ${flashcard.noteShortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`
+    `Flashcard ${flashcard.noteShortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
   );
   response.send(flashcard);
 });
@@ -199,7 +197,7 @@ ipcMain.on('edit', (event, workspaceSlug, relativePath, line) => {
 
   // TODO support VISUAL/EDITOR-like env variables
   console.log(
-    `Launching VS Code: code ${workspacePath} -g ${workspacePath}/${relativeFileReference}...`
+    `Launching VS Code: code ${workspacePath} -g ${workspacePath}/${relativeFileReference}...`,
   );
 
   const subprocess = spawn(
@@ -208,7 +206,7 @@ ipcMain.on('edit', (event, workspaceSlug, relativePath, line) => {
     {
       detached: true,
       stdio: 'ignore',
-    }
+    },
   );
   subprocess.on('error', (err) => {
     console.error(`Failed to edit ${relativePath}`, err);
@@ -243,14 +241,14 @@ ipcMain.on(
   'list-notes-in-file',
   async (event, workspaceSlug: string, relativePath: string) => {
     console.debug(
-      `Listing note in file ${relativePath} in workspace ${workspaceSlug}`
+      `Listing note in file ${relativePath} in workspace ${workspaceSlug}`,
     );
     const result = await db.listNotesInFile(workspaceSlug, relativePath);
     console.debug(
-      `Found ${result.length} notes for file ${relativePath} in workspace ${workspaceSlug}`
+      `Found ${result.length} notes for file ${relativePath} in workspace ${workspaceSlug}`,
     );
     event.reply('list-notes-in-file', result);
-  }
+  },
 );
 
 async function doSearch(channel: string, event: IpcMainEvent, query: Query) {
@@ -321,9 +319,8 @@ ipcMain.on('get-statistics', async (event, workspaceSlugs) => {
     countNotesPerKind: new Map<string, number>(),
     countNotesPerNationality: new Map<string, number>(),
   };
-  statistics.countNotesPerNationality = await db.countNotesPerNationality(
-    workspaceSlugs
-  );
+  statistics.countNotesPerNationality =
+    await db.countNotesPerNationality(workspaceSlugs);
   statistics.countNotesPerKind = await db.countNotesPerKind(workspaceSlugs);
   event.reply('get-statistics', statistics);
 });
@@ -346,7 +343,7 @@ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
-  require('electron-debug')();
+  require('electron-debug').default();
 }
 
 const installExtensions = async () => {
@@ -357,7 +354,7 @@ const installExtensions = async () => {
   return installer
     .default(
       extensions.map((name) => installer[name]),
-      forceDownload
+      forceDownload,
     )
     .catch(console.log);
 };
@@ -404,7 +401,7 @@ const createWindow = async () => {
     mainWindow.webContents.send('configuration-loaded', {
       static: config.editorStaticConfig,
       dynamic: config.editorDynamicConfig,
-      collections: config.collectionConfigs,
+      repositories: config.repositoryConfigs,
     });
 
     if (process.env.START_MINIMIZED) {

@@ -24,7 +24,7 @@ function RenderedDeck({
 
   // Read deck config
   const deckConfig =
-    config.collections[deckRef.workspaceSlug].deck[deckRef.key];
+    config.repositories[deckRef.workspaceSlug].deck[deckRef.key];
   console.log(deckConfig.name); // FIXME remove
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>();

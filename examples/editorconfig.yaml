@@ -4,7 +4,7 @@
 
 
 # List of workspaces (= The NoteWriter repositories)
-# Useful when spliting work and life notes in different Git repositories while keeping the options to search across all collections of notes using the desktop application.
+# Useful when spliting work and life notes in different Git repositories while keeping the options to search across all repositories of notes using the desktop application.
 # (Ex; You can keep Go cheatsheets inside your main collection as can be useful if you change work and still want to search them at work)
 workspaces:
 - name: Main
