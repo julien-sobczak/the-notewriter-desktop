@@ -13,10 +13,8 @@ import {
   RepositoryConfig,
   DeckRef,
   Review,
-  Commit,
   PackFile,
   Study,
-  CommitGraph,
 } from '../shared/Model';
 import { normalizePath } from './util';
 
@@ -288,23 +286,8 @@ export default class ConfigManager {
     */
     }
 
-    // Create a new commit
-    const commit: Commit = {
-      oid: uuidv4(),
-      ctime: now.toISOString(),
-      mtime: now.toISOString(),
-      packFiles: [
-        {
-          oid: packFile.oid,
-          ctime: packFile.ctime,
-          mtime: packFile.mtime,
-        },
-      ],
-    };
-
     // Create the pack file
     const objectsPath = this.mustGetObjectsPath(deckRef.workspaceSlug);
-    const commitGraphPath = this.mustGetCommitGraphPath(deckRef.workspaceSlug);
 
     const packFilePath = path.join(
       objectsPath,

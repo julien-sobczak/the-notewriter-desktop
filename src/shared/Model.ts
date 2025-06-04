@@ -1,5 +1,8 @@
 /* Config */
 
+/* Static Config */
+/* editorconfig.yml */
+
 export interface EditorStaticConfig {
   workspaces: WorkspaceConfig[];
   dailyQuote?: DailyQuoteConfig;
@@ -35,6 +38,7 @@ export interface ZenQuery {
 }
 
 /* Dynamic Config */
+/* editorconfig.json */
 
 export interface EditorDynamicConfig {
   bookmarks?: Bookmark[];
@@ -80,17 +84,48 @@ export interface Block {
   noteRefs: NoteRef[];
 }
 
-/* The NoteWriter Config */
 
-// .nt/config
+/* The NoteWriter Config */
+/* .nt/.config.json */
+
 export interface RepositoryConfig {
   core: CoreConfig | null;
-  deck: { [key: string]: DeckConfig };
-  search: { [key: string]: SearchConfig };
+  attributes: { [key: string]: AttributeConfig };
+  types: { [key: string]: TypeConfig };
+  remote: RemoteConfig | null;
+  decks: DeckConfig[];
+  searches: { [key: string]: SearchConfig };
+  // Ignore linter and references sections
 }
 export interface CoreConfig {
   extensions: string[];
-  maxObjectsPerPackFile: number;
+  // Ignore media section
+}
+export interface AttributeConfig {
+  name:    string;
+	aliases: string[];
+	type:    string;
+	format:  string;
+	min:     number;
+	max:     number;
+	pattern: string;
+	inherit: boolean | null;
+}
+export interface TypeConfig {
+  	name: string;
+	  pattern: string;
+	  preprocessors: string[];
+	  requiredAttributes: string[];
+	  optionalAttributes: string[];
+}
+export interface RemoteConfig {
+	type: string;
+	dir: string;
+	endpoint: string;
+	accessKey: string;
+	secretKey: string;
+	bucketName: string;
+	secure: boolean;
 }
 export interface DeckConfig {
   name: string;
@@ -102,8 +137,8 @@ export interface DeckConfig {
   algorithmSettings: { [key: string]: any };
 }
 export interface SearchConfig {
+  title: string;
   q: string;
-  name: string;
 }
 
 /* API */
@@ -265,16 +300,6 @@ export interface Review {
   settings: { [key: string]: any };
 }
 
-export interface CommitGraph {
-  updatedAt: string;
-  commits: Commit[];
-}
-export interface Commit {
-  oid: string;
-  ctime: string;
-  mtime: string;
-  packFiles: PackFileRef[];
-}
 export interface PackFileRef {
   oid: string;
   ctime: string;
