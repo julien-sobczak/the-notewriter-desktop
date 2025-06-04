@@ -1,39 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { load } from 'js-toml';
-import { CollectionConfig } from 'shared/Model';
 import ConfigManager from './config';
-
-// Learning test to demonstrate js-toml working
-test('js-toml', () => {
-  const data = load(`
-[core]
-extensions = ["md", "markdown"]
-
-[search.quotes]
-q = "-#ignore @kind:quote"
-name = "Favorite Quotes"
-
-[deck.life]
-name = "Life"
-query = "path:skills"
-newFlashcardsPerDay = 10
-algorithmSettings.easeFactor = 2.5
-
-[deck.programming]
-name = "Programming"
-query = "#programming"
-newFlashcardsPerDay = 5
-algorithmSettings.easeFactor = 1.5`) as CollectionConfig;
-
-  // Check extract values
-  expect(data?.deck).toHaveProperty('life');
-  expect(data?.deck).toHaveProperty('programming');
-  expect(data?.deck?.life).toBeTruthy();
-  expect(data?.deck?.life?.algorithmSettings.easeFactor).toBe(2.5);
-  expect(data?.deck?.programming?.algorithmSettings.easeFactor).toBe(1.5);
-});
 
 describe('ConfigManager', () => {
   let env: any;
@@ -63,40 +31,46 @@ workspaces:
 
     fs.mkdirSync(path.join(ntHomeDir, 'main/.nt'), { recursive: true });
     fs.writeFileSync(
-      path.join(ntHomeDir, 'main/.nt/config'),
+      path.join(ntHomeDir, 'main/.nt/.config.json'),
       `
-[core]
-extensions = ["md", "markdown"]
-
-[search.quotes]
-q = "-#ignore @kind:quote"
-name = "Favorite Quotes"
-
-[deck.life]
-name = "Life"
-query = "path:skills"
-newFlashcardsPerDay = 10
-algorithmSettings.easeFactor = 2.5
-
-[deck.programmming]
-name = "Programming"
-query = "#programming"
-newFlashcardsPerDay = 5
-algorithmSettings.easeFactor = 1.5
+{
+  "Core": {
+    "Extensions": [
+      "md",
+      "markdown"
+    ],
+    "Medias": {
+      "Command": "ffmpeg",
+      "Parallel": 1,
+      "Preset": "ultrafast"
+    }
+  }
+}
 `
     );
 
     fs.mkdirSync(path.join(ntHomeDir, 'work/.nt'), { recursive: true });
     fs.writeFileSync(
-      path.join(ntHomeDir, 'work/.nt/config'),
+      path.join(ntHomeDir, 'work/.nt/.config.json'),
       `
-[core]
-extensions = ["md", "markdown"]
+{
+  "Core": {
+    "Extensions": [
+      "md",
+      "markdown"
+    ],
+    "Medias": {
+      "Command": "ffmpeg",
+      "Parallel": 1,
+      "Preset": "ultrafast"
+    }
+  }
+}
 `
     );
 
     const configManager = new ConfigManager();
-    expect(configManager.collectionConfigs).toHaveLength(2);
+    expect(configManager.repositoryConfigs).toHaveLength(2);
   });
 
   // restoring everything back

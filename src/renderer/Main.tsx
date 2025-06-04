@@ -348,13 +348,13 @@ function Main() {
 
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
-  const collectionConfigs = config.collections;
-  const deckRefs = Object.keys(collectionConfigs || {})
+  const repositoryConfigs = config.repositories;
+  const deckRefs = Object.keys(repositoryConfigs || {})
     .map((workspaceSlug: string): DeckRef[] => {
-      const collectionConfig = collectionConfigs[workspaceSlug];
+      const repositoryConfig = repositoryConfigs[workspaceSlug];
       const results: DeckRef[] = [];
-      for (const deckKey of Object.keys(collectionConfig.deck || {})) {
-        const deckConfig = collectionConfig.deck[deckKey];
+      for (const deckKey of Object.keys(repositoryConfig.deck || {})) {
+        const deckConfig = repositoryConfig.deck[deckKey];
         results.push({
           workspaceSlug,
           key: deckKey,

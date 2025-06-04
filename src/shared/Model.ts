@@ -83,7 +83,7 @@ export interface Block {
 /* The NoteWriter Config */
 
 // .nt/config
-export interface CollectionConfig {
+export interface RepositoryConfig {
   core: CoreConfig | null;
   deck: { [key: string]: DeckConfig };
   search: { [key: string]: SearchConfig };

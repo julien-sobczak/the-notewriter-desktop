@@ -6,6 +6,7 @@ import webpack from 'webpack';
 import TsconfigPathsPlugins from 'tsconfig-paths-webpack-plugin';
 import webpackPaths from './webpack.paths';
 import { dependencies as externals } from '../../release/app/package.json';
+import path from 'path';
 
 const configuration: webpack.Configuration = {
   externals: [...Object.keys(externals || {})],
@@ -46,6 +47,14 @@ const configuration: webpack.Configuration = {
     modules: [webpackPaths.srcPath, 'node_modules'],
     // There is no need to add aliases here, the paths in tsconfig get mirrored
     plugins: [new TsconfigPathsPlugins()],
+    alias: {
+        // Force Webpack to use the ESM version for @phosphor-icons/react
+        // The '$' ensures it matches the exact module name and not sub-paths
+        '@phosphor-icons/react$': path.resolve(
+         'node_modules/',
+          '@phosphor-icons/react/dist/index.es.js'
+        ),
+      },
   },
 
   plugins: [new webpack.EnvironmentPlugin({ NODE_ENV: 'production' })],
