@@ -1,11 +1,11 @@
 import { capitalize } from './helpers';
 
-type NoteKindProps = {
-  // Kind value
+type NoteTypeProps = {
+  // type value
   value: string;
 };
 
-const kindColors = new Map<string, string>([
+const typeColors = new Map<string, string>([
   // See https://www.w3schools.com/cssref/css_colors.php
   ['free', 'Blue'],
   ['reference', 'DarkGrey'],
@@ -17,14 +17,19 @@ const kindColors = new Map<string, string>([
   ['todo', 'Yellow'],
   ['artwork', 'Tomato'],
   ['snippet', 'LightSkyBlue'],
+  ['unknown', 'LightGray'],
 ]);
 
-export default function NoteKind({ value }: NoteKindProps) {
-  const color = kindColors.get(value) || 'white';
-  const title = capitalize(value);
+export default function NoteType({ value }: NoteTypeProps) {
+  let currentValue = value;
+  if (!value) {
+    currentValue = 'unknown';
+  }
+  const color = typeColors.get(currentValue) || 'white';
+  const title = capitalize(currentValue);
   return (
     <span
-      className="NoteKind"
+      className="NoteType"
       title={title}
       style={{ backgroundColor: color }}
     />

@@ -3,7 +3,7 @@ import { useEffect, useState, useContext } from 'react';
 import classNames from 'classnames';
 import { Bookmark, Note, NoteRef } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
-import NoteKind from './NoteKind';
+import NoteType from './NoteType';
 import RenderedNote from './RenderedNote';
 
 type BookmarkerProps = {
@@ -55,7 +55,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
       <div className="LeftPanel">
         {bookmarks && (
           <ul>
-            {bookmarks.map((savedBookmark) => (
+            {bookmarks.map((savedBookmark: Bookmark) => (
               <li
                 key={savedBookmark.noteOID}
                 className={classNames({
@@ -65,7 +65,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
                 })}
                 onClick={() => handleBookmarkClick(savedBookmark)}
               >
-                <NoteKind value={savedBookmark.noteKind} />
+                <NoteType value={savedBookmark.noteType} />
                 &nbsp;
                 <span
                   className="BookmarkTitle"

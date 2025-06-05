@@ -10,11 +10,11 @@ import {
   Star,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Note, Media, Blob, Bookmark } from 'shared/Model';
+import { Note, Media, Blob, Bookmark } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
-import NoteKind from './NoteKind';
+import NoteType from './NoteType';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -68,7 +68,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
       console.log(`Missing media ${oid}`, mediasByOids);
       result = result.replace(
         mediaTag,
-        `<img src="${NotFound}" class="missing" />`
+        `<img src="${NotFound}" class="missing" />`,
       );
       continue;
     }
@@ -98,7 +98,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
       if (media.blobs.length === 0) {
         result = result.replace(
           mediaTag,
-          `<img src="${NotFound}" class="missing" />`
+          `<img src="${NotFound}" class="missing" />`,
         );
         continue;
       }
@@ -115,21 +115,21 @@ export function formatContent(note: Note, tags: string[] = []): string {
     if (media.kind === 'picture') {
       result = result.replace(
         mediaTag,
-        `<img src="file:${blobPath}" alt="${alt}" title="${title}" />`
+        `<img src="file:${blobPath}" alt="${alt}" title="${title}" />`,
       );
       continue;
     }
     if (media.kind === 'audio') {
       result = result.replace(
         mediaTag,
-        `<audio controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></audio>`
+        `<audio controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></audio>`,
       );
       continue;
     }
     if (media.kind === 'video') {
       result = result.replace(
         mediaTag,
-        `<video controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></video>`
+        `<video controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></video>`,
       );
       continue;
     }
@@ -141,7 +141,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
     }
     result = result.replace(
       mediaTag,
-      `<a target="_blank" href="file:${blobPath}" title="${title}">${label}</a>`
+      `<a target="_blank" href="file:${blobPath}" title="${title}">${label}</a>`,
     );
   }
 
@@ -203,8 +203,8 @@ export default function RenderedNote({
   // Remove extra attributes
   const filteredAttributes = Object.fromEntries(
     Object.entries(note.attributes).filter(
-      ([key]) => !omitAttributes.includes(key)
-    )
+      ([key]) => !omitAttributes.includes(key),
+    ),
   );
 
   const noteHasMetadata = note.tags || filteredAttributes;
@@ -229,7 +229,7 @@ export default function RenderedNote({
 
   // Returns the RenderedNote element.
   const getRenderedNote = (
-    target: HTMLElement | null | undefined
+    target: HTMLElement | null | undefined,
   ): HTMLElement | null | undefined => {
     if (!target) return undefined;
     if (target.classList.contains('RenderedNote')) {
@@ -239,7 +239,7 @@ export default function RenderedNote({
   };
   // Returns the parent of the RenderedNote element.
   const getContainer = (
-    target: HTMLElement | null | undefined
+    target: HTMLElement | null | undefined,
   ): HTMLElement | null | undefined => {
     return getRenderedNote(target)?.parentElement;
   };
@@ -322,7 +322,7 @@ export default function RenderedNote({
       'edit',
       note.workspaceSlug,
       note.relativePath,
-      note.line
+      note.line,
     );
     event.stopPropagation();
   };
@@ -335,7 +335,7 @@ export default function RenderedNote({
     const bookmark: Bookmark = {
       workspaceSlug: note.workspaceSlug,
       noteOID: note.oid,
-      noteKind: note.kind,
+      noteType: note.type,
       noteTitle: note.title,
       noteRelativePath: note.relativePath,
       noteLine: note.line,
@@ -350,7 +350,7 @@ export default function RenderedNote({
   if (config.dynamic && config.dynamic.bookmarks) {
     bookmarked =
       config.dynamic.bookmarks.filter(
-        (bookmark) => bookmark.noteOID === note.oid
+        (bookmark: Bookmark) => bookmark.noteOID === note.oid,
       ).length > 0;
   }
 
@@ -423,7 +423,7 @@ export default function RenderedNote({
       )}
       {showTitle && (
         <div className="RenderedNoteTitle">
-          <NoteKind value={note.kind} />
+          <NoteType value={note.type} />
           <span
             // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{

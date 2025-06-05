@@ -4,7 +4,13 @@ import {
   FilePlus as CommitIcon,
 } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
-import { Deck, DeckRef, Flashcard, Review } from '../shared/Model';
+import {
+  Deck,
+  DeckRef,
+  Flashcard,
+  Review,
+  WorkspaceConfig,
+} from '../shared/Model';
 import Loader from './Loader';
 import RenderedDeck from './RenderedDeck';
 
@@ -30,8 +36,8 @@ function Decks({ deck }: DecksProps) {
   useEffect(() => {
     // Show only decks for currently selected decks
     const workspaceSlugs: string[] = workspaces
-      .filter((w) => w.selected)
-      .map((w) => w.slug);
+      .filter((w: WorkspaceConfig) => w.selected)
+      .map((w: WorkspaceConfig) => w.slug);
 
     console.log('<Decks> slugs', workspaceSlugs); // FIXME remove
 
@@ -55,7 +61,7 @@ function Decks({ deck }: DecksProps) {
   const onFlashcardReviewed = (
     deckRef: DeckRef,
     flashcard: Flashcard,
-    review: Review
+    review: Review,
   ) => {
     fetch('http://localhost:3000/update-flashcard', {
       method: 'POST',
@@ -70,7 +76,7 @@ function Decks({ deck }: DecksProps) {
     })
       .then((response) => response.json())
       .then((updatedFlashcard: Flashcard) => {
-        console.log(`Flashcard ${updatedFlashcard.noteShortTitle} saved`);
+        console.log(`Flashcard ${updatedFlashcard.shortTitle} saved`);
         return null;
       })
       .catch((error: any) => console.log('Error:', error));
@@ -82,7 +88,7 @@ function Decks({ deck }: DecksProps) {
     // Nothing to save as the study object is edited after every review
     // and only committed when explicitly said.
     console.log(
-      `Quitted deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`
+      `Quitted deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
     );
     setSelectedDeck(undefined);
   };

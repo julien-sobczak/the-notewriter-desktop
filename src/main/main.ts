@@ -39,6 +39,7 @@ import {
   DeckRef,
   Flashcard,
   Review,
+  DeckConfig,
 } from '../shared/Model';
 
 const config = new ConfigManager();
@@ -112,13 +113,10 @@ api.post('/list-decks', async (request, response) => {
   const decks: Deck[] = [];
   for (const workspaceSlug of workspaceSlugs) {
     const repositoryConfig = config.repositoryConfigs[workspaceSlug];
-    const deckKeys = Object.keys(repositoryConfig.deck);
-    console.log('Searching into decks', repositoryConfig.deck, deckKeys); // FIXME remove
-    const deckConfigs = deckKeys.map(
-      (deckKey) => repositoryConfig.deck[deckKey],
-    );
-    for (let i = 0; i < deckConfigs.length; i++) {
-      const deckConfig = deckConfigs[i];
+    const deckKeys = Object.keys(repositoryConfig.decks);
+    console.log('Searching into decks', repositoryConfig.decks, deckKeys); // FIXME remove
+    for (let i = 0; i < repositoryConfig.decks.length; i++) {
+      const deckConfig = repositoryConfig.decks[i];
       // TODO find a better syntax to retrieve stats in parallel
       // eslint-disable-next-line no-await-in-loop
       const deckStats = await db.getDeckStats(workspaceSlug, deckConfig);
@@ -131,7 +129,6 @@ api.post('/list-decks', async (request, response) => {
     }
   }
 
-  console.log('Outer=', decks.length); // FIXME remove
   console.debug(`Found ${decks.length} decks for workspaces ${workspaceSlugs}`);
   response.send(decks);
 });
@@ -141,7 +138,24 @@ api.post('/list-today-flashcards', async (request, response) => {
     `POST /list-today-flashcards received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
   );
   const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
-  const deckConfig = repositoryConfig.deck[deckRef.key];
+
+  // Find the deck config
+  let deckConfig: DeckConfig | undefined;
+  for (const deck of repositoryConfig.decks) {
+    if (deck.name === deckRef.key) {
+      deckConfig = deck;
+      break;
+    }
+  }
+
+  if (!deckConfig) {
+    console.error(
+      `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+    );
+    response.send([]); // Send an empty array as response
+    return; // Stop the execution
+  }
+
   const flashcards = await db.getTodayFlashcards(
     deckRef.workspaceSlug,
     deckConfig,
@@ -163,12 +177,28 @@ api.post('/update-flashcard', async (request, response) => {
 
   // 1. Update in DB
   const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
-  const deckConfig = repositoryConfig.deck[deckRef.key];
-  await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
+  let deckConfig: DeckConfig | undefined;
+  for (const deck of repositoryConfig.decks) {
+    if (deck.name === deckRef.key) {
+      deckConfig = deck;
+      break;
+    }
+  }
+  if (!deckConfig) {
+    console.error(
+      `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+    );
+    // Do nothing and simply return the flashcard
+    response.send(flashcard);
+    return;
+  }
 
   // 2. Append review to local study
+  // TODO
+  await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
+
   console.debug(
-    `Flashcard ${flashcard.noteShortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+    `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
   );
   response.send(flashcard);
 });
@@ -316,12 +346,12 @@ ipcMain.on('get-daily-quote', async (event) => {
 
 ipcMain.on('get-statistics', async (event, workspaceSlugs) => {
   const statistics: Statistics = {
-    countNotesPerKind: new Map<string, number>(),
+    countNotesPerType: new Map<string, number>(),
     countNotesPerNationality: new Map<string, number>(),
   };
   statistics.countNotesPerNationality =
     await db.countNotesPerNationality(workspaceSlugs);
-  statistics.countNotesPerKind = await db.countNotesPerKind(workspaceSlugs);
+  statistics.countNotesPerType = await db.countNotesPerType(workspaceSlugs);
   event.reply('get-statistics', statistics);
 });
 

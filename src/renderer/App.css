@@ -724,7 +724,7 @@ button:focus {
 
 /* Misc */
 
-.NoteKind {
+.NoteType {
   /* Simply display a small rounded shape */
   display: inline-block;
   border: 1px solid black;

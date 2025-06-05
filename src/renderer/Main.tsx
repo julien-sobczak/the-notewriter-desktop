@@ -43,7 +43,7 @@ import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
 import Journal from './Journal';
 import Reminders from './Reminders';
-import NoteKind from './NoteKind';
+import NoteType from './NoteType';
 
 const { ipcRenderer } = window.electron;
 
@@ -316,7 +316,7 @@ function CommandMenu({
                 key={savedBookmark.noteOID}
                 onSelect={() => handleBookmarkSelected(savedBookmark)}
               >
-                <NoteKind value={savedBookmark.noteKind} />
+                <NoteType value={savedBookmark.noteType} />
                 &nbsp;
                 <span
                   className="BookmarkTitle"
@@ -376,7 +376,7 @@ function Main() {
 
   // Activities
   const [activity, setActivity] = useState<string>('desktop');
-  const previousActivity = useRef<string>();
+  const previousActivity = useRef<string>('desktop');
   // Use this method to memorize the last activity (useful for example to come back when you left after the zen mode)
   const switchActivity = (newActivity: string) => {
     previousActivity.current = activity;
@@ -386,7 +386,7 @@ function Main() {
   // Desks
   const [openedDesks, setOpenedDesks] = useState<Desk[]>([]);
   const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   // Files
@@ -399,7 +399,9 @@ function Main() {
 
   useEffect(() => {
     // Load all files to provide them in cmd+k
-    const workspaceSlugs: string[] = staticConfig.workspaces.map((w) => w.slug);
+    const workspaceSlugs: string[] = staticConfig.workspaces.map(
+      (w: WorkspaceConfig) => w.slug,
+    );
     fetch('http://localhost:3000/list-files', {
       method: 'POST',
       headers: {
@@ -427,8 +429,8 @@ function Main() {
   };
 
   const selectedWorkspaceSlugs = staticConfig.workspaces
-    .filter((workspace) => workspace.selected)
-    .map((workspace) => workspace.slug);
+    .filter((workspace: WorkspaceConfig) => workspace.selected)
+    .map((workspace: WorkspaceConfig) => workspace.slug);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -445,10 +447,10 @@ function Main() {
     };
     // TODO use REST API instead?
     ipcRenderer.sendMessage('search', query);
-    ipcRenderer.on('search', (arg) => {
+    ipcRenderer.on('search', (arg: any) => {
       const result = arg as QueryResult;
       console.debug(
-        `Found ${result.notes.length} results for ${result.query.q}`
+        `Found ${result.notes.length} results for ${result.query.q}`,
       );
       if (!result.query.blockId) {
         // global search
@@ -583,7 +585,7 @@ function Main() {
             onChange={(event: any) => setInputQuery(event.target.value)}
           />
           <nav className="WorkspaceButtonGroup">
-            {staticConfig.workspaces.map((workspace) => (
+            {staticConfig.workspaces.map((workspace: WorkspaceConfig) => (
               <button
                 type="button"
                 key={workspace.name}

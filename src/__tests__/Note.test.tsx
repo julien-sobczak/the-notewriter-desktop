@@ -1,4 +1,4 @@
-import { Note } from 'shared/Model';
+import { Note } from '../shared/Model';
 import { formatContent } from '../renderer/RenderedNote';
 
 describe('formatContent', () => {
@@ -22,6 +22,8 @@ This is a basic note with an image.
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
       kind: 'picture',
+      relativePath: 'pic.jpeg',
+      extension: 'jpeg',
       blobs: [
         {
           oid: '91cc7e00705770801948780fc639ad6d95db087a',
@@ -58,6 +60,8 @@ This is a basic note with a video.
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
       kind: 'video',
+      relativePath: 'video.mp4',
+      extension: 'mp4',
       blobs: [
         {
           oid: '91cc7e00705770801948780fc639ad6d95db087a',
@@ -94,6 +98,8 @@ This is a basic note with an audio.
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
       kind: 'audio',
+      relativePath: 'audio.mp3',
+      extension: 'mp3',
       blobs: [
         {
           oid: '808263e6d73dfe907317bf7869e0512268221fca',
@@ -125,6 +131,8 @@ This is a basic note with a document link.
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
       kind: 'document',
+      relativePath: 'doc.pdf',
+      extension: 'pdf',
       blobs: [
         {
           oid: '91cc7e00705770801948780fc639ad6d95db087a',
@@ -169,21 +177,26 @@ This is a basic note with an image.
 
 /* Test Helpers */
 
-function createNoteFromContent(html: string): Note {
+function createNoteFromContent(content: string): Note {
   return {
     oid: '7882294f4775c64ea059171387d750ea532a15d4',
     oidFile: '97fa3e4447e15b348fbe7ee2639092eda87ebbac',
     workspaceSlug: 'Personal',
     workspacePath: '~/notes',
-    kind: 'note',
+    slug: 'dummy',
+    type: 'note',
     relativePath: 'note.md',
     wikilink: 'note',
     attributes: {},
     tags: [],
     line: 1,
     title: 'Dummy',
-    content: html,
+    shortTitle: 'Dummy',
+    longTitle: 'Dummy',
+    content,
     comment: '',
     medias: [],
+    marked: false,
+    annotations: [],
   };
 }

@@ -8,8 +8,7 @@ function Reminders() {
     // Retrieve a random quote
     ipcRenderer.sendMessage('get-daily-quote', []);
 
-    ipcRenderer.on('get-daily-quote', (arg) => {
-      const note = arg as Note;
+    ipcRenderer.on('get-daily-quote', (note: Note) => {
       console.log(note);
     });
   }, []);

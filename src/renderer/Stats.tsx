@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useContext } from 'react';
 import { Chart } from 'react-google-charts';
-import { Statistics } from '../shared/Model';
+import { Statistics, WorkspaceConfig } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import Loader from './Loader';
 import { nationalities } from './world';
@@ -17,13 +17,12 @@ function Stats() {
   useEffect(() => {
     // Retrieve the statistics based on currently selected workspaces
     const selectedWorkspaceSlugs = staticConfig.workspaces
-      .filter((workspace) => workspace.selected)
-      .map((workspace) => workspace.slug);
+      .filter((workspace: WorkspaceConfig) => workspace.selected)
+      .map((workspace: WorkspaceConfig) => workspace.slug);
 
     ipcRenderer.sendMessage('get-statistics', selectedWorkspaceSlugs);
 
-    ipcRenderer.on('get-statistics', (arg) => {
-      const stats = arg as Statistics;
+    ipcRenderer.on('get-statistics', (stats: Statistics) => {
       console.log(stats);
       setStatistics(stats);
     });

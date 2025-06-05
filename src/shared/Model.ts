@@ -49,8 +49,8 @@ export interface Bookmark {
   // Identify the note
   workspaceSlug: string;
   noteOID: string;
-  // Copy some attributes to make easy to list favorites and jump to to them
-  noteKind: string;
+  // Copy some attributes to make easy to list favorites and jump to them
+  noteType: string;
   noteTitle: string;
   noteRelativePath: string;
   noteLine: number;
@@ -84,7 +84,6 @@ export interface Block {
   noteRefs: NoteRef[];
 }
 
-
 /* The NoteWriter Config */
 /* .nt/.config.json */
 
@@ -102,30 +101,30 @@ export interface CoreConfig {
   // Ignore media section
 }
 export interface AttributeConfig {
-  name:    string;
-	aliases: string[];
-	type:    string;
-	format:  string;
-	min:     number;
-	max:     number;
-	pattern: string;
-	inherit: boolean | null;
+  name: string;
+  aliases: string[];
+  type: string;
+  format: string;
+  min: number;
+  max: number;
+  pattern: string;
+  inherit: boolean | null;
 }
 export interface TypeConfig {
-  	name: string;
-	  pattern: string;
-	  preprocessors: string[];
-	  requiredAttributes: string[];
-	  optionalAttributes: string[];
+  name: string;
+  pattern: string;
+  preprocessors: string[];
+  requiredAttributes: string[];
+  optionalAttributes: string[];
 }
 export interface RemoteConfig {
-	type: string;
-	dir: string;
-	endpoint: string;
-	accessKey: string;
-	secretKey: string;
-	bucketName: string;
-	secure: boolean;
+  type: string;
+  dir: string;
+  endpoint: string;
+  accessKey: string;
+  secretKey: string;
+  bucketName: string;
+  secure: boolean;
 }
 export interface DeckConfig {
   name: string;
@@ -161,31 +160,6 @@ export interface DeckRef {
 
 /* UI Model */
 
-export interface Flashcard {
-  // Flashcards are related to their note and many attributes or properties on the note
-  // are interesting when working with a flashcard. (ex: the note line to edit)
-
-  oid: string;
-  oidFile: string;
-  oidNote: string;
-
-  // Note-specific attributes
-  noteRelativePath: string;
-  noteLine: number;
-  noteShortTitle: string;
-  noteTags: string[];
-  noteAttributes: { [name: string]: any };
-
-  // Content in HTML
-  front: string;
-  back: string;
-
-  // SRS
-  dueAt: string; // ISO Format (TODO use type Date instead?), empty if never studied
-  studiedAt: string; // ISO Format (TODO use type Date instead?), empty if never studied
-  settings: { [name: string]: any };
-}
-
 export interface NoteRef {
   oid: string;
   workspaceSlug: string;
@@ -195,67 +169,8 @@ export interface Statistics {
   // Count of notes according the nationality of the author
   countNotesPerNationality: Map<string, number>;
 
-  // Count of notes by kind
-  countNotesPerKind: Map<string, number>;
-}
-
-/* DB Model */
-
-export interface Blob {
-  oid: string;
-  mime: string;
-  tags: string[];
-}
-
-export interface Media {
-  oid: string;
-  kind: string;
-  blobs: Blob[];
-}
-
-export interface Note {
-  oid: string;
-  // File containing the note
-  oidFile: string;
-
-  // Enriched information about the workspace where the note comes from
-  workspaceSlug: string;
-  workspacePath: string;
-
-  // Type of note: free, reference, ...
-  kind: string;
-
-  // The relative path of the file containing the note (denormalized field)
-  relativePath: string;
-  // The full wikilink to this note
-  wikilink: string;
-
-  // Merged attributes in JSON
-  attributes: { [name: string]: any };
-
-  // Merged tags in a comma-separated list
-  tags: string[];
-
-  // Line number (1-based index) of the note section title
-  line: number;
-
-  // Long title in HTML format
-  title: string;
-  // Content in HTML format
-  content: string;
-  // Content in HTML format
-  comment: string;
-
-  // Medias/Blobs referenced by the note
-  medias: Media[];
-}
-
-export interface Relation {
-  sourceOID: string;
-  sourceKind: string;
-  targetOID: string;
-  targetKind: string;
-  relationType: string;
+  // Count of notes by type
+  countNotesPerType: Map<string, number>;
 }
 
 export interface Query {
@@ -276,15 +191,119 @@ export interface QueryResult {
   notes: Note[];
 }
 
-export interface File {
+/* DB Model */
+
+export interface Blob {
   oid: string;
+  mime: string;
+  tags: string[];
+}
+
+export interface Media {
+  oid: string;
+  relativePath: string;
+  kind: string;
+  extension: string;
+  blobs: Blob[];
+}
+
+export interface Note {
+  oid: string;
+  // File containing the note
+  oidFile: string;
+
+  slug: string;
+
+  // Enriched information about the workspace where the note comes from
   workspaceSlug: string;
   workspacePath: string;
+
+  // Type of note: free, reference, ...
+  type: string;
+
+  // Titles in Markdown
+  title: string;
+  longTitle: string;
+  shortTitle: string;
+
+  // The relative path of the file containing the note (denormalized field)
   relativePath: string;
-  countNotes: number;
+  // The full wikilink to this note
+  wikilink: string;
+
+  // Attributes
+  attributes: { [name: string]: any };
+  // Tags
+  tags: string[];
+
+  // Line number (1-based index) of the note section title
+  line: number;
+
+  // Content (Markdown)
+  content: string;
+  // Comment (Markdown)
+  comment: string;
+
+  marked: boolean;
+  annotations: Annotation[];
+
+  // Medias/Blobs referenced by the note
+  medias: Media[];
+}
+
+export interface Annotation {
+  oid: string;
+  text: string;
+}
+
+export interface Flashcard {
+  // Flashcards are related to their note and many attributes or properties on the note
+  // are interesting when working with a flashcard. (ex: the note line to edit)
+
+  oid: string;
+  oidFile: string;
+  oidNote: string;
+
+  // Note-specific attributes
+  relativePath: string;
+  shortTitle: string;
+  tags: string[];
+  attributes: { [name: string]: string };
+
+  // Content in Markdown
+  front: string;
+  back: string;
+
+  // SRS
+  dueAt: string; // ISO Format (TODO use type Date instead?), empty if never studied
+  studiedAt: string; // ISO Format (TODO use type Date instead?), empty if never studied
+  settings: { [name: string]: any };
+}
+
+export interface Relation {
+  sourceOID: string;
+  sourceKind: string;
+  targetOID: string;
+  targetKind: string;
+  relationType: string;
+}
+
+export interface File {
+  oid: string;
+  slug: string;
+
+  workspaceSlug: string;
+  workspacePath: string;
+
+  relativePath: string;
+  wikilink: string;
+  // Titles in Markdown
+  title: string;
+  shortTitle: string;
 }
 
 export interface Study {
+  // TODO still useful?
   oid: string;
   startedAt: string;
   endedAt: string;
@@ -292,6 +311,7 @@ export interface Study {
 }
 
 export interface Review {
+  // TODO update?
   flashcardOID: string;
   feedback: string; // easy | good | again | hard | too-easy | too-hard
   durationInMs: number;
@@ -303,19 +323,17 @@ export interface Review {
 export interface PackFileRef {
   oid: string;
   ctime: string;
-  mtime: string;
 }
 export interface PackFile {
   oid: string;
   ctime: string;
-  mtime: string;
   packObjects: PackObject[];
+  blobs: Blob[];
 }
 export interface PackObject {
   oid: string;
   kind: string;
-  state: string;
-  mtime: string;
+  ctime: string;
   description: string;
   data: string;
 }

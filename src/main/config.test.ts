@@ -26,7 +26,7 @@ workspaces:
   slug: my-company
   path: ${ntHomeDir}/work
   selected: false
-`
+`,
     );
 
     fs.mkdirSync(path.join(ntHomeDir, 'main/.nt'), { recursive: true });
@@ -46,7 +46,7 @@ workspaces:
     }
   }
 }
-`
+`,
     );
 
     fs.mkdirSync(path.join(ntHomeDir, 'work/.nt'), { recursive: true });
@@ -66,11 +66,11 @@ workspaces:
     }
   }
 }
-`
+`,
     );
 
     const configManager = new ConfigManager();
-    expect(configManager.repositoryConfigs).toHaveLength(2);
+    expect(Object.keys(configManager.repositoryConfigs).length).toBe(2);
   });
 
   // restoring everything back

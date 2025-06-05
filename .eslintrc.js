@@ -15,6 +15,14 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'error',
     'no-restricted-syntax': 'off',
     'no-plusplus': 'off',
+    'no-use-before-define': 'off',
+    'no-console': 'off', // TODO Reconsider this exclusion later
+    'no-continue': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'jsx-a11y/no-noninteractive-element-interactions': 'off',
+    'react/require-default-props': 'off',
+    'prefer-destructuring': 'off',
+    'jsx-a11y/control-has-associated-label': 'off',
   },
   parserOptions: {
     ecmaVersion: 2022,

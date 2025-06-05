@@ -5,7 +5,14 @@ import {
   ArrowsOutLineVertical,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Desk, Block, Note, NoteRef, Query, QueryResult } from 'shared/Model';
+import {
+  Desk,
+  Block,
+  Note,
+  NoteRef,
+  Query,
+  QueryResult,
+} from '../shared/Model';
 import NoteContainer from './NoteContainer';
 import Loader from './Loader';
 import { capitalize } from './helpers';
@@ -19,7 +26,7 @@ function extractNoteRefs(desk: Desk): NoteRef[] {
 function extractNoteRefsFromBlock(
   desk: Desk,
   block: Block,
-  workspaces: string[]
+  workspaces: string[],
 ): NoteRef[] {
   // Determine on which workspace we are working
   let selectedWorkspaces = [];
@@ -37,7 +44,7 @@ function extractNoteRefsFromBlock(
     if (!block.elements) return results;
     for (const element of block.elements) {
       results.push(
-        ...extractNoteRefsFromBlock(desk, element, selectedWorkspaces)
+        ...extractNoteRefsFromBlock(desk, element, selectedWorkspaces),
       );
     }
   }
@@ -54,7 +61,7 @@ function extractQueries(desk: Desk): Query[] {
 function extractQueriesFromBlock(
   desk: Desk,
   block: Block,
-  workspaces: string[]
+  workspaces: string[],
 ): Query[] {
   // Determine on which workspace we are working
   let selectedWorkspaces = [];
@@ -79,7 +86,7 @@ function extractQueriesFromBlock(
     if (!block.elements) return results;
     for (const element of block.elements) {
       results.push(
-        ...extractQueriesFromBlock(desk, element, selectedWorkspaces)
+        ...extractQueriesFromBlock(desk, element, selectedWorkspaces),
       );
     }
   }

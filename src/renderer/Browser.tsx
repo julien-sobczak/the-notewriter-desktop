@@ -7,7 +7,7 @@ import TreeView, {
   ITreeViewOnNodeSelectProps,
   flattenTree,
 } from 'react-accessible-treeview';
-import { File, Note, WorkspaceConfig } from 'shared/Model';
+import { File, Note, WorkspaceConfig } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteContainer from './NoteContainer';
 
@@ -45,10 +45,10 @@ function Browser({ file }: BrowserProps) {
   const [files, setFiles] = useState<File[]>([]);
   // Which file?
   const [selectedFile, setSelectedFile] = useState<string | undefined>(
-    file ? file.relativePath : undefined
+    file ? file.relativePath : undefined,
   );
   const [selectedDir, setSelectedDir] = useState<string | undefined>(
-    file ? dirname(file.relativePath) : undefined
+    file ? dirname(file.relativePath) : undefined,
   );
 
   // Notes in selectedFile
@@ -75,7 +75,7 @@ function Browser({ file }: BrowserProps) {
       // console.log(result);
       // TODO keep filtering journal files to force the use f the Journal viewer?
       const filteredFiles = result.filter(
-        (foundFile) => !foundFile.relativePath.startsWith('journal')
+        (foundFile) => !foundFile.relativePath.startsWith('journal'),
       );
       setFiles(filteredFiles);
     });
@@ -89,7 +89,7 @@ function Browser({ file }: BrowserProps) {
     ipcRenderer.sendMessage(
       'list-notes-in-file',
       selectedWorkspace,
-      selectedFile
+      selectedFile,
     );
   }, [selectedFile]);
   // + Listen for answers
@@ -284,7 +284,7 @@ function FileIcon({ filename }: any) {
 // Return the default workspace to use.
 function getDefaultWorkspaceSlug(
   file: File | undefined,
-  workspaces: WorkspaceConfig[]
+  workspaces: WorkspaceConfig[],
 ): string | undefined {
   if (file) {
     return file.workspaceSlug;

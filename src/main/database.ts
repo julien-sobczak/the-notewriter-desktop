@@ -79,7 +79,7 @@ export default class DatabaseManager {
 
   async searchMedias(
     oids: string[],
-    datasourceName: string
+    datasourceName: string,
   ): Promise<Model.Media[]> {
     // Nothing to search
     if (oids.length === 0) {
@@ -95,11 +95,10 @@ export default class DatabaseManager {
     return new Promise<Model.Media[]>((resolve, reject) => {
       const sqlOids = `'${oids.join("','")}'`;
       const sqlQuery = `
-        SELECT m.oid, m.kind, b.oid as blobOid, b.mime as blobMime, b.tags as blobTags
+        SELECT m.oid, m.relative_path, m.kind, m.extension, b.oid as blobOid, b.mime as blobMime, b.tags as blobTags
         FROM media m JOIN blob b on m.oid = b.media_oid
         WHERE m.dangling = 0 AND m.oid IN (${sqlOids})
       `;
-      console.log(sqlQuery); // FIXME remove
       db.all(sqlQuery, async (err: any, rows: any) => {
         if (err) {
           console.log('Error while searching for medias', err);
@@ -124,6 +123,8 @@ export default class DatabaseManager {
             medias.push({
               oid: row.oid,
               kind: row.kind,
+              extension: row.extension,
+              relativePath: row.relative_path,
               blobs: [
                 {
                   oid: row.blobOid,
@@ -143,7 +144,7 @@ export default class DatabaseManager {
     q: string,
     datasourceName: string,
     limit: number,
-    shuffle: boolean
+    shuffle: boolean,
   ): Promise<Model.Note[]> {
     const db = this.datasources.get(datasourceName);
     if (!db) {
@@ -175,7 +176,7 @@ export default class DatabaseManager {
         // Search for medias
         const foundMedias = await this.searchMedias(mediaOIDs, datasourceName);
         console.log(
-          `Found ${notes.length} notes, ${foundMedias.length} medias`
+          `Found ${notes.length} notes, ${foundMedias.length} medias`,
         );
         const mediasByOids = new Map<string, Model.Media>();
         foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
@@ -202,7 +203,7 @@ export default class DatabaseManager {
   }
 
   async countNotesPerNationality(
-    workspaceSlugs: string[]
+    workspaceSlugs: string[],
   ): Promise<Map<string, number>> {
     const workspaceResults: Promise<Map<string, number>>[] = [];
     for (const datasourceName of this.datasources.keys()) {
@@ -230,22 +231,22 @@ export default class DatabaseManager {
                 if (err) {
                   console.log(
                     'Error while searching for statistics about nationalities',
-                    err
+                    err,
                   );
                   reject(err);
                 } else {
                   const result: Map<string, number> = new Map();
                   for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
-                    const nationality = row.nationality;
+                    const { nationality } = row;
                     const count = row.count_notes;
                     result.set(nationality, count);
                   }
                   resolve(result);
                 }
-              }
+              },
             );
-          })
+          }),
         );
       }
     }
@@ -267,8 +268,8 @@ export default class DatabaseManager {
     });
   }
 
-  async countNotesPerKind(
-    workspaceSlugs: string[]
+  async countNotesPerType(
+    workspaceSlugs: string[],
   ): Promise<Map<string, number>> {
     const workspaceResults: Promise<Map<string, number>>[] = [];
     for (const datasourceName of this.datasources.keys()) {
@@ -285,30 +286,30 @@ export default class DatabaseManager {
           new Promise<Map<string, number>>((resolve, reject) => {
             db.all(
               `
-                SELECT n.kind as kind, count(*) as count_notes
+                SELECT n.note_type as type, count(*) as count_notes
                 FROM note n
-                GROUP BY n.kind
+                GROUP BY n.note_type
               `,
               (err: any, rows: any) => {
                 if (err) {
                   console.log(
                     'Error while searching for statistics about kinds',
-                    err
+                    err,
                   );
                   reject(err);
                 } else {
                   const result: Map<string, number> = new Map();
                   for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
-                    const kind = row.kind;
+                    const noteType = row.type;
                     const count = row.count_notes;
-                    result.set(kind, count);
+                    result.set(noteType, count);
                   }
                   resolve(result);
                 }
-              }
+              },
             );
-          })
+          }),
         );
       }
     }
@@ -353,17 +354,23 @@ export default class DatabaseManager {
           SELECT
             oid,
             file_oid,
-            kind,
+            slug,
+            note_type,
             relative_path,
             wikilink,
             attributes,
+            title,
+            long_title,
+            short_title,
+            attributes,
             tags,
             line,
-            title_html,
-            content_html,
-            comment_html
+            content,
+            comment,
+            marked,
+            annotations
           FROM note
-          WHERE kind = 'quote'
+          WHERE note_type = 'quote'
           ORDER BY RANDOM()
           LIMIT 1`,
         (err: any, rows: any) => {
@@ -371,10 +378,35 @@ export default class DatabaseManager {
             console.log('Error while searching for daily quote', err);
             reject(err);
           } else {
-            const note = this.#rowToNote(rows[0], selectedDatasourceName);
+            // TODO extract as const on top of file
+            let note: Model.Note = {
+              oid: '0000000000000000000000000000000000000000',
+              oidFile: '0000000000000000000000000000000000000000',
+              workspaceSlug: selectedDatasourceName,
+              workspacePath: this.#getWorkspacePath(selectedDatasourceName),
+              slug: 'default-quote',
+              type: 'quote',
+              relativePath: 'dummy',
+              wikilink: 'dummy',
+              attributes: {},
+              tags: [],
+              line: 0,
+              title: 'TODO',
+              longTitle: 'TODO',
+              shortTitle: 'TODO',
+              marked: false,
+              annotations: [],
+              content: 'TODO',
+              comment: '',
+              medias: [],
+            };
+            if (rows.length > 0) {
+              // Return the first note
+              note = this.#rowToNote(rows[0], selectedDatasourceName);
+            }
             resolve(note);
           }
-        }
+        },
       );
     });
   }
@@ -390,15 +422,21 @@ export default class DatabaseManager {
         SELECT
           oid,
           file_oid,
-          kind,
+          slug,
+          note_type,
           relative_path,
           wikilink,
           attributes,
+          title,
+          long_title,
+          short_title,
+          attributes,
           tags,
           line,
-          title_html,
-          content_html,
-          comment_html
+          content,
+          comment,
+          marked,
+          annotations
         FROM note
         WHERE oid = ?
       `;
@@ -451,15 +489,21 @@ export default class DatabaseManager {
           SELECT
             oid,
             file_oid,
-            kind,
+            slug,
+            note_type,
             relative_path,
             wikilink,
             attributes,
+            title,
+            long_title,
+            short_title,
+            attributes,
             tags,
             line,
-            title_html,
-            content_html,
-            comment_html
+            content,
+            comment,
+            marked,
+            annotations
           FROM note
           WHERE oid IN ?
         `;
@@ -487,7 +531,7 @@ export default class DatabaseManager {
           // Search for medias
           const foundMedias = await this.searchMedias(
             mediaOIDs,
-            datasourceName
+            datasourceName,
           );
           const mediasByOids = new Map<string, Model.Media>();
           foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
@@ -536,7 +580,7 @@ export default class DatabaseManager {
         query.workspaces.includes(datasourceName)
       ) {
         results.push(
-          this.searchNotes(query.q, datasourceName, query.limit, query.shuffle)
+          this.searchNotes(query.q, datasourceName, query.limit, query.shuffle),
         );
       }
     }
@@ -588,7 +632,11 @@ export default class DatabaseManager {
               `
                 SELECT
                   file.oid as oid,
-                  note.relative_path as relative_path,
+                  file.slug as slug,
+                  file.relative_path as relative_path,
+                  file.wikilink as wikilink,
+                  file.title as title,
+                  file.short_title as short_title,
                   count(*) as count_notes
                 FROM note JOIN file on note.file_oid = file.oid
                 GROUP BY file.relative_path
@@ -604,9 +652,9 @@ export default class DatabaseManager {
                   }
                   resolve(files);
                 }
-              }
+              },
             );
-          })
+          }),
         );
       }
     }
@@ -624,7 +672,7 @@ export default class DatabaseManager {
 
   async listNotesInFile(
     workspaceSlug: string,
-    relativePath: string
+    relativePath: string,
   ): Promise<Model.Note[]> {
     return this.searchNotes(`path:${relativePath}`, workspaceSlug, 0, false);
   }
@@ -633,7 +681,7 @@ export default class DatabaseManager {
 
   async getDeckStats(
     workspaceSlug: string,
-    deckConfig: Model.DeckConfig
+    deckConfig: Model.DeckConfig,
   ): Promise<Model.StatsDeck> {
     const db = this.datasources.get(workspaceSlug);
     if (!db) {
@@ -669,7 +717,7 @@ export default class DatabaseManager {
 
   async getTodayFlashcards(
     workspaceSlug: string,
-    deckConfig: Model.DeckConfig
+    deckConfig: Model.DeckConfig,
   ): Promise<Model.Flashcard[]> {
     const db = this.datasources.get(workspaceSlug);
     if (!db) {
@@ -705,7 +753,6 @@ export default class DatabaseManager {
           flashcard.file_oid,
           flashcard.note_oid,
           note.relative_path,
-          note.line,
           note.short_title,
           note.tags,
           note.attributes,
@@ -735,13 +782,12 @@ export default class DatabaseManager {
             oid: row.oid,
             oidFile: row.file_oid,
             oidNote: row.note_oid,
-            noteRelativePath: row.relative_path,
-            noteLine: row.line,
-            noteShortTitle: row.short_title,
-            noteTags: row.tags.split(','),
-            noteAttributes: JSON.parse(row.attributes),
-            front: row.front_html,
-            back: row.back_html,
+            relativePath: row.relative_path,
+            shortTitle: row.short_title,
+            tags: row.tags.split(','),
+            attributes: JSON.parse(row.attributes),
+            front: row.front,
+            back: row.back,
             dueAt: row.due_at,
             studiedAt: row.studied_at,
             settings: JSON.parse(row.settings),
@@ -756,7 +802,7 @@ export default class DatabaseManager {
   async updateFlashcard(
     workspaceSlug: string,
     deckConfig: Model.DeckConfig,
-    flashcard: Model.Flashcard
+    flashcard: Model.Flashcard,
   ): Promise<Model.Flashcard> {
     const db = this.datasources.get(workspaceSlug);
     if (!db) {
@@ -795,8 +841,11 @@ export default class DatabaseManager {
       oid: row.oid,
       workspaceSlug,
       workspacePath: this.#getWorkspacePath(workspaceSlug),
+      slug: row.slug,
       relativePath: row.relative_path,
-      countNotes: row.count_notes,
+      wikilink: row.wikilink,
+      title: row.title,
+      shortTitle: row.short_title,
     };
   }
 
@@ -808,15 +857,20 @@ export default class DatabaseManager {
       oidFile: row.file_oid,
       workspaceSlug,
       workspacePath: this.#getWorkspacePath(workspaceSlug),
-      kind: row.kind,
+      slug: row.slug,
+      type: row.type,
       relativePath: row.relative_path,
       wikilink: row.wikilink,
       attributes: JSON.parse(row.attributes),
       tags: parsedTags,
       line: row.line,
-      title: row.title_html,
-      content: row.content_html,
-      comment: row.comment_html,
+      title: row.title,
+      longTitle: row.long_title,
+      shortTitle: row.short_title,
+      marked: row.marked,
+      annotations: JSON.parse(row.annotations) as Model.Annotation[],
+      content: row.content,
+      comment: row.comment,
       medias: [],
     };
   }
@@ -914,17 +968,17 @@ function queryPart2sql(qParent: string): string {
       return sql;
     }
 
-    if (query.startsWith('@kind:')) {
+    if (query.startsWith('@type:')) {
       const nextSpaceIndex = query.indexOf(' ');
-      let kind = '';
+      let noteType = '';
       let remainingQuery;
       if (nextSpaceIndex === -1) {
-        kind = query.substring('@kind:'.length);
+        noteType = query.substring('@type:'.length);
       } else {
-        kind = query.substring('@kind:'.length, nextSpaceIndex);
+        noteType = query.substring('@type:'.length, nextSpaceIndex);
         remainingQuery = query.substring(nextSpaceIndex);
       }
-      let sql = `note.kind='${kind}'`;
+      let sql = `note.note_type='${noteType}'`;
       if (remainingQuery) {
         sql += ` AND ${queryPart2sqlInner(remainingQuery)}`;
       }
@@ -966,7 +1020,7 @@ function queryPart2sql(qParent: string): string {
 export function query2sql(q: string, limit: number, shuffle: boolean): string {
   const whereContent = queryPart2sql(q);
   const fields =
-    'note.oid, note.file_oid, note.kind, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title_html, note.content_html, note.comment_html';
+    'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.comment, note.marked, note.annotations';
   let sql = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`;
   if (whereContent) {
     sql += ` WHERE ${whereContent}`;

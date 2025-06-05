@@ -1,7 +1,6 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import YAML from 'yaml'; // TODO migrate to js-yaml?
 import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid'; // uuidv4()
 
@@ -70,7 +69,7 @@ export default class ConfigManager {
 
     console.log(`Reading configuration from ${homeConfigValidPath}`);
     const data = fs.readFileSync(homeConfigValidPath, 'utf8');
-    const config = YAML.parse(data) as EditorStaticConfig;
+    const config = yaml.load(data) as EditorStaticConfig;
     return ConfigManager.#applyDefaultStaticConfig(config);
   }
 
@@ -102,7 +101,7 @@ export default class ConfigManager {
 
   // Traverse the static configuration to apply default values.
   static #applyDefaultStaticConfig(
-    config: EditorStaticConfig
+    config: EditorStaticConfig,
   ): EditorStaticConfig {
     const selectedWorkspaceSlugs: string[] = [];
 
@@ -122,7 +121,7 @@ export default class ConfigManager {
 
     // Define default daily quote
     const defaultDailyQuote: DailyQuoteConfig = {
-      query: `@kind:quote`, // any quote
+      query: `@type:quote`, // any quote
       workspaces: selectedWorkspaceSlugs, // default workspace(s)
     };
     if (!config.dailyQuote) {
@@ -158,7 +157,7 @@ export default class ConfigManager {
   // Returns only workspaces selected by default.
   selectedWorkspaces(): WorkspaceConfig[] {
     return this.editorStaticConfig.workspaces.filter(
-      (workspace) => workspace.selected
+      (workspace) => workspace.selected,
     );
   }
 
@@ -205,7 +204,7 @@ export default class ConfigManager {
       const study = studies[i];
       const studyStartedAt = Date.parse(study.startedAt);
       const elapsedTimeInHours = Math.ceil(
-        ((studyStartedAt - now.getDate()) / 1000) * 60 * 60
+        ((studyStartedAt - now.getDate()) / 1000) * 60 * 60,
       );
       if (elapsedTimeInHours <= 1) {
         // Started in the last hour?
@@ -255,16 +254,15 @@ export default class ConfigManager {
     const packFile: PackFile = {
       oid: uuidv4(),
       ctime: now.toISOString(),
-      mtime: now.toISOString(),
       packObjects: [],
+      blobs: [],
     };
     for (const study of studies) {
       packFile.packObjects.push({
         oid: study.oid,
         kind: 'study',
-        state: 'new',
         description: 'Study',
-        mtime: now.toISOString(),
+        ctime: now.toISOString(),
         data: `TODO`, // TODO now
       });
       /*
@@ -292,7 +290,7 @@ export default class ConfigManager {
     const packFilePath = path.join(
       objectsPath,
       packFile.oid.substring(0, 2),
-      packFile.oid
+      packFile.oid,
     );
     const packFileRaw = yaml.dump(packFile);
     fs.writeFileSync(packFilePath, packFileRaw);
@@ -309,19 +307,6 @@ export default class ConfigManager {
       throw new Error(`${objectsPath} does not exist`);
     }
     return objectsPath;
-  }
-
-  // Returns the path .nt/objects/info/commit-graph
-  mustGetCommitGraphPath(workspaceSlug: string): string {
-    const workspaceConfig = this.mustGetWorkspaceConfig(workspaceSlug);
-    const commitGraphPath = path.join(
-      workspaceConfig.path,
-      '.nt/objects/info/commit-graph'
-    ); // Expect at least a commit
-    if (!fs.existsSync(commitGraphPath)) {
-      throw new Error(`${commitGraphPath} does not exist`);
-    }
-    return commitGraphPath;
   }
 
   // Returns the config for the given workspace.
@@ -345,7 +330,7 @@ export function studyPath(deckRef: DeckRef): string {
   }
   const filePath = path.join(
     dirPath,
-    `${deckRef.workspaceSlug}-${deckRef.key}.yml`
+    `${deckRef.workspaceSlug}-${deckRef.key}.yml`,
   );
   return filePath;
 }
