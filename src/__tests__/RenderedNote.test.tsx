@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
-import { Note } from 'shared/Model';
+import { Note } from '../shared/Model';
 import RenderedNote from '../renderer/RenderedNote';
 
 describe('RenderedNote', () => {
@@ -10,7 +10,8 @@ describe('RenderedNote', () => {
       oidFile: 'e6bb9f43-6381-4a1a-89a3-5d1024e1f994',
       workspaceSlug: 'life',
       workspacePath: '~/Documents/life',
-      kind: 'quote',
+      type: 'quote',
+      slug: 'quotes-general',
       relativePath: 'references/quotes/general.md',
       wikilink: 'references/quote/general#Quote: Aristotle on Wisdom',
       attributes: {
@@ -19,11 +20,15 @@ describe('RenderedNote', () => {
       tags: ['wisdom'],
       line: 3,
       title: 'Quote: Aristotle on Wisdom',
+      shortTitle: 'Aristotle on Wisdom',
+      longTitle: 'General / Quote: Aristotle on Wisdom',
       // Content in HTML format
       content: `Wisdom is the reward you get for a lifetime of listening when you'd rather have been talking.`,
       // Content in HTML format
       comment: '',
       medias: [],
+      marked: false,
+      annotations: [],
     };
     expect(render(<RenderedNote note={note} />)).toBeTruthy();
   });

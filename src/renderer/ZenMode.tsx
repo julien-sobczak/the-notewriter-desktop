@@ -55,7 +55,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
   const [index, setIndex] = useState<number>(0); // 0 <= index < note.length
 
   // Playback management
-  const intervalRef = useRef<number>(); // Required to cancel when pausing or during unmounting
+  const intervalRef = useRef<number>(-1); // Required to cancel when pausing or during unmounting
   const [paused, setPaused] = useState<boolean>(false);
   const [speed, setSpeed] = useState<number>(10); // seconds
 
@@ -135,7 +135,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
       'edit',
       note.workspaceSlug,
       note.relativePath,
-      note.line
+      note.line,
     );
   };
 

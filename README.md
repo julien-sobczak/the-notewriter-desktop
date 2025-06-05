@@ -23,7 +23,7 @@ Start the app in the `dev` environment:
 
 ```bash
 npm run fixtures
-npm start
+env NT_HOME=$PWD/fixtures npm run start
 ```
 
 ## Packaging for Production

@@ -10,7 +10,7 @@ type RenderedDeckProps = {
   onFlashcardReviewed?: (
     deckRef: DeckRef,
     flashcard: Flashcard,
-    review: Review
+    review: Review,
   ) => void;
   onQuit?: (deckRef: DeckRef) => void;
 };
@@ -52,7 +52,6 @@ function RenderedDeck({
 
   // Called when the user completes the review of a single flashcard
   const onReviewed = (flashcard: Flashcard, review: Review) => {
-
     // Apply SRS algorithm based on SRS Settings
 
     onFlashcardReviewed(deckRef, flashcard, review);

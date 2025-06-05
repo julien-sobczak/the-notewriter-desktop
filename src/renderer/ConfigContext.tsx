@@ -5,7 +5,7 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   RepositoryConfig,
-} from 'shared/Model';
+} from '../shared/Model';
 import configReducer from './configReducer';
 
 // Useful Resources:

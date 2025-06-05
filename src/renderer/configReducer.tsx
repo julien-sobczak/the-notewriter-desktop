@@ -4,7 +4,7 @@ import {
   RepositoryConfig,
   Desk,
   Bookmark,
-} from 'shared/Model';
+} from '../shared/Model';
 
 export type Config = {
   static: EditorStaticConfig;

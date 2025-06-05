@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { Note } from 'shared/Model';
 import {
   Rows as ListIcon,
   SquaresFour as GridIcon,
@@ -7,6 +6,7 @@ import {
   X as CloseIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
+import { Note } from '../shared/Model';
 import RenderedNote from './RenderedNote';
 import { capitalize } from './helpers';
 
@@ -61,7 +61,7 @@ function NoteContainer({
     if (!containerRef.current) return;
 
     const children = Object.values(
-      containerRef.current.childNodes
+      containerRef.current.childNodes,
     ) as HTMLElement[];
     // console.log('parent', containerRef.current.offsetWidth, containerRef.current.offsetHeight); // TODO remove
 

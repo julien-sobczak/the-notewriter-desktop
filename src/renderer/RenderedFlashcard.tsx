@@ -15,15 +15,18 @@ function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
     if (!onReviewed) return;
     const completionTime = new Date();
     onReviewed({
+      flashcardOID: flashcard.oid,
       feedback,
       durationInMs: completionTime.getTime() - startTime.getTime(),
-      completedAt: completionTime.toISOString,
+      completedAt: completionTime.toISOString(),
+      dueAt: completionTime.toISOString(), // FIXME
+      settings: flashcard.settings, // FIXME
     });
   };
 
   return (
     <div className="RenderedFlashcard">
-      <h1>{flashcard.noteShortTitle}</h1>
+      <h1>{flashcard.shortTitle}</h1>
       {/* TODO show content */}
       <div className="ButtonGroup">
         <button type="button" onClick={() => onAnswered('hard')}>
