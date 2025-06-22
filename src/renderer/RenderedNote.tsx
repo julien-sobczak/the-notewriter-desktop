@@ -26,7 +26,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
   const mediasByOids = new Map<string, Media>();
   note.medias.forEach((media) => mediasByOids.set(media.oid, media));
 
-  let result = note.content;
+  let result = note.body;
 
   // Extract <media /> tags
   const mediaTags = [];
