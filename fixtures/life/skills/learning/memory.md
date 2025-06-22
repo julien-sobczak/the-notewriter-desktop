@@ -18,14 +18,14 @@ _Rote learning_ is a memorization technique based on repetition. The method rest
 ## Patterns
 
 
-### Reference: Flashcards
+### Note:Flashcards
 
 `@source: https://en.wikipedia.org/wiki/Spaced_repetition`
 
 _Spaced repetition_ is an evidence-based learning technique that is usually performed with flashcards. Newly introduced and more difficult flashcards are shown more frequently, while older and less difficult flashcards are shown less frequently in order to exploit the psychological spacing effect. The use of spaced repetition has been proven to increase the rate of learning.
 
 
-### Reference: Testing effect
+### Note:Testing effect
 
 `@source: https://en.wikipedia.org/wiki/Testing_effect`
 
@@ -35,14 +35,14 @@ The _testing effect_ (also known as _retrieval practice_, _active recall_, _prac
 ## Techniques
 
 
-### Reference: Method of Loci
+### Note:Method of Loci
 
 `@source: https://en.wikipedia.org/wiki/Method_of_loci`
 
 The _method of loci_ is a strategy for memory enhancement, which **uses visualizations of familiar spatial environments** in order to enhance the recall of information. The method of loci is also known as the _memory journey_, _memory palace_, _journey method_, _memory spaces_, or _mind palace technique_.
 
 
-### Reference: Major System
+### Note:Major System
 
 `@source: https://en.wikipedia.org/wiki/Mnemonic_major_system`
 

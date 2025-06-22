@@ -858,7 +858,7 @@ export default class DatabaseManager {
       workspaceSlug,
       workspacePath: this.#getWorkspacePath(workspaceSlug),
       slug: row.slug,
-      type: row.type,
+      type: row.note_type,
       relativePath: row.relative_path,
       wikilink: row.wikilink,
       attributes: JSON.parse(row.attributes),

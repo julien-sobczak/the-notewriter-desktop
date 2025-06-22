@@ -17,9 +17,17 @@ for subdir in $(find . -mindepth 1 -maxdepth 1 -type d); do
   # No need to run "nt init"
 
   nt add .
+  if [[ $? -ne 0 ]]; then
+    echo "❌ 'nt add' failed in $PWD"
+    exit 1
+  fi
   echo "✅ 'nt add' completed successfully";
 
   nt commit
+  if [[ $? -ne 0 ]]; then
+    echo "❌ 'nt commit' failed in $PWD"
+    exit 1
+  fi
   echo "✅ 'nt commit' completed successfully";
 
   cd $1
