@@ -241,6 +241,8 @@ export interface Note {
 
   // Content (Markdown)
   content: string;
+  // Body of the note, without the title and block attributes
+  body: string;
   // Comment (Markdown)
   comment: string;
 

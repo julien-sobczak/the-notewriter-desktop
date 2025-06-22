@@ -331,6 +331,33 @@ export default class DatabaseManager {
     });
   }
 
+  // Quote to display when no quote exists in the database
+  defaultQuote(datasourceName: string): Model.Note {
+    return {
+      oid: '0000000000000000000000000000000000000000',
+      oidFile: '0000000000000000000000000000000000000000',
+      workspaceSlug: datasourceName,
+      workspacePath: this.#getWorkspacePath(datasourceName),
+      slug: 'default-quote',
+      type: 'quote',
+      relativePath: 'dummy',
+      wikilink: 'dummy',
+      attributes: {},
+      tags: [],
+      line: 0,
+      title: 'Quote: On Writing',
+      longTitle: 'On Writing',
+      shortTitle: 'On Writing',
+      marked: false,
+      annotations: [],
+      content:
+        '## Quote: On Writing\n\n> Writing is thinking. To write well is to think clearly. That’s why it’s so hard.\n> -- David McCullough, American historian and author',
+      body: '> Writing is thinking. To write well is to think clearly. That’s why it’s so hard.\n> -- David McCullough, American historian and author',
+      comment: '',
+      medias: [],
+    };
+  }
+
   async searchDailyQuote(query: Model.Query): Promise<Model.Note> {
     // Choose a datasource
     let selectedDatasourceName: string;
@@ -366,45 +393,23 @@ export default class DatabaseManager {
             tags,
             line,
             content,
+            body,
             comment,
             marked,
             annotations
           FROM note
-          WHERE note_type = 'quote'
+          WHERE note_type = 'Quote'
           ORDER BY RANDOM()
           LIMIT 1`,
         (err: any, rows: any) => {
           if (err) {
-            console.log('Error while searching for daily quote', err);
+            console.log('Error while searching for a daily quote', err);
             reject(err);
+          } else if (rows.length > 0) {
+            // Return the first note as randomly ordered
+            resolve(this.#rowToNote(rows[0], selectedDatasourceName));
           } else {
-            // TODO extract as const on top of file
-            let note: Model.Note = {
-              oid: '0000000000000000000000000000000000000000',
-              oidFile: '0000000000000000000000000000000000000000',
-              workspaceSlug: selectedDatasourceName,
-              workspacePath: this.#getWorkspacePath(selectedDatasourceName),
-              slug: 'default-quote',
-              type: 'quote',
-              relativePath: 'dummy',
-              wikilink: 'dummy',
-              attributes: {},
-              tags: [],
-              line: 0,
-              title: 'TODO',
-              longTitle: 'TODO',
-              shortTitle: 'TODO',
-              marked: false,
-              annotations: [],
-              content: 'TODO',
-              comment: '',
-              medias: [],
-            };
-            if (rows.length > 0) {
-              // Return the first note
-              note = this.#rowToNote(rows[0], selectedDatasourceName);
-            }
-            resolve(note);
+            resolve(this.defaultQuote(selectedDatasourceName));
           }
         },
       );
@@ -434,6 +439,7 @@ export default class DatabaseManager {
           tags,
           line,
           content,
+          body,
           comment,
           marked,
           annotations
@@ -501,6 +507,7 @@ export default class DatabaseManager {
             tags,
             line,
             content,
+            body,
             comment,
             marked,
             annotations
@@ -870,6 +877,7 @@ export default class DatabaseManager {
       marked: row.marked,
       annotations: JSON.parse(row.annotations) as Model.Annotation[],
       content: row.content,
+      body: row.body,
       comment: row.comment,
       medias: [],
     };
@@ -1020,7 +1028,7 @@ function queryPart2sql(qParent: string): string {
 export function query2sql(q: string, limit: number, shuffle: boolean): string {
   const whereContent = queryPart2sql(q);
   const fields =
-    'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.comment, note.marked, note.annotations';
+    'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.body, note.comment, note.marked, note.annotations';
   let sql = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`;
   if (whereContent) {
     sql += ` WHERE ${whereContent}`;

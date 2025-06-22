@@ -34,7 +34,7 @@ function DailyQuote({ onClose }: any) {
     <div className="DailyQuote">
       {dailyQuote && (
         // eslint-disable-next-line react/no-danger
-        <div dangerouslySetInnerHTML={{ __html: dailyQuote.content }} />
+        <div dangerouslySetInnerHTML={{ __html: dailyQuote.body }} />
       )}
     </div>
   );
