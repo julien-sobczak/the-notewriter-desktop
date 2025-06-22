@@ -274,9 +274,9 @@ export default class ConfigManager {
       $ echo "<value>" | base64 -d | zlib-flate -uncompress
       oid: 6ee8a962
       file_oid: d19a2bba
-      kind: reference
+      kind: note
       relative_path: hello.md
-      wikilink: 'hello#Reference: Hello'
+      wikilink: 'hello#Note: Hello'
       content_raw: Coucou
       content_hash: b70f7d0e2acef2e0fa1c6f117e3c11e0d7082232
       ...

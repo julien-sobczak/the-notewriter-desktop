@@ -5,7 +5,7 @@ tags: go
 
 # Go
 
-## Reference: Constants
+## Note:Constants
 
 `@source: https://tour.golang.org/basics/15`
 
@@ -31,7 +31,7 @@ const (
 ```
 
 
-## Reference: Hello World
+## Note:Hello World
 
 ```go
 package main
@@ -60,7 +60,7 @@ Or use the [Go repl](https://repl.it/languages/go).
 ## Basic Types
 
 
-### Reference: Strings
+### Note:Strings
 
 ```go
 str := "Hello"
@@ -69,7 +69,7 @@ string`
 ```
 
 
-### Reference: Numbers
+### Note:Numbers
 
 ```go
 num := 3          // int
@@ -85,7 +85,7 @@ var p float32 = 22.7  // 32-bit float
 ## Flow Control
 
 
-### Reference: Conditional
+### Note:Conditional
 
 ```go
 if day == "sunday" || day == "saturday" {
@@ -100,7 +100,7 @@ if day == "sunday" || day == "saturday" {
 See [`if`](https://tour.golang.org/flowcontrol/5)
 
 
-### Reference: Statements in `if`
+### Note:Statements in `if`
 
 ```go
 if _, err := doThing(); err != nil {
@@ -113,7 +113,7 @@ A condition in an if statement can be preceded with a statement before a ;. Vari
 See: [If with a short statement](https://tour.golang.org/flowcontrol/6)
 
 
-### Reference: Switch
+### Note:Switch
 
 ```go
 switch day {
@@ -132,7 +132,7 @@ switch day {
 See: [Switch](https://github.com/golang/go/wiki/Switch)
 
 
-### Reference: For-Range loop
+### Note:For-Range loop
 
 ```go
 entry := []string{"Jack","John","Jones"}
@@ -144,7 +144,7 @@ for i, val := range entry {
 See: [For-Range loops](https://gobyexample.com/range)
 
 
-### Reference: For loop
+### Note:For loop
 
 ```go
 for count := 0; count <= 10; count++ {
@@ -155,7 +155,7 @@ for count := 0; count <= 10; count++ {
 See: [For loops](https://tour.golang.org/flowcontrol/1)
 
 
-### Reference: While loop
+### Note:While loop
 
 ```go
 n := 0

@@ -8,7 +8,7 @@ tags: typescript
 TypeScript is just like ES2015 with type-checking. All ES2015 (classes, etc) should work.
 
 
-## Reference: Declarations
+## Note:Declarations
 
 ```typescript
 let isDone: boolean
@@ -22,7 +22,7 @@ function add (a: number, b: number) { ... }
 ```
 
 
-## Reference: Basic types
+## Note:Basic types
 
 ```typescript
 any
@@ -55,7 +55,7 @@ let c: Color = Color.Green
 ```
 
 
-## Reference: Type assertions
+## Note:Type assertions
 
 ### Variables
 

@@ -26,7 +26,7 @@ The command `nt push` and `nt pull` would triggers a `git push` and `git pull` i
 The main motivation is to avoid relying on a S3 storage solution (which is rarely free).
 
 
-## Reference: Note-Taking Systems
+## Note: Note-Taking Systems
 
 * File-Based Solutions
   * [Obsidian](https://obsidian.md/)

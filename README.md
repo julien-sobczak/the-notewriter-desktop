@@ -22,7 +22,7 @@ npm install
 Start the app in the `dev` environment:
 
 ```bash
-npm run fixtures
+npm run fixtures # Failed randomly. Rerun. Root cause still not found.
 env NT_HOME=$PWD/fixtures npm run start
 ```
 

@@ -17,6 +17,6 @@ $ make run
 
 ## Troubleshooting
 
-### Reference: Error `cannot find submodule`
+### Note:Error `cannot find submodule`
 
 Try to run the command `go ​clean -modcache` and retry.
