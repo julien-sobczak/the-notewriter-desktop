@@ -18,4 +18,6 @@ A room without books is like a body without a soul.
 
 `#favorite` `#life` `#death`
 
-To study philosophy is to learn how to die.
+> To study philosophy is to learn how to die.
+>
+> -- Cicero, Roman orator
