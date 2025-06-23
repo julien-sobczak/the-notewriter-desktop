@@ -3,7 +3,7 @@
 ## TODO: Backlog
 
 * [x] Add fixtures to work in isolation when developing
-* [ ] Add cmd+K using this [librarie](https://github.com/pacocoursey/cmdk)
+* [ ] Add cmd+K using this [library](https://github.com/pacocoursey/cmdk)
 * [ ] List all possible commandes: show daily quote, open file, open zen mode, ...
 
 
