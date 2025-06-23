@@ -22,9 +22,8 @@ describe('RenderedNote', () => {
       title: 'Quote: Aristotle on Wisdom',
       shortTitle: 'Aristotle on Wisdom',
       longTitle: 'General / Quote: Aristotle on Wisdom',
-      // Content in HTML format
       content: `Wisdom is the reward you get for a lifetime of listening when you'd rather have been talking.`,
-      // Content in HTML format
+      body: `Wisdom is the reward you get for a lifetime of listening when you'd rather have been talking.`,
       comment: '',
       medias: [],
       marked: false,

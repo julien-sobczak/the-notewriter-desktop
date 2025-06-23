@@ -97,6 +97,7 @@
     "electron-updater": "^6.3.9",
     "express": "^5.1.0",
     "js-yaml": "^4.1.0",
+    "marked": "^15.0.12",
     "node-abi": "^4.9.0",
     "react": "^19.0.0",
     "react-accessible-treeview": "^2.11.1",

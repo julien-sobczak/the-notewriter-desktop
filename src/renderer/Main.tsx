@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 /* eslint-disable react/jsx-no-useless-fragment */
 import { useState, useEffect, useRef, useContext } from 'react';
 // import { v4 as uuidv4 } from 'uuid'; // uuidv4()
@@ -44,6 +43,7 @@ import NoteContainer from './NoteContainer';
 import Journal from './Journal';
 import Reminders from './Reminders';
 import NoteType from './NoteType';
+import Markdown from './Markdown';
 
 const { ipcRenderer } = window.electron;
 
@@ -318,10 +318,9 @@ function CommandMenu({
               >
                 <NoteType value={savedBookmark.noteType} />
                 &nbsp;
-                <span
-                  className="BookmarkTitle"
-                  dangerouslySetInnerHTML={{ __html: savedBookmark.noteTitle }}
-                />
+                <span className="BookmarkTitle">
+                  <Markdown md={savedBookmark.noteTitle} />
+                </span>
                 <span className="CommandItemMeta">
                   <code>{savedBookmark.noteRelativePath}</code>
                 </span>
@@ -353,13 +352,14 @@ function Main() {
     .map((workspaceSlug: string): DeckRef[] => {
       const repositoryConfig = repositoryConfigs[workspaceSlug];
       const results: DeckRef[] = [];
-      for (const deckKey of Object.keys(repositoryConfig.deck || {})) {
-        const deckConfig = repositoryConfig.deck[deckKey];
-        results.push({
-          workspaceSlug,
-          key: deckKey,
-          name: deckConfig.name,
-        });
+      if (repositoryConfig.decks) {
+        for (const deck of repositoryConfig.decks) {
+          results.push({
+            workspaceSlug,
+            key: deck.name,
+            name: deck.name,
+          });
+        }
       }
       return results;
     })

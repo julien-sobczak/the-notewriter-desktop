@@ -114,7 +114,6 @@ api.post('/list-decks', async (request, response) => {
   for (const workspaceSlug of workspaceSlugs) {
     const repositoryConfig = config.repositoryConfigs[workspaceSlug];
     const deckKeys = Object.keys(repositoryConfig.decks);
-    console.log('Searching into decks', repositoryConfig.decks, deckKeys); // FIXME remove
     for (let i = 0; i < repositoryConfig.decks.length; i++) {
       const deckConfig = repositoryConfig.decks[i];
       // TODO find a better syntax to retrieve stats in parallel

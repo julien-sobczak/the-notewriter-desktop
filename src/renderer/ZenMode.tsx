@@ -13,6 +13,7 @@ import { ConfigContext } from './ConfigContext';
 import { Note, ZenConfig, Query, QueryResult } from '../shared/Model';
 import RenderedNote from './RenderedNote';
 import useKeyDown from './useKeyDown';
+import Markdown from './Markdown';
 
 function extractQueries(zenMode: ZenConfig | undefined): Query[] {
   if (!zenMode) return [];
@@ -221,12 +222,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
           </div>
           <div className="Footer">
             <div>
-              <span
-                // eslint-disable-next-line react/no-danger
-                dangerouslySetInnerHTML={{
-                  __html: note.title,
-                }}
-              />
+              <Markdown md={note.title} />
               <br />
               <span>
                 <strong>{note.workspaceSlug}</strong>&nbsp;/&nbsp;

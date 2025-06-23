@@ -23,9 +23,16 @@ function RenderedDeck({
   const { config } = useContext(ConfigContext);
 
   // Read deck config
-  const deckConfig =
-    config.repositories[deckRef.workspaceSlug].deck[deckRef.key];
-  console.log(deckConfig.name); // FIXME remove
+  const repository = config.repositories[deckRef.workspaceSlug];
+  let deckConfig;
+  if (repository.decks) {
+    for (const deck of repository.decks) {
+      if (deck.name === deckRef.name) {
+        deckConfig = deck;
+      }
+    }
+  }
+  console.log(deckConfig?.name); // FIXME remove
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>();
   const [flashcardIndex, setFlashcardIndex] = useState<number>(0);

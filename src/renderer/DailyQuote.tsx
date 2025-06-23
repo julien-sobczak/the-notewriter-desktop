@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Note } from '../shared/Model';
 import useKeyDown from './useKeyDown';
+import Markdown from './Markdown';
 
 const { ipcRenderer } = window.electron;
 
@@ -33,8 +34,9 @@ function DailyQuote({ onClose }: any) {
   return (
     <div className="DailyQuote">
       {dailyQuote && (
-        // eslint-disable-next-line react/no-danger
-        <div dangerouslySetInnerHTML={{ __html: dailyQuote.body }} />
+        <div>
+          <Markdown md={dailyQuote.body} />
+        </div>
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { Bookmark, Note, NoteRef } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteType from './NoteType';
 import RenderedNote from './RenderedNote';
+import Markdown from './Markdown';
 
 type BookmarkerProps = {
   bookmark: Bookmark | undefined | null;
@@ -67,10 +68,9 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
               >
                 <NoteType value={savedBookmark.noteType} />
                 &nbsp;
-                <span
-                  className="BookmarkTitle"
-                  dangerouslySetInnerHTML={{ __html: savedBookmark.noteTitle }}
-                />
+                <span className="BookmarkTitle">
+                  <Markdown md={savedBookmark.noteTitle} />
+                </span>
                 <br />
                 <span className="BookmarkRelativePath">
                   {savedBookmark.noteRelativePath}
