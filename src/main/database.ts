@@ -12,15 +12,15 @@ function randomElement(items: string[]): string {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-// Extract medias OIDs from a single note
-function extractMediaOIDs(note: Model.Note): string[] {
+// Extract medias relative paths from a single note
+function extractMediaRelativePaths(note: Model.Note): string[] {
   const results: string[] = [];
 
-  const re: RegExp = /<media oid="([a-zA-Z0-9]{40})"/g;
+  const re: RegExp = /<media relative-path="(.*?)".*?\/>/g;
   let m: RegExpExecArray | null;
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    m = re.exec(note.content);
+    m = re.exec(note.body);
     if (m == null) {
       break;
     }
@@ -75,6 +75,69 @@ export default class DatabaseManager {
       throw new Error(`missing path for workspace ${slug}`);
     }
     return absolutePath;
+  }
+
+  async searchMediasByRelativePaths(
+    relativePaths: string[],
+    datasourceName: string,
+  ): Promise<Model.Media[]> {
+    // Nothing to search
+    if (relativePaths.length === 0) {
+      return new Promise<Model.Media[]>((resolve) => {
+        resolve([]);
+      });
+    }
+
+    const db = this.datasources.get(datasourceName);
+    if (!db) {
+      throw new Error(`No datasource ${datasourceName} found`);
+    }
+    return new Promise<Model.Media[]>((resolve, reject) => {
+      const sqlRelativePaths = `'${relativePaths.join("','")}'`;
+      const sqlQuery = `
+        SELECT m.oid, m.relative_path, m.kind, m.extension, b.oid as blobOid, b.mime as blobMime, b.tags as blobTags
+        FROM media m JOIN blob b on m.oid = b.media_oid
+        WHERE m.dangling = 0 AND m.relative_path IN (${sqlRelativePaths})
+      `;
+      db.all(sqlQuery, async (err: any, rows: any) => {
+        if (err) {
+          console.log('Error while searching for medias', err);
+          reject(err);
+          return;
+        }
+
+        const medias: Model.Media[] = [];
+        let lastMediaOid: string | undefined;
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          let blobTags = [];
+          if (rows.blobTags !== '') blobTags = row.blobTags.split(',');
+          if (lastMediaOid === row.oid) {
+            medias[medias.length - 1].blobs.push({
+              oid: row.blobOid,
+              mime: row.blobMime,
+              tags: blobTags,
+            });
+          } else {
+            lastMediaOid = row.oid;
+            medias.push({
+              oid: row.oid,
+              kind: row.kind,
+              extension: row.extension,
+              relativePath: row.relative_path,
+              blobs: [
+                {
+                  oid: row.blobOid,
+                  mime: row.blobMime,
+                  tags: blobTags,
+                },
+              ],
+            });
+          }
+        }
+        resolve(medias);
+      });
+    });
   }
 
   async searchMedias(
@@ -161,37 +224,44 @@ export default class DatabaseManager {
         }
 
         const notes: Model.Note[] = []; // The found notes
-        const mediaOIDs: string[] = []; // The list of all medias found
-        const notesMediaOIDs = new Map<string, string[]>(); // The mapping of note <-> medias
+        const mediaRelativePaths: string[] = []; // The list of all medias found
+        const notesMediaRelativePaths = new Map<string, string[]>(); // The mapping of note <-> medias
 
         // Iterate over found notes and search for potential referenced medias
         for (let i = 0; i < rows.length; i++) {
           const note = this.#rowToNote(rows[i], datasourceName);
-          const noteMediaOIDs = extractMediaOIDs(note);
-          notesMediaOIDs.set(note.oid, noteMediaOIDs);
-          mediaOIDs.push(...noteMediaOIDs);
+          const noteMediaRelativePaths = extractMediaRelativePaths(note);
+          notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths);
+          mediaRelativePaths.push(...noteMediaRelativePaths);
           notes.push(note);
         }
 
         // Search for medias
-        const foundMedias = await this.searchMedias(mediaOIDs, datasourceName);
+        const foundMedias = await this.searchMediasByRelativePaths(
+          mediaRelativePaths,
+          datasourceName,
+        );
         console.log(
           `Found ${notes.length} notes, ${foundMedias.length} medias`,
         );
-        const mediasByOids = new Map<string, Model.Media>();
-        foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
+        const mediasByRelativePaths = new Map<string, Model.Media>();
+        foundMedias.forEach((media: Model.Media) =>
+          mediasByRelativePaths.set(media.relativePath, media),
+        );
 
         // Append found medias on notes
         for (let i = 0; i < notes.length; i++) {
           const note = notes[i];
-          if (!notesMediaOIDs.has(note.oid)) {
+          if (!notesMediaRelativePaths.has(note.oid)) {
             // No medias for this note
             continue;
           }
 
-          const referencedMediaOids = notesMediaOIDs.get(note.oid);
-          referencedMediaOids?.forEach((mediaOid) => {
-            const media = mediasByOids.get(mediaOid);
+          const referencedMediaRelativePaths = notesMediaRelativePaths.get(
+            note.oid,
+          );
+          referencedMediaRelativePaths?.forEach((mediaRelativePath) => {
+            const media = mediasByRelativePaths.get(mediaRelativePath);
             if (media) {
               note.medias.push(media);
             }
@@ -455,10 +525,13 @@ export default class DatabaseManager {
         }
 
         const note = this.#rowToNote(row, datasourceName);
-        const mediaOIDs = extractMediaOIDs(note);
+        const mediaRelativePaths = extractMediaRelativePaths(note);
 
         // Append found medias on note
-        const foundMedias = await this.searchMedias(mediaOIDs, datasourceName);
+        const foundMedias = await this.searchMediasByRelativePaths(
+          mediaRelativePaths,
+          datasourceName,
+        );
         note.medias.push(...foundMedias);
 
         resolve(note);
@@ -523,38 +596,41 @@ export default class DatabaseManager {
           }
 
           const notes: Model.Note[] = []; // The found notes
-          const mediaOIDs: string[] = []; // The list of all medias found
-          const notesMediaOIDs = new Map<string, string[]>(); // The mapping of note <-> medias
+          const mediaRelativePaths: string[] = []; // The list of all medias found
+          const notesMediaRelativePaths = new Map<string, string[]>(); // The mapping of note <-> medias
 
           // Iterate over found notes and search for potential referenced medias
           for (let i = 0; i < rows.length; i++) {
             const note = this.#rowToNote(rows[i], datasourceName);
-            const noteMediaOIDs = extractMediaOIDs(note);
-            notesMediaOIDs.set(note.oid, noteMediaOIDs);
-            mediaOIDs.push(...noteMediaOIDs);
+            const noteMediaRelativePaths = extractMediaRelativePaths(note);
+            notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths);
+            mediaRelativePaths.push(...noteMediaRelativePaths);
             notes.push(note);
           }
 
           // Search for medias
-          const foundMedias = await this.searchMedias(
-            mediaOIDs,
+          const foundMedias = await this.searchMediasByRelativePaths(
+            mediaRelativePaths,
             datasourceName,
           );
-          const mediasByOids = new Map<string, Model.Media>();
-          foundMedias.forEach((media) => mediasByOids.set(media.oid, media));
+          const mediasByRelativePath = new Map<string, Model.Media>();
+          foundMedias.forEach((media) =>
+            mediasByRelativePath.set(media.relativePath, media),
+          );
 
           // Append found medias on notes
           for (let i = 0; i < notes.length; i++) {
             const note = notes[i];
-            if (!notesMediaOIDs.has(note.oid)) {
+            if (!notesMediaRelativePaths.has(note.oid)) {
               // No medias for this note
               continue;
             }
 
-            console.log(`Have medias to append for note ${note.oid}`); // FIXME remove
-            const referencedMediaOids = notesMediaOIDs.get(note.oid);
-            referencedMediaOids?.forEach((mediaOid) => {
-              const media = mediasByOids.get(mediaOid);
+            const referencedMediaRelativePaths = notesMediaRelativePaths.get(
+              note.oid,
+            );
+            referencedMediaRelativePaths?.forEach((mediaRelativePath) => {
+              const media = mediasByRelativePath.get(mediaRelativePath);
               if (media) {
                 note.medias.push(media);
               }

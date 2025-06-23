@@ -17,7 +17,7 @@ This is a basic note.`;
 
 This is a basic note with an image.
 
-<media oid="7495f870749a85228fbaf1101775448ddfe4d50e" />`;
+<media relative-path="pic.jpeg" />`;
     const note: Note = createNoteFromContent(content);
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
@@ -44,7 +44,7 @@ This is a basic note with an image.
 
 This is a basic note with an image.
 
-<img src="file:~/notes/.nt/objects/80/808263e6d73dfe907317bf7869e0512268221fca" alt="" title="" />`;
+<img src="file:~/notes/.nt/objects/80/808263e6d73dfe907317bf7869e0512268221fca.blob" alt="" title="" />`;
 
     expect(actual).toBe(expected);
   });
@@ -55,7 +55,7 @@ This is a basic note with an image.
 
 This is a basic note with a video.
 
-<media oid="7495f870749a85228fbaf1101775448ddfe4d50e" />`;
+<media relative-path="video.mp4" />`;
     const note: Note = createNoteFromContent(content);
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
@@ -82,7 +82,7 @@ This is a basic note with a video.
 
 This is a basic note with a video.
 
-<video controls title=""><source src="file:~/notes/.nt/objects/80/808263e6d73dfe907317bf7869e0512268221fca" type="video/webm"></video>`;
+<video controls title=""><source src="file:~/notes/.nt/objects/80/808263e6d73dfe907317bf7869e0512268221fca.blob" type="video/webm"></video>`;
 
     expect(actual).toBe(expected);
   });
@@ -93,7 +93,7 @@ This is a basic note with a video.
 
 This is a basic note with an audio.
 
-<media oid="7495f870749a85228fbaf1101775448ddfe4d50e" />`;
+<media relative-path="audio.mp3" />`;
     const note: Note = createNoteFromContent(content);
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
@@ -115,7 +115,7 @@ This is a basic note with an audio.
 
 This is a basic note with an audio.
 
-<audio controls title=""><source src="file:~/notes/.nt/objects/80/808263e6d73dfe907317bf7869e0512268221fca" type="audio/mpeg"></audio>`;
+<audio controls title=""><source src="file:~/notes/.nt/objects/80/808263e6d73dfe907317bf7869e0512268221fca.blob" type="audio/mpeg"></audio>`;
 
     expect(actual).toBe(expected);
   });
@@ -126,7 +126,7 @@ This is a basic note with an audio.
 
 This is a basic note with a document link.
 
-<media oid="7495f870749a85228fbaf1101775448ddfe4d50e" />`;
+<media relative-path="doc.pdf" />`;
     const note: Note = createNoteFromContent(content);
     note.medias.push({
       oid: '7495f870749a85228fbaf1101775448ddfe4d50e',
@@ -148,7 +148,7 @@ This is a basic note with a document link.
 
 This is a basic note with a document link.
 
-<a target="_blank" href="file:~/notes/.nt/objects/91/91cc7e00705770801948780fc639ad6d95db087a" title="">link</a>`;
+<a target="_blank" href="file:~/notes/.nt/objects/91/91cc7e00705770801948780fc639ad6d95db087a.blob" title="">link</a>`;
 
     expect(actual).toBe(expected);
   });
@@ -159,7 +159,7 @@ This is a basic note with a document link.
 
 This is a basic note with an image.
 
-<media oid="4044044044044044044044044044044044044040" />`;
+<media relative-path="unknown.png" />`;
     const note: Note = createNoteFromContent(content);
     note.medias = []; // no matching media
 
@@ -194,6 +194,7 @@ function createNoteFromContent(content: string): Note {
     shortTitle: 'Dummy',
     longTitle: 'Dummy',
     content,
+    body: content,
     comment: '',
     medias: [],
     marked: false,

@@ -15,24 +15,29 @@ import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
 import NoteType from './NoteType';
+import Markdown from './Markdown';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
   // Regex to locate media references
-  const reOids: RegExp = /<media oid="([a-zA-Z0-9]{40})".*\/>/g;
+  const reMedias: RegExp = /<media relative-path="(.*)".*\/>/g;
   let m: RegExpExecArray | null;
 
+  console.log('Note with medias?', note.body, note.medias.length > 0);
+
   // Create a map of all note medias for quick access
-  const mediasByOids = new Map<string, Media>();
-  note.medias.forEach((media) => mediasByOids.set(media.oid, media));
+  const mediasByRelativePath = new Map<string, Media>();
+  note.medias.forEach((media) =>
+    mediasByRelativePath.set(media.relativePath, media),
+  );
 
   let result = note.body;
 
-  // Extract <media /> tags
+  // Extract <Media /> tags
   const mediaTags = [];
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    m = reOids.exec(result);
+    m = reMedias.exec(result);
     if (m == null) {
       break;
     }
@@ -41,16 +46,16 @@ export function formatContent(note: Note, tags: string[] = []): string {
 
   // Parse tags and replace by standard HTML tags
   for (const mediaTag of mediaTags) {
-    let oid: string = '';
+    let relativePath: string = '';
     let alt: string = '';
     let title: string = '';
-    const indexOID = mediaTag.indexOf('oid="');
+    const indexRelativePath = mediaTag.indexOf('relative-path="');
     const indexAlt = mediaTag.indexOf('alt="');
     const indexTitle = mediaTag.indexOf('title="');
-    if (indexOID !== -1) {
-      const indexStart = indexOID + 'oid="'.length;
+    if (indexRelativePath !== -1) {
+      const indexStart = indexRelativePath + 'relative-path="'.length;
       const indexEnd = mediaTag.indexOf('"', indexStart);
-      oid = mediaTag.substring(indexStart, indexEnd);
+      relativePath = mediaTag.substring(indexStart, indexEnd);
     }
     if (indexAlt !== -1) {
       const indexStart = indexAlt + 'alt="'.length;
@@ -63,9 +68,9 @@ export function formatContent(note: Note, tags: string[] = []): string {
       title = mediaTag.substring(indexStart, indexEnd);
     }
 
-    if (oid === '' || !mediasByOids.has(oid)) {
+    if (relativePath === '' || !mediasByRelativePath.has(relativePath)) {
       // 404 or dangling media or missing blob
-      console.log(`Missing media ${oid}`, mediasByOids);
+      console.log(`Missing media ${relativePath}`, mediasByRelativePath);
       result = result.replace(
         mediaTag,
         `<img src="${NotFound}" class="missing" />`,
@@ -73,7 +78,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
       continue;
     }
 
-    const media = mediasByOids.get(oid);
+    const media = mediasByRelativePath.get(relativePath);
     if (!media) {
       // already managed in above condition
       continue;
@@ -92,7 +97,9 @@ export function formatContent(note: Note, tags: string[] = []): string {
       }
     }
     if (!foundBlob) {
-      console.log(`Missing blob for media ${oid} matching "${tags.join(',')}"`);
+      console.log(
+        `Missing blob for media ${relativePath} matching "${tags.join(',')}"`,
+      );
 
       // Fallback to the first blob
       if (media.blobs.length === 0) {
@@ -111,7 +118,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
 
     const blob = foundBlob;
     const prefix = blob.oid.substring(0, 2);
-    const blobPath = `${note.workspacePath}/.nt/objects/${prefix}/${blob.oid}`;
+    const blobPath = `${note.workspacePath}/.nt/objects/${prefix}/${blob.oid}.blob`;
     if (media.kind === 'picture') {
       result = result.replace(
         mediaTag,
@@ -310,9 +317,6 @@ export default function RenderedNote({
     event.stopPropagation();
   };
   const handleMouseOut = (event: React.MouseEvent) => {
-    // console.log(
-    //   `mouseout ${window.innerWidth}x${window.innerHeight} vs ${event.clientX}x${event.clientY}`
-    // ); // FIXME remove
     event.stopPropagation();
   };
 
@@ -424,19 +428,12 @@ export default function RenderedNote({
       {showTitle && (
         <div className="RenderedNoteTitle">
           <NoteType value={note.type} />
-          <span
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{
-              __html: note.title,
-            }}
-          />
+          <Markdown md={note.longTitle} />
         </div>
       )}
-      <div
-        className="RenderedNoteContent"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: formatContent(note, ['preview']) }}
-      />
+      <div className="RenderedNoteContent">
+        <Markdown md={formatContent(note, ['preview'])} />
+      </div>
       {metadataVisible && noteHasMetadata && (
         <div className="RenderedNoteMetadata">
           {showTags && note.tags && note.tags.length > 0 && (
@@ -462,11 +459,9 @@ export default function RenderedNote({
         </div>
       )}
       {showComment && note.comment && (
-        <div
-          className="RenderedNoteComment"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: note.comment }}
-        />
+        <div className="RenderedNoteComment">
+          <Markdown md={note.comment} />
+        </div>
       )}
     </div>
   );

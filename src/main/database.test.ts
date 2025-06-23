@@ -1,7 +1,7 @@
 import { readStringValue, query2sql } from './database';
 
 const fields =
-  'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.comment, note.marked, note.annotations';
+  'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.body, note.comment, note.marked, note.annotations';
 const selectClause = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`;
 
 beforeEach(() => {});
