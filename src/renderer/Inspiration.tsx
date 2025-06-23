@@ -51,20 +51,13 @@ function Inspiration() {
     // Load random notes
     const query = extractQuery(inspiration);
     console.info(`Searching for ${inspiration.name}...`);
-    fetch('http://localhost:3000/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(query),
-    })
-      .then((response) => response.json())
-      .then((results: QueryResult) => {
-        console.info(`Found ${results.notes.length} note(s)...`);
-        setNotes(results.notes);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+
+    const search = async () => {
+      const results: QueryResult = await window.electron.search(query);
+      console.info(`Found ${results.notes.length} note(s)...`);
+      setNotes(results.notes);
+    };
+    search();
   };
 
   // Triggered when the user move between notes

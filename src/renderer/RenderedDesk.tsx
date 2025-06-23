@@ -114,40 +114,25 @@ export default function RenderedDesk({ desk, selected }: RenderedDeskProps) {
     const queries = extractQueries(desk);
     const noteRefs = extractNoteRefs(desk);
 
-    fetch('http://localhost:3000/multi-search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(queries),
-    })
-      .then((response) => response.json())
-      .then((results: QueryResult[]) => {
-        setQueriesLoaded(true);
-        for (const result of results) {
-          if (!result.query.blockId) continue;
-          notesCache.current.set(result.query.blockId, result.notes);
-        }
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+    const msearch = async () => {
+      const results: QueryResult[] = await window.electron.msearch(queries);
+      setQueriesLoaded(true);
+      for (const result of results) {
+        if (!result.query.blockId) continue;
+        notesCache.current.set(result.query.blockId, result.notes);
+      }
+    };
 
-    fetch('http://localhost:3000/multi-find', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(noteRefs),
-    })
-      .then((response) => response.json())
-      .then((results: Note[]) => {
-        setNoteRefsLoaded(true);
-        for (const result of results) {
-          notesCache.current.set(result.oid, [result]);
-        }
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+    const mfind = async () => {
+      const results: Note[] = await window.electron.mfind(noteRefs);
+      setNoteRefsLoaded(true);
+      for (const result of results) {
+        notesCache.current.set(result.oid, [result]);
+      }
+    };
+
+    msearch();
+    mfind();
   }, []);
 
   // TODO test drag & drop API between NoteContainer

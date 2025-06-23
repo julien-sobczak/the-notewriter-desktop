@@ -39,22 +39,14 @@ function RenderedDeck({
 
   // Download flashcard
   useEffect(() => {
-    fetch('http://localhost:3000/list-today-flashcards', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(deckRef),
-    })
-      .then((response) => response.json())
-      .then((results: Flashcard[]) => {
-        // TODO support different sorts
-        const shuffledFlashcards = results.sort(() => 0.5 - Math.random());
-        setFlashcards(shuffledFlashcards);
-        setFlashcardIndex(0);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+    const listTodayFlashcards = async () => {
+      const results = window.electron.listTodayFlashcards(deckRef);
+      // TODO support different sorts
+      const shuffledFlashcards = results.sort(() => 0.5 - Math.random());
+      setFlashcards(shuffledFlashcards);
+      setFlashcardIndex(0);
+    };
+    listTodayFlashcards();
   }, [deckRef]);
 
   // Called when the user completes the review of a single flashcard

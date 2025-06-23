@@ -3,19 +3,17 @@ import { Note } from '../shared/Model';
 import useKeyDown from './useKeyDown';
 import Markdown from './Markdown';
 
-const { ipcRenderer } = window.electron;
-
 function DailyQuote({ onClose }: any) {
   const [dailyQuote, setDailyQuote] = useState<Note | undefined>(undefined);
 
   useEffect(() => {
     // Retrieve a random quote
-    ipcRenderer.sendMessage('get-daily-quote', []);
-
-    ipcRenderer.on('get-daily-quote', (arg) => {
-      const note = arg as Note;
+    const getDailyQuote = async () => {
+      if (!window.electron) return;
+      const note = await window.electron.getDailyQuote();
       setDailyQuote(note);
-    });
+    };
+    getDailyQuote();
   }, []);
 
   // Close after one minute

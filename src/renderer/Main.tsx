@@ -45,8 +45,6 @@ import Reminders from './Reminders';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
 
-const { ipcRenderer } = window.electron;
-
 type CommandMenuProps = {
   // Style
   workspaces: WorkspaceConfig[];
@@ -402,19 +400,12 @@ function Main() {
     const workspaceSlugs: string[] = staticConfig.workspaces.map(
       (w: WorkspaceConfig) => w.slug,
     );
-    fetch('http://localhost:3000/list-files', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(workspaceSlugs),
-    })
-      .then((response) => response.json())
-      .then((results: File[]) => {
-        setFiles(results);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+
+    const listFiles = async () => {
+      const results: File[] = await window.electron.listFiles(workspaceSlugs);
+      setFiles(results);
+    };
+    listFiles();
   }, [staticConfig.workspaces]);
 
   const handleSearch = (event: any) => {
@@ -445,10 +436,9 @@ function Main() {
       limit: 0,
       shuffle: false,
     };
-    // TODO use REST API instead?
-    ipcRenderer.sendMessage('search', query);
-    ipcRenderer.on('search', (arg: any) => {
-      const result = arg as QueryResult;
+
+    const search = async () => {
+      const result: QueryResult = await window.electron.search(query);
       console.debug(
         `Found ${result.notes.length} results for ${result.query.q}`,
       );
@@ -457,7 +447,8 @@ function Main() {
         setSearchResults(result);
         setShowSearchResults(true);
       }
-    });
+    };
+    search();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 

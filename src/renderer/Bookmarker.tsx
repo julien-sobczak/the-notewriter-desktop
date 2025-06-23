@@ -31,20 +31,11 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
       workspaceSlug: selectedBookmark.workspaceSlug,
       oid: selectedBookmark.noteOID,
     };
-    fetch('http://localhost:3000/find', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(noteRef),
-    })
-      .then((response) => response.json())
-      .then((result: Note) => {
-        console.log(`Found note ${result.oid}`); // FIXME now why never called???????
-        setSelectedNote(result);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+    const find = async () => {
+      const note: Note = window.electron.find(noteRef);
+      setSelectedNote(note);
+    };
+    find();
   }, [selectedBookmark]);
 
   const handleBookmarkClick = (newSelectedBookmark: Bookmark) => {

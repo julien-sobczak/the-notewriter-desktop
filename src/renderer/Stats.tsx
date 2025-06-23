@@ -6,8 +6,6 @@ import { ConfigContext } from './ConfigContext';
 import Loader from './Loader';
 import { nationalities } from './world';
 
-const { ipcRenderer } = window.electron;
-
 function Stats() {
   const { config } = useContext(ConfigContext);
   const staticConfig = config.static;
@@ -20,12 +18,13 @@ function Stats() {
       .filter((workspace: WorkspaceConfig) => workspace.selected)
       .map((workspace: WorkspaceConfig) => workspace.slug);
 
-    ipcRenderer.sendMessage('get-statistics', selectedWorkspaceSlugs);
-
-    ipcRenderer.on('get-statistics', (stats: Statistics) => {
+    const getStatistics = async () => {
+      const stats = await window.electron.getStatistics(selectedWorkspaceSlugs);
       console.log(stats);
       setStatistics(stats);
-    });
+    };
+
+    getStatistics();
   }, []);
 
   const nationalityChartData: any = [['Country', 'Popularity']];
@@ -60,7 +59,7 @@ function Stats() {
     }
 
     // Format data for kind chart
-    for (const [kind, count] of statistics.countNotesPerKind) {
+    for (const [kind, count] of statistics.countNotesPerType) {
       if (kind && count) {
         kindChartData.push([kind, count]);
       }

@@ -23,8 +23,6 @@ export function formatContent(note: Note, tags: string[] = []): string {
   const reMedias: RegExp = /<media relative-path="(.*)".*\/>/g;
   let m: RegExpExecArray | null;
 
-  console.log('Note with medias?', note.body, note.medias.length > 0);
-
   // Create a map of all note medias for quick access
   const mediasByRelativePath = new Map<string, Media>();
   note.medias.forEach((media) =>
@@ -321,13 +319,8 @@ export default function RenderedNote({
   };
 
   const handleEdit = (event: React.MouseEvent) => {
-    const { ipcRenderer } = window.electron;
-    ipcRenderer.sendMessage(
-      'edit',
-      note.workspaceSlug,
-      note.relativePath,
-      note.line,
-    );
+    // Send a message to the main process
+    window.electron.edit(note.workspaceSlug, note.relativePath, note.line);
     event.stopPropagation();
   };
 

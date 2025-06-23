@@ -17,7 +17,6 @@ import {
   ipcMain,
   globalShortcut,
   clipboard,
-  IpcMainEvent,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -25,7 +24,6 @@ import installExtension, {
   REACT_DEVELOPER_TOOLS,
 } from 'electron-devtools-installer';
 import { spawn } from 'child_process';
-import express from 'express';
 
 import MenuBuilder from './menu';
 import { resolveHtmlPath, normalizePath } from './util';
@@ -40,6 +38,7 @@ import {
   Flashcard,
   Review,
   DeckConfig,
+  EditorDynamicConfig,
 } from '../shared/Model';
 
 const config = new ConfigManager();
@@ -56,162 +55,12 @@ class AppUpdater {
 }
 
 /*
- * Local REST API.
- *
- * The motivation is to make easy for query notes from any React components.
- * Using IPC is challenging when several components want to consumme the same channel.
- */
-const api = express();
-api.use(express.json());
-const port = process.env.PORT || 3000;
-api.get('/status', (request, response) => {
-  response.send({
-    Status: 'Running',
-  });
-});
-api.post('/list-files', async (request, response) => {
-  const workspaceSlugs = request.body as string[];
-  console.debug(`POST /list-files received for workspaces ${workspaceSlugs}`);
-  const results = await db.listFiles(workspaceSlugs);
-  console.debug(
-    `Found ${results.length} files for workspaces ${workspaceSlugs}`,
-  );
-  response.send(results);
-});
-api.post('/find', async (request, response) => {
-  const noteRef = request.body as NoteRef;
-  console.debug(`POST /find received for note ref ${noteRef.oid}`);
-  const result = await db.find(noteRef);
-  console.debug(`Found note for ref ${noteRef.oid}`);
-  response.send(result);
-});
-api.post('/multi-find', async (request, response) => {
-  const noteRefs = request.body as NoteRef[];
-  console.debug(`POST /multi-find received for ${noteRefs.length} note ref(s)`);
-  const results = await db.multiFind(noteRefs);
-  console.debug(`Found ${results.length} note(s)`);
-  response.send(results);
-});
-api.post('/search', async (request, response) => {
-  const query = request.body as Query;
-  console.debug(`POST /search received for query ${query.q}`);
-  const result = await db.search(query);
-  console.debug(`Found ${result.notes.length} note(s)`);
-  response.send(result);
-});
-api.post('/multi-search', async (request, response) => {
-  const queries = request.body as Query[];
-  console.debug(`POST /multi-search received for ${queries.length} queries`);
-  const results = await db.multiSearch(queries);
-  console.debug(`Found ${results.length} note(s)`);
-  response.send(results);
-});
-api.post('/list-decks', async (request, response) => {
-  const workspaceSlugs = request.body as string[];
-  console.debug(`POST /list-decks received for workspaces ${workspaceSlugs}`);
-
-  const decks: Deck[] = [];
-  for (const workspaceSlug of workspaceSlugs) {
-    const repositoryConfig = config.repositoryConfigs[workspaceSlug];
-    const deckKeys = Object.keys(repositoryConfig.decks);
-    for (let i = 0; i < repositoryConfig.decks.length; i++) {
-      const deckConfig = repositoryConfig.decks[i];
-      // TODO find a better syntax to retrieve stats in parallel
-      // eslint-disable-next-line no-await-in-loop
-      const deckStats = await db.getDeckStats(workspaceSlug, deckConfig);
-      decks.push({
-        workspaceSlug,
-        key: deckKeys[i],
-        config: deckConfig,
-        stats: deckStats,
-      });
-    }
-  }
-
-  console.debug(`Found ${decks.length} decks for workspaces ${workspaceSlugs}`);
-  response.send(decks);
-});
-api.post('/list-today-flashcards', async (request, response) => {
-  const deckRef = request.body as DeckRef;
-  console.debug(
-    `POST /list-today-flashcards received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
-  );
-  const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
-
-  // Find the deck config
-  let deckConfig: DeckConfig | undefined;
-  for (const deck of repositoryConfig.decks) {
-    if (deck.name === deckRef.key) {
-      deckConfig = deck;
-      break;
-    }
-  }
-
-  if (!deckConfig) {
-    console.error(
-      `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
-    );
-    response.send([]); // Send an empty array as response
-    return; // Stop the execution
-  }
-
-  const flashcards = await db.getTodayFlashcards(
-    deckRef.workspaceSlug,
-    deckConfig,
-  );
-  console.debug(
-    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
-  );
-  response.send(flashcards);
-});
-api.post('/update-flashcard', async (request, response) => {
-  const { deckRef, flashcard } = request.body as {
-    deckRef: DeckRef;
-    flashcard: Flashcard;
-    review: Review;
-  };
-  console.debug(
-    `POST /update-flashcard received for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
-  );
-
-  // 1. Update in DB
-  const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
-  let deckConfig: DeckConfig | undefined;
-  for (const deck of repositoryConfig.decks) {
-    if (deck.name === deckRef.key) {
-      deckConfig = deck;
-      break;
-    }
-  }
-  if (!deckConfig) {
-    console.error(
-      `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
-    );
-    // Do nothing and simply return the flashcard
-    response.send(flashcard);
-    return;
-  }
-
-  // 2. Append review to local study
-  // TODO
-  await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
-
-  console.debug(
-    `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
-  );
-  response.send(flashcard);
-});
-api.listen(port, () => {
-  console.log(`Server Listening on PORT: ${port}`);
-});
-
-/*
  * IPC
  */
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('edit', (event, workspaceSlug, relativePath, line) => {
+ipcMain.on('edit', (_event, workspaceSlug, relativePath, line) => {
   let relativeFileReference = relativePath;
   if (line > 0) {
     relativeFileReference += `:${line}`;
@@ -253,22 +102,34 @@ ipcMain.on('copy', (event, text) => {
   if (win != null) win.minimize();
 });
 
-ipcMain.on('copyText', (event, text) => {
+ipcMain.on('copyText', (_event, text) => {
   if (!text) return;
   console.debug(`Copy ${text}...`);
   clipboard.writeText(text);
   // new Notification({ title: "Copied!", body: text.substring(0, 10) + '...' }).show()
 });
 
-ipcMain.on('list-files', async (event, workspaceSlug: string) => {
+/* Two-way communication with the renderer process */
+ipcMain.handle(
+  'save-dynamic-config',
+  (_event, dynamicConfig: EditorDynamicConfig) => {
+    console.log('received save-dynamic-config');
+    console.log('Saving...', dynamicConfig);
+    // await config.save(dynamicConfig); // FIXME uncomment
+    configSaved = true;
+    mainWindow?.close();
+    mainWindow = null;
+  },
+);
+ipcMain.handle('list-files', async (event, workspaceSlug: string) => {
   console.debug(`Listing files in workspace ${workspaceSlug}`);
   const result = await db.listFiles([workspaceSlug]);
   console.debug(`Found ${result.length} files`);
-  event.reply('list-files', result);
+  return result;
 });
-ipcMain.on(
+ipcMain.handle(
   'list-notes-in-file',
-  async (event, workspaceSlug: string, relativePath: string) => {
+  async (_event, workspaceSlug: string, relativePath: string) => {
     console.debug(
       `Listing note in file ${relativePath} in workspace ${workspaceSlug}`,
     );
@@ -276,57 +137,39 @@ ipcMain.on(
     console.debug(
       `Found ${result.length} notes for file ${relativePath} in workspace ${workspaceSlug}`,
     );
-    event.reply('list-notes-in-file', result);
+    return result;
   },
 );
 
-async function doSearch(channel: string, event: IpcMainEvent, query: Query) {
+ipcMain.handle('/find', async (_event, noteRef: NoteRef) => {
+  console.debug(`Finding note from ref ${noteRef.oid}`);
+  const result = await db.find(noteRef);
+  console.debug(`Found note for ref ${noteRef.oid}`);
+  return result;
+});
+ipcMain.handle('/mfind', async (_event, noteRefs: NoteRef[]) => {
+  console.debug(`Finding notes for ${noteRefs.length} note ref(s)`);
+  const results = await db.multiFind(noteRefs);
+  console.debug(`Found ${results.length} note(s)`);
+  return results;
+});
+
+async function doSearch(query: Query) {
   console.debug(`Searching for "${query.q}" in workspaces ${query.workspaces}`);
   const result = await db.search(query);
   console.debug(`Found ${result.notes.length} notes`);
-  event.reply(channel, result);
+  return result;
 }
-ipcMain.on('search', async (event, query: Query) => {
-  doSearch('search', event, query);
-});
-// TODO probably delete following events (use the REST API instead)
-ipcMain.on('search-desk0', async (event, query: Query) => {
-  doSearch('search-desk0', event, query);
-});
-ipcMain.on('search-desk1', async (event, query: Query) => {
-  doSearch('search-desk1', event, query);
-});
-ipcMain.on('search-desk2', async (event, query: Query) => {
-  doSearch('search-desk2', event, query);
-});
-ipcMain.on('search-desk3', async (event, query: Query) => {
-  doSearch('search-desk3', event, query);
-});
-ipcMain.on('search-desk4', async (event, query: Query) => {
-  doSearch('search-desk4', event, query);
-});
-ipcMain.on('search-desk5', async (event, query: Query) => {
-  doSearch('search-desk5', event, query);
-});
-ipcMain.on('search-desk6', async (event, query: Query) => {
-  doSearch('search-desk6', event, query);
-});
-ipcMain.on('search-desk7', async (event, query: Query) => {
-  doSearch('search-desk7', event, query);
-});
-ipcMain.on('search-desk8', async (event, query: Query) => {
-  doSearch('search-desk8', event, query);
-});
-ipcMain.on('search-desk9', async (event, query: Query) => {
-  doSearch('search-desk9', event, query);
+ipcMain.handle('search', async (event, query: Query) => {
+  return doSearch(query);
 });
 
-ipcMain.on('multi-search', async (event, queries: Query[]) => {
+ipcMain.handle('msearch', async (_event, queries: Query[]) => {
   const results = await db.multiSearch(queries);
-  event.reply('multi-search', results);
+  return results;
 });
 
-ipcMain.on('get-daily-quote', async (event) => {
+ipcMain.handle('get-daily-quote', async () => {
   const { dailyQuote } = config.editorStaticConfig;
   if (!dailyQuote) {
     throw new Error('No daily quote found');
@@ -340,10 +183,10 @@ ipcMain.on('get-daily-quote', async (event) => {
     shuffle: false,
   };
   const note = await db.searchDailyQuote(query);
-  event.reply('get-daily-quote', note);
+  return note;
 });
 
-ipcMain.on('get-statistics', async (event, workspaceSlugs) => {
+ipcMain.handle('get-statistics', async (_event, workspaceSlugs) => {
   const statistics: Statistics = {
     countNotesPerType: new Map<string, number>(),
     countNotesPerNationality: new Map<string, number>(),
@@ -351,17 +194,97 @@ ipcMain.on('get-statistics', async (event, workspaceSlugs) => {
   statistics.countNotesPerNationality =
     await db.countNotesPerNationality(workspaceSlugs);
   statistics.countNotesPerType = await db.countNotesPerType(workspaceSlugs);
-  event.reply('get-statistics', statistics);
+  return statistics;
 });
 
-ipcMain.on('window-is-closing', async (event, dynamicConfig) => {
-  console.log('received window-is-closing');
-  console.log('Saving...', dynamicConfig);
-  // await config.save(dynamicConfig); // FIXME uncomment
-  configSaved = true;
-  mainWindow?.close();
-  mainWindow = null;
+ipcMain.handle('list-decks', async (_event, workspaceSlugs: string[]) => {
+  console.debug(`Listing decks for workspaces ${workspaceSlugs}`);
+  const decks: Deck[] = [];
+  for (const workspaceSlug of workspaceSlugs) {
+    const repositoryConfig = config.repositoryConfigs[workspaceSlug];
+    const deckKeys = Object.keys(repositoryConfig.decks);
+    for (let i = 0; i < repositoryConfig.decks.length; i++) {
+      const deckConfig = repositoryConfig.decks[i];
+      // TODO find a better syntax to retrieve stats in parallel
+      // eslint-disable-next-line no-await-in-loop
+      const deckStats = await db.getDeckStats(workspaceSlug, deckConfig);
+      decks.push({
+        workspaceSlug,
+        key: deckKeys[i],
+        config: deckConfig,
+        stats: deckStats,
+      });
+    }
+  }
+
+  console.debug(`Found ${decks.length} decks for workspaces ${workspaceSlugs}`);
+  return decks;
 });
+ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
+  console.debug(
+    `Listing flashcards for today for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
+  );
+  const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
+
+  // Find the deck config
+  let deckConfig: DeckConfig | undefined;
+  for (const deck of repositoryConfig.decks) {
+    if (deck.name === deckRef.key) {
+      deckConfig = deck;
+      break;
+    }
+  }
+
+  if (!deckConfig) {
+    console.error(
+      `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+    );
+    return []; // Send an empty array as response to stop the execution
+  }
+
+  const flashcards = await db.getTodayFlashcards(
+    deckRef.workspaceSlug,
+    deckConfig,
+  );
+  console.debug(
+    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+  );
+  return flashcards;
+});
+ipcMain.handle(
+  'update-flashcard',
+  async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {
+    console.debug(
+      `Updating flashcard for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key} and review ${review.feedback}`, // TODO reword this message
+    );
+
+    // 1. Update in DB
+    const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
+    let deckConfig: DeckConfig | undefined;
+    for (const deck of repositoryConfig.decks) {
+      if (deck.name === deckRef.key) {
+        deckConfig = deck;
+        break;
+      }
+    }
+    if (!deckConfig) {
+      console.error(
+        `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+      );
+      // Do nothing and simply return the flashcard
+      return flashcard;
+    }
+
+    // 2. Append review to local study
+    // TODO
+    await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
+
+    console.debug(
+      `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+    );
+    return flashcard;
+  },
+);
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
