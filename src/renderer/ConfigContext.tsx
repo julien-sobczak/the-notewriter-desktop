@@ -43,18 +43,16 @@ export function ConfigContextProvider({ children }: any) {
 
   useEffect(() => {
     if (!window.electron) return;
-    const { ipcRenderer } = window.electron;
-    ipcRenderer.on('configuration-loaded', (arg) => {
+    window.electron.onConfigurationLoaded((existingConfig: any) => {
       console.log('Received [configuration-loaded]');
-      const existingConfig = arg;
       dispatch({
         type: 'init',
         payload: existingConfig,
       });
     });
-    ipcRenderer.on('window-is-closing', () => {
+    window.electron.onWindowIsClosing(() => {
       console.log('window-is-closing');
-      ipcRenderer.sendMessage('window-is-closing', config.dynamic);
+      window.electron.saveDynamicConfig(config.dynamic);
     });
   }, [config]);
 

@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
-import { Note } from '../shared/Model';
-
-const { ipcRenderer } = window.electron;
 
 function Hi() {
   useEffect(() => {
-    // Retrieve a random quote
-    ipcRenderer.sendMessage('get-daily-quote', []);
-
-    ipcRenderer.on('get-daily-quote', (arg) => {
-      const note = arg as Note;
-      console.log(note);
-    });
+    // TODO implement
+    // Ex: Retrieve a random quote
+    const getDailyQuote = async () => {
+      if (!window.electron) return;
+      await window.electron.getDailyQuote();
+    };
+    getDailyQuote();
   }, []);
 
   return (

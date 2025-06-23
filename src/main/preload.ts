@@ -1,47 +1,54 @@
 // Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import {
+  DeckRef,
+  EditorDynamicConfig,
+  Flashcard,
+  NoteRef,
+  Query,
+  Review,
+} from '../shared/Model';
 
-export type Channels =
-  | 'get-daily-quote'
-  | 'get-statistics'
-  | 'edit'
-  | 'search'
-  | 'search-desk0'
-  | 'search-desk1'
-  | 'search-desk2'
-  | 'search-desk3'
-  | 'search-desk4'
-  | 'search-desk5'
-  | 'search-desk6'
-  | 'search-desk7'
-  | 'search-desk8'
-  | 'search-desk9'
-  | 'list-files'
-  | 'list-notes-in-file'
-  | 'configuration-loaded'
-  | 'window-is-closing';
+contextBridge.exposeInMainWorld('electron', {
+  // Main to renderer
+  onConfigurationLoaded: (callback: any) =>
+    ipcRenderer.on('configuration-loaded', (_event, value) => callback(value)),
+  onClean: (callback: any) =>
+    ipcRenderer.on('clean', (_event, value) => callback(value)),
+  onWindowIsClosing: (callback: any) =>
+    ipcRenderer.on('window-is-closing', (_event, value) => callback(value)),
 
-const electronHandler = {
-  ipcRenderer: {
-    sendMessage(channel: Channels, ...args: unknown[]) {
-      ipcRenderer.send(channel, ...args);
-    },
-    on(channel: Channels, func: (...args: unknown[]) => void) {
-      const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
-        func(...args);
-      ipcRenderer.on(channel, subscription);
+  // 1-way renderer to main
+  edit: (workspaceSlug: string, filePath: string, line: number) =>
+    ipcRenderer.send('edit', workspaceSlug, filePath, line),
 
-      return () => {
-        ipcRenderer.removeListener(channel, subscription);
-      };
-    },
-    once(channel: Channels, func: (...args: unknown[]) => void) {
-      ipcRenderer.once(channel, (_event, ...args) => func(...args));
-    },
-  },
-};
+  // 2-way renderer to main
+  getDailyQuote: () => ipcRenderer.invoke('get-daily-quote'),
+  // Viewer
+  find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
+  mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
+  search: (query: Query) => ipcRenderer.invoke('search', query),
+  mearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
+  listNotesInFile: (workspaceSlug: string, filePath: string) =>
+    ipcRenderer.invoke('list-notes-in-file', workspaceSlug, filePath),
+  listFiles: (workspaceSlug: string) =>
+    ipcRenderer.invoke('list-files', workspaceSlug),
+  // Statistics
+  getStatistics: (workspaceSlugs: string[]) =>
+    ipcRenderer.invoke('get-statistics', workspaceSlugs),
+  // Settings
+  getWorkspaceConfig: (workspaceSlug: string) =>
+    ipcRenderer.invoke('get-workspace-config', workspaceSlug),
+  saveDynamicConfig: (dynamicConfig: EditorDynamicConfig) =>
+    ipcRenderer.invoke('save-dynamic-config', dynamicConfig),
+  // Flashcards
+  listDecks: (workspaceSlugs: string[]) =>
+    ipcRenderer.invoke('list-decks', workspaceSlugs),
+  listTodayFlashcards: (deckRef: DeckRef) =>
+    ipcRenderer.invoke('list-today-flashcards', deckRef),
+  updateFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
+    ipcRenderer.invoke('update-flashcard', deckRef, flashcard, review),
+});
 
-contextBridge.exposeInMainWorld('electron', electronHandler);
-
-export type ElectronHandler = typeof electronHandler;
+// export type ElectronHandler = typeof electronHandler;

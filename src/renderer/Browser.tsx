@@ -11,8 +11,6 @@ import { File, Note, WorkspaceConfig } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteContainer from './NoteContainer';
 
-const { ipcRenderer } = window.electron;
-
 function dirname(path: string): string {
   const matches = path.match(/(.*)[/\\]/);
   if (matches) {
@@ -64,41 +62,37 @@ function Browser({ file }: BrowserProps) {
 
   // Load files when switching to a new workspace
   useEffect(() => {
-    if (!selectedWorkspace) return;
     setFiles([]);
-    ipcRenderer.sendMessage('list-files', selectedWorkspace);
-  }, [selectedWorkspace]);
-  // + listen for answers
-  useEffect(() => {
-    ipcRenderer.on('list-files', (arg) => {
-      const result = arg as File[];
+
+    if (!selectedWorkspace) return;
+
+    const loadFiles = async () => {
+      const result: File[] = await window.electron.listFiles(selectedWorkspace);
       // console.log(result);
       // TODO keep filtering journal files to force the use f the Journal viewer?
       const filteredFiles = result.filter(
         (foundFile) => !foundFile.relativePath.startsWith('journal'),
       );
       setFiles(filteredFiles);
-    });
-  }, []);
+    };
+    loadFiles();
+  }, [selectedWorkspace]);
 
   // Load notes when selecting a file
   useEffect(() => {
     if (!selectedFile) return;
 
     setNotes([]);
-    ipcRenderer.sendMessage(
-      'list-notes-in-file',
-      selectedWorkspace,
-      selectedFile,
-    );
-  }, [selectedFile]);
-  // + Listen for answers
-  useEffect(() => {
-    ipcRenderer.on('list-notes-in-file', (arg) => {
-      const result = arg as Note[];
+
+    const listNotesInFile = async () => {
+      const result: Note[] = await window.electron.listNotesInFile(
+        selectedWorkspace,
+        selectedFile,
+      );
       setNotes(result);
-    });
-  }, []);
+    };
+    listNotesInFile();
+  }, [selectedFile]);
 
   const handleWorkspaceChange = (workspaceSlug: string) => {
     setSelectedFile(undefined);

@@ -82,24 +82,16 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
       setQueriesLoaded(true);
     }
 
-    fetch('http://localhost:3000/multi-search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(queries),
-    })
-      .then((response) => response.json())
-      .then((results: QueryResult[]) => {
-        setQueriesLoaded(true);
-        const foundNotes: Note[] = [];
-        for (const result of results) {
-          foundNotes.push(...result.notes);
-        }
-        setNotes(foundNotes);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+    const msearch = async () => {
+      const results: QueryResult[] = await window.electron.msearch(queries);
+      setQueriesLoaded(true);
+      const foundNotes: Note[] = [];
+      for (const result of results) {
+        foundNotes.push(...result.notes);
+      }
+      setNotes(foundNotes);
+    };
+    msearch();
   }, [config.static.zenMode]);
 
   // Exit Zen Mode on pressing ESC
@@ -131,13 +123,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
   const handleEdit = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!note) return;
-    const { ipcRenderer } = window.electron;
-    ipcRenderer.sendMessage(
-      'edit',
-      note.workspaceSlug,
-      note.relativePath,
-      note.line,
-    );
+    window.electron.edit(note.workspaceSlug, note.relativePath, note.line);
   };
 
   return (

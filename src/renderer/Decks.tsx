@@ -41,20 +41,12 @@ function Decks({ deck }: DecksProps) {
 
     console.log('<Decks> slugs', workspaceSlugs); // FIXME remove
 
-    fetch('http://localhost:3000/list-decks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(workspaceSlugs),
-    })
-      .then((response) => response.json())
-      .then((results: Deck[]) => {
-        console.log('<Decks> decks', results); // FIXME remove
-        setDecks(results);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+    const listDecks = async () => {
+      const results: Deck[] = await window.electron.listDecks(workspaceSlugs);
+      console.log('<Decks> decks', results); // FIXME remove
+      setDecks(results);
+    };
+    listDecks();
   }, [workspaces]);
 
   // Called every time a new flashcard has been reviewed.
@@ -63,23 +55,15 @@ function Decks({ deck }: DecksProps) {
     flashcard: Flashcard,
     review: Review,
   ) => {
-    fetch('http://localhost:3000/update-flashcard', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const updateFlashcard = async () => {
+      const updatedFlashcard = await window.electron.updateFlashcard(
         deckRef,
         flashcard,
         review,
-      }),
-    })
-      .then((response) => response.json())
-      .then((updatedFlashcard: Flashcard) => {
-        console.log(`Flashcard ${updatedFlashcard.shortTitle} saved`);
-        return null;
-      })
-      .catch((error: any) => console.log('Error:', error));
+      );
+      console.log(`Flashcard ${updatedFlashcard.shortTitle} saved`);
+    };
+    updateFlashcard();
   };
 
   // Called when the user completes all flashcards in a deck or
