@@ -6,6 +6,5 @@
 
 ## TODO: Improvement
 
-* [ ] Add `npm run:gocloc` to match `the-notewriter`
 * [ ] Rename "workspaceSlug" and other workspace-related stuffs into "repositorySlug"
 * [ ] Remove in a new commit `"trailingComma": "none"` in `package.json` and add missing commas in the codebase
