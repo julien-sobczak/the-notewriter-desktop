@@ -23,7 +23,7 @@ function RenderedDeck({
   const { config } = useContext(ConfigContext);
 
   // Read deck config
-  const repository = config.repositories[deckRef.workspaceSlug];
+  const repository = config.repositories[deckRef.repositorySlug];
   let deckConfig;
   if (repository.decks) {
     for (const deck of repository.decks) {

@@ -9,7 +9,7 @@ import {
   DeckRef,
   Flashcard,
   Review,
-  WorkspaceConfig,
+  RepositoryRefConfig,
 } from '../shared/Model';
 import Loader from './Loader';
 import RenderedDeck from './RenderedDeck';
@@ -21,8 +21,8 @@ type DecksProps = {
 function Decks({ deck }: DecksProps) {
   const { config } = useContext(ConfigContext);
 
-  // Read configured workspaces (useful to populate the dropdown)
-  const { workspaces } = config.static;
+  // Read configured repositories (useful to populate the dropdown)
+  const { repositories } = config.static;
 
   const [decks, setDecks] = useState<Deck[]>();
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>(deck);
@@ -35,19 +35,19 @@ function Decks({ deck }: DecksProps) {
   // Download decks
   useEffect(() => {
     // Show only decks for currently selected decks
-    const workspaceSlugs: string[] = workspaces
-      .filter((w: WorkspaceConfig) => w.selected)
-      .map((w: WorkspaceConfig) => w.slug);
+    const repositorySlugs: string[] = repositories
+      .filter((w: RepositoryRefConfig) => w.selected)
+      .map((w: RepositoryRefConfig) => w.slug);
 
-    console.log('<Decks> slugs', workspaceSlugs); // FIXME remove
+    console.log('<Decks> slugs', repositorySlugs); // FIXME remove
 
     const listDecks = async () => {
-      const results: Deck[] = await window.electron.listDecks(workspaceSlugs);
+      const results: Deck[] = await window.electron.listDecks(repositorySlugs);
       console.log('<Decks> decks', results); // FIXME remove
       setDecks(results);
     };
     listDecks();
-  }, [workspaces]);
+  }, [repositories]);
 
   // Called every time a new flashcard has been reviewed.
   const onFlashcardReviewed = (
@@ -72,7 +72,7 @@ function Decks({ deck }: DecksProps) {
     // Nothing to save as the study object is edited after every review
     // and only committed when explicitly said.
     console.log(
-      `Quitted deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+      `Quitted deck ${deckRef.key} in repository ${deckRef.repositorySlug}`,
     );
     setSelectedDeck(undefined);
   };
@@ -97,7 +97,7 @@ function Decks({ deck }: DecksProps) {
                 <td
                   onClick={() =>
                     setSelectedDeck({
-                      workspaceSlug: currentDeck.workspaceSlug,
+                      repositorySlug: currentDeck.repositorySlug,
                       key: currentDeck.key,
                       name: currentDeck.config.name,
                     })

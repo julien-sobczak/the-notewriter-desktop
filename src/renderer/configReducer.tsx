@@ -26,10 +26,10 @@ export default function configReducer(draft: Config, action: Action): any {
       draft.repositories = action.payload.repositories;
       break;
     }
-    case 'toggleWorkspaceSelected': {
-      for (const workspace of draft.static.workspaces) {
-        if (workspace.slug === action.payload) {
-          workspace.selected = !workspace.selected;
+    case 'toggleRepositorySelected': {
+      for (const repository of draft.static.repositories) {
+        if (repository.slug === action.payload) {
+          repository.selected = !repository.selected;
         }
       }
       break;

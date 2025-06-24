@@ -8,8 +8,8 @@ describe('RenderedNote', () => {
     const note: Note = {
       oid: 'fc6da20f-7eb2-4dd4-b19f-55973400e6af',
       oidFile: 'e6bb9f43-6381-4a1a-89a3-5d1024e1f994',
-      workspaceSlug: 'life',
-      workspacePath: '~/Documents/life',
+      repositorySlug: 'life',
+      repositoryPath: '~/Documents/life',
       type: 'quote',
       slug: 'quotes-general',
       relativePath: 'references/quotes/general.md',

@@ -116,7 +116,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
 
     const blob = foundBlob;
     const prefix = blob.oid.substring(0, 2);
-    const blobPath = `${note.workspacePath}/.nt/objects/${prefix}/${blob.oid}.blob`;
+    const blobPath = `${note.repositoryPath}/.nt/objects/${prefix}/${blob.oid}.blob`;
     if (media.kind === 'picture') {
       result = result.replace(
         mediaTag,
@@ -320,7 +320,7 @@ export default function RenderedNote({
 
   const handleEdit = (event: React.MouseEvent) => {
     // Send a message to the main process
-    window.electron.edit(note.workspaceSlug, note.relativePath, note.line);
+    window.electron.edit(note.repositorySlug, note.relativePath, note.line);
     event.stopPropagation();
   };
 
@@ -330,7 +330,7 @@ export default function RenderedNote({
 
   const handleBookmark = () => {
     const bookmark: Bookmark = {
-      workspaceSlug: note.workspaceSlug,
+      repositorySlug: note.repositorySlug,
       noteOID: note.oid,
       noteType: note.type,
       noteTitle: note.title,

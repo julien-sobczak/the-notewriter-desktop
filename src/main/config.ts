@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid'; // uuidv4()
 import {
   EditorStaticConfig,
   EditorDynamicConfig,
-  WorkspaceConfig,
+  RepositoryRefConfig,
   DailyQuoteConfig,
   RepositoryConfig,
   DeckRef,
@@ -47,9 +47,9 @@ export default class ConfigManager {
   constructor() {
     this.editorStaticConfig = ConfigManager.#readStaticConfig();
     this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
-    for (const workspaceConfig of this.editorStaticConfig.workspaces) {
-      this.repositoryConfigs[workspaceConfig.slug] =
-        ConfigManager.#readRepositoryConfig(workspaceConfig);
+    for (const repositoryConfig of this.editorStaticConfig.repositories) {
+      this.repositoryConfigs[repositoryConfig.slug] =
+        ConfigManager.#readRepositoryConfig(repositoryConfig);
     }
   }
 
@@ -88,13 +88,15 @@ export default class ConfigManager {
     return JSON.parse(data) as EditorDynamicConfig;
   }
 
-  static #readRepositoryConfig(workspace: WorkspaceConfig): RepositoryConfig {
-    const workspacePath = normalizePath(workspace.path);
-    const workspaceConfigPath = path.join(workspacePath, '.nt/.config.json');
-    if (!fs.existsSync(workspaceConfigPath)) {
-      throw new Error(`Missing configuration ${workspaceConfigPath}`);
+  static #readRepositoryConfig(
+    repositoryRef: RepositoryRefConfig,
+  ): RepositoryConfig {
+    const repositoryPath = normalizePath(repositoryRef.path);
+    const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json');
+    if (!fs.existsSync(repositoryConfigPath)) {
+      throw new Error(`Missing configuration ${repositoryConfigPath}`);
     }
-    const data = fs.readFileSync(workspaceConfigPath, 'utf8');
+    const data = fs.readFileSync(repositoryConfigPath, 'utf8');
     const config = JSON.parse(data) as RepositoryConfig;
     return config;
   }
@@ -103,18 +105,18 @@ export default class ConfigManager {
   static #applyDefaultStaticConfig(
     config: EditorStaticConfig,
   ): EditorStaticConfig {
-    const selectedWorkspaceSlugs: string[] = [];
+    const selectedRepositorySlugs: string[] = [];
 
-    // Select workspaces by default
-    if (config.workspaces) {
-      for (let i = 0; i < config.workspaces.length; i++) {
-        const workspace = config.workspaces[i];
-        if (workspace.selected === undefined) {
-          // Workspaces are selected by default
-          workspace.selected = true;
+    // Select repositories by default
+    if (config.repositories) {
+      for (let i = 0; i < config.repositories.length; i++) {
+        const repository = config.repositories[i];
+        if (repository.selected === undefined) {
+          // Repositories are selected by default
+          repository.selected = true;
         }
-        if (workspace.selected) {
-          selectedWorkspaceSlugs.push(workspace.slug);
+        if (repository.selected) {
+          selectedRepositorySlugs.push(repository.slug);
         }
       }
     }
@@ -122,26 +124,26 @@ export default class ConfigManager {
     // Define default daily quote
     const defaultDailyQuote: DailyQuoteConfig = {
       query: `@type:quote`, // any quote
-      workspaces: selectedWorkspaceSlugs, // default workspace(s)
+      repositories: selectedRepositorySlugs, // default repositories
     };
     if (!config.dailyQuote) {
       config.dailyQuote = defaultDailyQuote;
     }
 
-    // Use default selected workspaces when none are specified
+    // Use default selected repositories when none are specified
     if (config.zenMode) {
       for (let i = 0; i < config.zenMode.queries.length; i++) {
         const query = config.zenMode.queries[i];
-        if (!query.workspaces) {
-          query.workspaces = selectedWorkspaceSlugs;
+        if (!query.repositories) {
+          query.repositories = selectedRepositorySlugs;
         }
       }
     }
     if (config.inspirations) {
       for (let i = 0; i < config.inspirations.length; i++) {
         const inspiration = config.inspirations[i];
-        if (!inspiration.workspaces) {
-          inspiration.workspaces = selectedWorkspaceSlugs;
+        if (!inspiration.repositories) {
+          inspiration.repositories = selectedRepositorySlugs;
         }
       }
     }
@@ -149,15 +151,15 @@ export default class ConfigManager {
     return config;
   }
 
-  // Returns all declared workspaces.
-  workspaces(): WorkspaceConfig[] {
-    return this.editorStaticConfig.workspaces;
+  // Returns all declared repositories.
+  repositories(): RepositoryRefConfig[] {
+    return this.editorStaticConfig.repositories;
   }
 
-  // Returns only workspaces selected by default.
-  selectedWorkspaces(): WorkspaceConfig[] {
-    return this.editorStaticConfig.workspaces.filter(
-      (workspace) => workspace.selected,
+  // Returns only repositories selected by default.
+  selectedRepositories(): RepositoryRefConfig[] {
+    return this.editorStaticConfig.repositories.filter(
+      (repository) => repository.selected,
     );
   }
 
@@ -285,7 +287,7 @@ export default class ConfigManager {
     }
 
     // Create the pack file
-    const objectsPath = this.mustGetObjectsPath(deckRef.workspaceSlug);
+    const objectsPath = this.mustGetObjectsPath(deckRef.repositorySlug);
 
     const packFilePath = path.join(
       objectsPath,
@@ -299,24 +301,24 @@ export default class ConfigManager {
     fs.rmSync(studyFilePath);
   }
 
-  // Returns the path .nt/objects for a given workspace
-  mustGetObjectsPath(workspaceSlug: string): string {
-    const workspaceConfig = this.mustGetWorkspaceConfig(workspaceSlug);
-    const objectsPath = path.join(workspaceConfig.path, '.nt/objects');
+  // Returns the path .nt/objects for a given repository
+  mustGetObjectsPath(repositorySlug: string): string {
+    const repositoryConfig = this.mustGetRepositoryRefConfig(repositorySlug);
+    const objectsPath = path.join(repositoryConfig.path, '.nt/objects');
     if (!fs.existsSync(objectsPath)) {
       throw new Error(`${objectsPath} does not exist`);
     }
     return objectsPath;
   }
 
-  // Returns the config for the given workspace.
-  mustGetWorkspaceConfig(workspaceSlug: string): WorkspaceConfig {
-    for (const workspaceConfig of this.editorStaticConfig.workspaces) {
-      if (workspaceConfig.slug === workspaceSlug) {
-        return workspaceConfig;
+  // Returns the config for the given repository.
+  mustGetRepositoryRefConfig(repositorySlug: string): RepositoryRefConfig {
+    for (const repositoryConfig of this.editorStaticConfig.repositories) {
+      if (repositoryConfig.slug === repositorySlug) {
+        return repositoryConfig;
       }
     }
-    throw new Error(`No workspace with slug ${workspaceSlug}`);
+    throw new Error(`No repository with slug ${repositorySlug}`);
   }
 }
 
@@ -330,7 +332,7 @@ export function studyPath(deckRef: DeckRef): string {
   }
   const filePath = path.join(
     dirPath,
-    `${deckRef.workspaceSlug}-${deckRef.key}.yml`,
+    `${deckRef.repositorySlug}-${deckRef.key}.yml`,
   );
   return filePath;
 }

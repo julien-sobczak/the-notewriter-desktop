@@ -31,15 +31,15 @@ function extractMediaRelativePaths(note: Model.Note): string[] {
 }
 
 export default class DatabaseManager {
-  workspaces: Map<string, Model.WorkspaceConfig>;
+  repositories: Map<string, Model.RepositoryRefConfig>;
 
-  // List of datasources based on workspaces defined in global configuration
+  // List of datasources based on repositories defined in global configuration
   datasources: Map<string, Database>;
 
   datasourcesPaths: Map<string, string>;
 
   constructor() {
-    this.workspaces = new Map();
+    this.repositories = new Map();
     this.datasources = new Map<string, Database>();
     this.datasourcesPaths = new Map<string, string>();
   }
@@ -51,16 +51,16 @@ export default class DatabaseManager {
     });
   }
 
-  registerWorkspace(workspace: Model.WorkspaceConfig): this {
-    this.workspaces.set(workspace.slug, workspace);
+  registerRepository(repository: Model.RepositoryRefConfig): this {
+    this.repositories.set(repository.slug, repository);
 
-    const workspacePath = normalizePath(workspace.path);
-    const dbPath = path.join(workspacePath, '.nt/database.db');
+    const repositoryPath = normalizePath(repository.path);
+    const dbPath = path.join(repositoryPath, '.nt/database.db');
     if (fs.existsSync(dbPath)) {
       console.debug(`Using database ${dbPath}`);
       const db = new Database(dbPath);
-      this.datasources.set(workspace.slug, db);
-      this.datasourcesPaths.set(workspace.slug, workspacePath);
+      this.datasources.set(repository.slug, db);
+      this.datasourcesPaths.set(repository.slug, repositoryPath);
     } else {
       throw new Error(`Missing database ${dbPath}`);
     }
@@ -68,11 +68,11 @@ export default class DatabaseManager {
     return this;
   }
 
-  // Returns the absolute for to the workspace root directory from its slug name.
-  #getWorkspacePath(slug: string): string {
+  // Returns the absolute for to the repository root directory from its slug name.
+  #getRepositoryPath(slug: string): string {
     const absolutePath = this.datasourcesPaths.get(slug);
     if (!absolutePath) {
-      throw new Error(`missing path for workspace ${slug}`);
+      throw new Error(`missing path for repository ${slug}`);
     }
     return absolutePath;
   }
@@ -273,20 +273,20 @@ export default class DatabaseManager {
   }
 
   async countNotesPerNationality(
-    workspaceSlugs: string[],
+    repositorySlugs: string[],
   ): Promise<Map<string, number>> {
-    const workspaceResults: Promise<Map<string, number>>[] = [];
+    const repositoryResults: Promise<Map<string, number>>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
-        workspaceSlugs.length === 0 ||
-        workspaceSlugs.includes(datasourceName)
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
       ) {
         const db = this.datasources.get(datasourceName);
         if (!db) {
           throw new Error(`No datasource ${datasourceName} found`);
         }
 
-        workspaceResults.push(
+        repositoryResults.push(
           new Promise<Map<string, number>>((resolve, reject) => {
             db.all(
               `
@@ -321,11 +321,11 @@ export default class DatabaseManager {
       }
     }
 
-    return Promise.all(workspaceResults).then((allWorkspaceResults) => {
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
       return new Promise<Map<string, number>>((resolve) => {
         const result: Map<string, number> = new Map();
-        for (const workspaceResult of allWorkspaceResults) {
-          for (const [key, value] of workspaceResult) {
+        for (const repositoryResult of allRepositoryResults) {
+          for (const [key, value] of repositoryResult) {
             if (!result.has(key)) {
               result.set(key, 0);
             }
@@ -339,20 +339,20 @@ export default class DatabaseManager {
   }
 
   async countNotesPerType(
-    workspaceSlugs: string[],
+    repositorySlugs: string[],
   ): Promise<Map<string, number>> {
-    const workspaceResults: Promise<Map<string, number>>[] = [];
+    const repositoryResults: Promise<Map<string, number>>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
-        workspaceSlugs.length === 0 ||
-        workspaceSlugs.includes(datasourceName)
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
       ) {
         const db = this.datasources.get(datasourceName);
         if (!db) {
           throw new Error(`No datasource ${datasourceName} found`);
         }
 
-        workspaceResults.push(
+        repositoryResults.push(
           new Promise<Map<string, number>>((resolve, reject) => {
             db.all(
               `
@@ -384,11 +384,11 @@ export default class DatabaseManager {
       }
     }
 
-    return Promise.all(workspaceResults).then((allWorkspaceResults) => {
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
       return new Promise<Map<string, number>>((resolve) => {
         const result: Map<string, number> = new Map();
-        for (const workspaceResult of allWorkspaceResults) {
-          for (const [key, value] of workspaceResult) {
+        for (const repositoryResult of allRepositoryResults) {
+          for (const [key, value] of repositoryResult) {
             if (!result.has(key)) {
               result.set(key, 0);
             }
@@ -406,8 +406,8 @@ export default class DatabaseManager {
     return {
       oid: '0000000000000000000000000000000000000000',
       oidFile: '0000000000000000000000000000000000000000',
-      workspaceSlug: datasourceName,
-      workspacePath: this.#getWorkspacePath(datasourceName),
+      repositorySlug: datasourceName,
+      repositoryPath: this.#getRepositoryPath(datasourceName),
       slug: 'default-quote',
       type: 'quote',
       relativePath: 'dummy',
@@ -431,13 +431,13 @@ export default class DatabaseManager {
   async searchDailyQuote(query: Model.Query): Promise<Model.Note> {
     // Choose a datasource
     let selectedDatasourceName: string;
-    if (!query.workspaces || query.workspaces.length === 0) {
+    if (!query.repositories || query.repositories.length === 0) {
       selectedDatasourceName = randomElement([...this.datasources.keys()]);
-    } else if (query.workspaces.length === 1) {
+    } else if (query.repositories.length === 1) {
       // eslint-disable-next-line prefer-destructuring
-      selectedDatasourceName = query.workspaces[0];
+      selectedDatasourceName = query.repositories[0];
     } else {
-      selectedDatasourceName = randomElement(query.workspaces);
+      selectedDatasourceName = randomElement(query.repositories);
     }
 
     const db = this.datasources.get(selectedDatasourceName);
@@ -487,7 +487,7 @@ export default class DatabaseManager {
   }
 
   async find(noteRef: Model.NoteRef): Promise<Model.Note> {
-    const datasourceName = noteRef.workspaceSlug;
+    const datasourceName = noteRef.repositorySlug;
     const db = this.datasources.get(datasourceName);
     if (!db) {
       throw new Error(`No datasource ${datasourceName} found`);
@@ -548,17 +548,17 @@ export default class DatabaseManager {
     }
 
     // Group OID by datasource
-    const oidByWorkspace = new Map<string, string[]>();
+    const oidByRepository = new Map<string, string[]>();
     for (const noteRef of noteRefs) {
-      if (!oidByWorkspace.has(noteRef.workspaceSlug)) {
-        oidByWorkspace.set(noteRef.workspaceSlug, []);
+      if (!oidByRepository.has(noteRef.repositorySlug)) {
+        oidByRepository.set(noteRef.repositorySlug, []);
       }
-      oidByWorkspace.get(noteRef.workspaceSlug)?.push(noteRef.oid);
+      oidByRepository.get(noteRef.repositorySlug)?.push(noteRef.oid);
     }
 
     // Trigger one query per datasource
     const results: Promise<Model.Note[]>[] = [];
-    for (const [datasourceName, oids] of oidByWorkspace) {
+    for (const [datasourceName, oids] of oidByRepository) {
       const db = this.datasources.get(datasourceName);
       if (!db) {
         throw new Error(`No datasource ${datasourceName} found`);
@@ -658,9 +658,9 @@ export default class DatabaseManager {
     const results: Promise<Model.Note[]>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
-        !query.workspaces ||
-        query.workspaces.length === 0 ||
-        query.workspaces.includes(datasourceName)
+        !query.repositories ||
+        query.repositories.length === 0 ||
+        query.repositories.includes(datasourceName)
       ) {
         results.push(
           this.searchNotes(query.q, datasourceName, query.limit, query.shuffle),
@@ -697,19 +697,19 @@ export default class DatabaseManager {
 
   /* Files Management */
 
-  async listFiles(workspaceSlugs: string[]): Promise<Model.File[]> {
-    const workspaceResults: Promise<Model.File[]>[] = [];
+  async listFiles(repositorySlugs: string[]): Promise<Model.File[]> {
+    const repositoryResults: Promise<Model.File[]>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
-        workspaceSlugs.length === 0 ||
-        workspaceSlugs.includes(datasourceName)
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
       ) {
         const db = this.datasources.get(datasourceName);
         if (!db) {
           throw new Error(`No datasource ${datasourceName} found`);
         }
 
-        workspaceResults.push(
+        repositoryResults.push(
           new Promise<Model.File[]>((resolve, reject) => {
             db.all(
               `
@@ -742,11 +742,11 @@ export default class DatabaseManager {
       }
     }
 
-    return Promise.all(workspaceResults).then((allWorkspaceResults) => {
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
       return new Promise<Model.File[]>((resolve) => {
         const result: Model.File[] = [];
-        for (const workspaceResult of allWorkspaceResults) {
-          result.push(...workspaceResult);
+        for (const repositoryResult of allRepositoryResults) {
+          result.push(...repositoryResult);
         }
         resolve(result);
       });
@@ -754,21 +754,21 @@ export default class DatabaseManager {
   }
 
   async listNotesInFile(
-    workspaceSlug: string,
+    repositorySlug: string,
     relativePath: string,
   ): Promise<Model.Note[]> {
-    return this.searchNotes(`path:${relativePath}`, workspaceSlug, 0, false);
+    return this.searchNotes(`path:${relativePath}`, repositorySlug, 0, false);
   }
 
   /* Deck Management */
 
   async getDeckStats(
-    workspaceSlug: string,
+    repositorySlug: string,
     deckConfig: Model.DeckConfig,
   ): Promise<Model.StatsDeck> {
-    const db = this.datasources.get(workspaceSlug);
+    const db = this.datasources.get(repositorySlug);
     if (!db) {
-      throw new Error(`No datasource ${workspaceSlug} found`);
+      throw new Error(`No datasource ${repositorySlug} found`);
     }
 
     return new Promise<Model.StatsDeck>((resolve, reject) => {
@@ -799,12 +799,12 @@ export default class DatabaseManager {
   }
 
   async getTodayFlashcards(
-    workspaceSlug: string,
+    repositorySlug: string,
     deckConfig: Model.DeckConfig,
   ): Promise<Model.Flashcard[]> {
-    const db = this.datasources.get(workspaceSlug);
+    const db = this.datasources.get(repositorySlug);
     if (!db) {
-      throw new Error(`No datasource ${workspaceSlug} found`);
+      throw new Error(`No datasource ${repositorySlug} found`);
     }
 
     return new Promise<Model.Flashcard[]>((resolve, reject) => {
@@ -883,13 +883,13 @@ export default class DatabaseManager {
   }
 
   async updateFlashcard(
-    workspaceSlug: string,
+    repositorySlug: string,
     deckConfig: Model.DeckConfig,
     flashcard: Model.Flashcard,
   ): Promise<Model.Flashcard> {
-    const db = this.datasources.get(workspaceSlug);
+    const db = this.datasources.get(repositorySlug);
     if (!db) {
-      throw new Error(`No datasource ${workspaceSlug} found`);
+      throw new Error(`No datasource ${repositorySlug} found`);
     }
 
     return new Promise<Model.Flashcard>((resolve, reject) => {
@@ -919,11 +919,11 @@ export default class DatabaseManager {
 
   /* Converters */
 
-  #rowToFile(row: any, workspaceSlug: string): Model.File {
+  #rowToFile(row: any, repositorySlug: string): Model.File {
     return {
       oid: row.oid,
-      workspaceSlug,
-      workspacePath: this.#getWorkspacePath(workspaceSlug),
+      repositorySlug,
+      repositoryPath: this.#getRepositoryPath(repositorySlug),
       slug: row.slug,
       relativePath: row.relative_path,
       wikilink: row.wikilink,
@@ -932,14 +932,14 @@ export default class DatabaseManager {
     };
   }
 
-  #rowToNote(row: any, workspaceSlug: string): Model.Note {
+  #rowToNote(row: any, repositorySlug: string): Model.Note {
     let parsedTags = [];
     if (row.tags !== '') parsedTags = row.tags.split(',');
     return {
       oid: row.oid,
       oidFile: row.file_oid,
-      workspaceSlug,
-      workspacePath: this.#getWorkspacePath(workspaceSlug),
+      repositorySlug,
+      repositoryPath: this.#getRepositoryPath(repositorySlug),
       slug: row.slug,
       type: row.note_type,
       relativePath: row.relative_path,

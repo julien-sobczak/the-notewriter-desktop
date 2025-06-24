@@ -1,4 +1,4 @@
-workspaces:
+repositories:
 - name: Life
   slug: life
   path: "$PWD/fixtures/life"
@@ -9,18 +9,18 @@ workspaces:
 
 dailyQuote:
   query: "path:references @kind:quote"
-  workspaces: [life]
+  repositories: [life]
 
 inspirations:
 - name: Life
   query: "path:references/persons (#life or #purpose) @kind:quote"
-  workspaces: [life]
+  repositories: [life]
 - name: Art
   query: "path:references @kind:artwork"
-  workspaces: [life]
+  repositories: [life]
 
 zenMode:
   queries:
   - query: "path:references @kind:quote"
-    workspaces: [life]
+    repositories: [life]
   - query: "path:thoughts"
