@@ -43,7 +43,9 @@ import {
 
 const config = new ConfigManager();
 const db = new DatabaseManager();
-config.workspaces().forEach((workspace) => db.registerWorkspace(workspace));
+config
+  .repositories()
+  .forEach((repository) => db.registerRepository(repository));
 let configSaved = false; // true after saving configuration back to file before closing the application
 
 class AppUpdater {
@@ -60,27 +62,29 @@ class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('edit', (_event, workspaceSlug, relativePath, line) => {
+ipcMain.on('edit', (_event, repositorySlug, relativePath, line) => {
   let relativeFileReference = relativePath;
   if (line > 0) {
     relativeFileReference += `:${line}`;
   }
 
-  const workspace = config.workspaces().find((w) => w.slug === workspaceSlug);
-  if (!workspace) {
-    console.log(`Unknown workspace ${workspaceSlug}`);
+  const repository = config
+    .repositories()
+    .find((w) => w.slug === repositorySlug);
+  if (!repository) {
+    console.log(`Unknown repository ${repositorySlug}`);
     return;
   }
-  const workspacePath = normalizePath(workspace.path);
+  const repositoryPath = normalizePath(repository.path);
 
   // TODO support VISUAL/EDITOR-like env variables
   console.log(
-    `Launching VS Code: code ${workspacePath} -g ${workspacePath}/${relativeFileReference}...`,
+    `Launching VS Code: code ${repositoryPath} -g ${repositoryPath}/${relativeFileReference}...`,
   );
 
   const subprocess = spawn(
     'code',
-    [workspacePath, '-g', `${workspacePath}/${relativeFileReference}`],
+    [repositoryPath, '-g', `${repositoryPath}/${relativeFileReference}`],
     {
       detached: true,
       stdio: 'ignore',
@@ -121,21 +125,21 @@ ipcMain.handle(
     mainWindow = null;
   },
 );
-ipcMain.handle('list-files', async (event, workspaceSlug: string) => {
-  console.debug(`Listing files in workspace ${workspaceSlug}`);
-  const result = await db.listFiles([workspaceSlug]);
+ipcMain.handle('list-files', async (event, repositorySlug: string) => {
+  console.debug(`Listing files in repository ${repositorySlug}`);
+  const result = await db.listFiles([repositorySlug]);
   console.debug(`Found ${result.length} files`);
   return result;
 });
 ipcMain.handle(
   'list-notes-in-file',
-  async (_event, workspaceSlug: string, relativePath: string) => {
+  async (_event, repositorySlug: string, relativePath: string) => {
     console.debug(
-      `Listing note in file ${relativePath} in workspace ${workspaceSlug}`,
+      `Listing note in file ${relativePath} in repository ${repositorySlug}`,
     );
-    const result = await db.listNotesInFile(workspaceSlug, relativePath);
+    const result = await db.listNotesInFile(repositorySlug, relativePath);
     console.debug(
-      `Found ${result.length} notes for file ${relativePath} in workspace ${workspaceSlug}`,
+      `Found ${result.length} notes for file ${relativePath} in repository ${repositorySlug}`,
     );
     return result;
   },
@@ -155,7 +159,9 @@ ipcMain.handle('/mfind', async (_event, noteRefs: NoteRef[]) => {
 });
 
 async function doSearch(query: Query) {
-  console.debug(`Searching for "${query.q}" in workspaces ${query.workspaces}`);
+  console.debug(
+    `Searching for "${query.q}" in repositories ${query.repositories}`,
+  );
   const result = await db.search(query);
   console.debug(`Found ${result.notes.length} notes`);
   return result;
@@ -176,7 +182,7 @@ ipcMain.handle('get-daily-quote', async () => {
   }
   const query: Query = {
     q: dailyQuote.query,
-    workspaces: dailyQuote.workspaces,
+    repositories: dailyQuote.repositories,
     blockId: undefined,
     deskId: undefined,
     limit: 0,
@@ -186,30 +192,30 @@ ipcMain.handle('get-daily-quote', async () => {
   return note;
 });
 
-ipcMain.handle('get-statistics', async (_event, workspaceSlugs) => {
+ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
   const statistics: Statistics = {
     countNotesPerType: new Map<string, number>(),
     countNotesPerNationality: new Map<string, number>(),
   };
   statistics.countNotesPerNationality =
-    await db.countNotesPerNationality(workspaceSlugs);
-  statistics.countNotesPerType = await db.countNotesPerType(workspaceSlugs);
+    await db.countNotesPerNationality(repositorySlugs);
+  statistics.countNotesPerType = await db.countNotesPerType(repositorySlugs);
   return statistics;
 });
 
-ipcMain.handle('list-decks', async (_event, workspaceSlugs: string[]) => {
-  console.debug(`Listing decks for workspaces ${workspaceSlugs}`);
+ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
+  console.debug(`Listing decks for repositories ${repositorySlugs}`);
   const decks: Deck[] = [];
-  for (const workspaceSlug of workspaceSlugs) {
-    const repositoryConfig = config.repositoryConfigs[workspaceSlug];
+  for (const repositorySlug of repositorySlugs) {
+    const repositoryConfig = config.repositoryConfigs[repositorySlug];
     const deckKeys = Object.keys(repositoryConfig.decks);
     for (let i = 0; i < repositoryConfig.decks.length; i++) {
       const deckConfig = repositoryConfig.decks[i];
       // TODO find a better syntax to retrieve stats in parallel
       // eslint-disable-next-line no-await-in-loop
-      const deckStats = await db.getDeckStats(workspaceSlug, deckConfig);
+      const deckStats = await db.getDeckStats(repositorySlug, deckConfig);
       decks.push({
-        workspaceSlug,
+        repositorySlug,
         key: deckKeys[i],
         config: deckConfig,
         stats: deckStats,
@@ -217,14 +223,16 @@ ipcMain.handle('list-decks', async (_event, workspaceSlugs: string[]) => {
     }
   }
 
-  console.debug(`Found ${decks.length} decks for workspaces ${workspaceSlugs}`);
+  console.debug(
+    `Found ${decks.length} decks for repositories ${repositorySlugs}`,
+  );
   return decks;
 });
 ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
   console.debug(
-    `Listing flashcards for today for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key}`,
+    `Listing flashcards for today for repository ${deckRef.repositorySlug} and deck ${deckRef.key}`,
   );
-  const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
+  const repositoryConfig = config.repositoryConfigs[deckRef.repositorySlug];
 
   // Find the deck config
   let deckConfig: DeckConfig | undefined;
@@ -237,17 +245,17 @@ ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
 
   if (!deckConfig) {
     console.error(
-      `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+      `No deck configuration found for key ${deckRef.key} in repository ${deckRef.repositorySlug}`,
     );
     return []; // Send an empty array as response to stop the execution
   }
 
   const flashcards = await db.getTodayFlashcards(
-    deckRef.workspaceSlug,
+    deckRef.repositorySlug,
     deckConfig,
   );
   console.debug(
-    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in repository ${deckRef.repositorySlug}`,
   );
   return flashcards;
 });
@@ -255,11 +263,11 @@ ipcMain.handle(
   'update-flashcard',
   async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {
     console.debug(
-      `Updating flashcard for workspace ${deckRef.workspaceSlug} and deck ${deckRef.key} and review ${review.feedback}`, // TODO reword this message
+      `Updating flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.key} and review ${review.feedback}`, // TODO reword this message
     );
 
     // 1. Update in DB
-    const repositoryConfig = config.repositoryConfigs[deckRef.workspaceSlug];
+    const repositoryConfig = config.repositoryConfigs[deckRef.repositorySlug];
     let deckConfig: DeckConfig | undefined;
     for (const deck of repositoryConfig.decks) {
       if (deck.name === deckRef.key) {
@@ -269,7 +277,7 @@ ipcMain.handle(
     }
     if (!deckConfig) {
       console.error(
-        `No deck configuration found for key ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+        `No deck configuration found for key ${deckRef.key} in repository ${deckRef.repositorySlug}`,
       );
       // Do nothing and simply return the flashcard
       return flashcard;
@@ -277,10 +285,10 @@ ipcMain.handle(
 
     // 2. Append review to local study
     // TODO
-    await db.updateFlashcard(deckRef.workspaceSlug, deckConfig, flashcard);
+    await db.updateFlashcard(deckRef.repositorySlug, deckConfig, flashcard);
 
     console.debug(
-      `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.key} in workspace ${deckRef.workspaceSlug}`,
+      `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.key} in repository ${deckRef.repositorySlug}`,
     );
     return flashcard;
   },

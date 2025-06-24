@@ -6,7 +6,7 @@
       "name": "The NoteWriter",
       "root": {
         "id": "469f71c1-45fe-4aa3-9791-0521d7c36b0f",
-        "workspaces": "life",
+        "repository": "life",
         "layout": "vertical",
         "elements": [
           {
@@ -42,7 +42,7 @@
       "name": "Developer Cheatsheet",
       "root": {
         "id": "93ef328a-dcad-4ee0-b3ca-4cd5780f3a14",
-        "workspaces": "life",
+        "repositories": "life",
         "layout": "vertical",
         "elements": [
           {
@@ -69,7 +69,7 @@
       "name": "Quotes",
       "root": {
         "id": "8441dfdb-688c-4b02-87e0-82083c97a7c9",
-        "workspaces": "life",
+        "repositories": "life",
         "layout": "container",
         "query": "@kind:quote path:references/quotes",
         "view": "grid"

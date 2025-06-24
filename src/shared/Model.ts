@@ -3,14 +3,16 @@
 /* Static Config */
 /* editorconfig.yml */
 
+// TODO use repositorySlugs instead of repositories to be consistent
+
 export interface EditorStaticConfig {
-  workspaces: WorkspaceConfig[];
+  repositories: RepositoryRefConfig[];
   dailyQuote?: DailyQuoteConfig;
   inspirations?: InspirationConfig[];
   zenMode?: ZenConfig;
 }
 
-export interface WorkspaceConfig {
+export interface RepositoryRefConfig {
   name: string;
   slug: string;
   path: string;
@@ -19,12 +21,12 @@ export interface WorkspaceConfig {
 
 export interface DailyQuoteConfig {
   query: string;
-  workspaces: string[];
+  repositories: string[];
 }
 
 export interface InspirationConfig {
   name: string;
-  workspaces: string[];
+  repositories: string[];
   query: string;
 }
 
@@ -34,7 +36,7 @@ export interface ZenConfig {
 
 export interface ZenQuery {
   query: string;
-  workspaces?: string[];
+  repositories?: string[];
 }
 
 /* Dynamic Config */
@@ -47,7 +49,7 @@ export interface EditorDynamicConfig {
 
 export interface Bookmark {
   // Identify the note
-  workspaceSlug: string;
+  repositorySlug: string;
   noteOID: string;
   // Copy some attributes to make easy to list favorites and jump to them
   noteType: string;
@@ -69,7 +71,7 @@ export interface Block {
   id: string;
   name: string | null;
   layout: string; // container | horizontal | vertical
-  workspaces: string[]; // Workspaces to use by default on queries (recursively)
+  repositories: string[]; // Repositories to use by default on queries (recursively)
   view: string | null; // single | grid | list | free
   // Percentage of this block on parent size (height for vertical, width for horizontal)
   size: string | null;
@@ -143,7 +145,7 @@ export interface SearchConfig {
 /* API */
 
 export interface Deck {
-  workspaceSlug: string;
+  repositorySlug: string;
   key: string;
   config: DeckConfig;
   stats: StatsDeck;
@@ -153,7 +155,7 @@ export interface StatsDeck {
   new: number;
 }
 export interface DeckRef {
-  workspaceSlug: string;
+  repositorySlug: string;
   key: string;
   name: string;
 }
@@ -162,7 +164,7 @@ export interface DeckRef {
 
 export interface NoteRef {
   oid: string;
-  workspaceSlug: string;
+  repositorySlug: string;
 }
 
 export interface Statistics {
@@ -176,8 +178,8 @@ export interface Statistics {
 export interface Query {
   // The raw query string
   q: string;
-  // The selected workspaces
-  workspaces: string[];
+  // The selected repositories
+  repositories: string[];
   // The desk where the query originated
   deskId: string | null | undefined;
   // The block where the query originated
@@ -214,9 +216,9 @@ export interface Note {
 
   slug: string;
 
-  // Enriched information about the workspace where the note comes from
-  workspaceSlug: string;
-  workspacePath: string;
+  // Enriched information about the repository where the note comes from
+  repositorySlug: string;
+  repositoryPath: string;
 
   // Type of note: free, reference, ...
   type: string;
@@ -294,8 +296,8 @@ export interface File {
   oid: string;
   slug: string;
 
-  workspaceSlug: string;
-  workspacePath: string;
+  repositorySlug: string;
+  repositoryPath: string;
 
   relativePath: string;
   wikilink: string;

@@ -22,7 +22,7 @@ import {
   Desk,
   Query,
   QueryResult,
-  WorkspaceConfig,
+  RepositoryRefConfig,
   DeckRef,
   Bookmark,
   File,
@@ -47,13 +47,13 @@ import Markdown from './Markdown';
 
 type CommandMenuProps = {
   // Style
-  workspaces: WorkspaceConfig[];
+  repositories: RepositoryRefConfig[];
   desks: Desk[] | null | undefined;
   decks: DeckRef[] | null | undefined;
   bookmarks: Bookmark[] | null | undefined;
   files: File[] | null | undefined;
   onActivitySelected?: (activity: string) => void;
-  onWorkspaceToggled?: (workspace: WorkspaceConfig) => void;
+  onRepositoryToggled?: (repository: RepositoryRefConfig) => void;
   onDeskSelected?: (desk: Desk) => void;
   onDeckSelected?: (desk: DeckRef) => void;
   onBookmarkSelected?: (bookmark: Bookmark) => void;
@@ -61,13 +61,13 @@ type CommandMenuProps = {
 };
 
 function CommandMenu({
-  workspaces,
+  repositories,
   desks,
   decks,
   bookmarks,
   files,
   onActivitySelected = () => {},
-  onWorkspaceToggled = () => {},
+  onRepositoryToggled = () => {},
   onDeskSelected = () => {},
   onDeckSelected = () => {},
   onBookmarkSelected = () => {},
@@ -107,8 +107,8 @@ function CommandMenu({
     closeMenu();
   };
 
-  const handleWorkspaceToggled = (workspace: WorkspaceConfig) => {
-    onWorkspaceToggled(workspace);
+  const handleRepositoryToggled = (repository: RepositoryRefConfig) => {
+    onRepositoryToggled(repository);
     closeMenu();
   };
 
@@ -176,22 +176,22 @@ function CommandMenu({
           {!page && (
             <Command.Item
               onSelect={() => {
-                setPages([...pages, 'workspaces']);
+                setPages([...pages, 'repositories']);
                 setSearch('');
               }}
             >
-              Toggle workspace...
+              Toggle repository...
             </Command.Item>
           )}
-          {page === 'workspaces' && (
+          {page === 'repositories' && (
             <>
-              {workspaces.map((workspace: WorkspaceConfig) => (
+              {repositories.map((repository: RepositoryRefConfig) => (
                 <Command.Item
-                  key={workspace.slug}
-                  value={workspace.name}
-                  onSelect={() => handleWorkspaceToggled(workspace)}
+                  key={repository.slug}
+                  value={repository.name}
+                  onSelect={() => handleRepositoryToggled(repository)}
                 >
-                  Toggle workspace <em>{workspace.name}</em>
+                  Toggle repository <em>{repository.name}</em>
                 </Command.Item>
               ))}
             </>
@@ -341,19 +341,19 @@ export interface Activity {
 
 function Main() {
   const { config, dispatch } = useContext(ConfigContext);
-  console.log('<Main>', config.static.workspaces); // FIXME remove
+  console.log('<Main>', config.static.repositories); // FIXME remove
 
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
   const repositoryConfigs = config.repositories;
   const deckRefs = Object.keys(repositoryConfigs || {})
-    .map((workspaceSlug: string): DeckRef[] => {
-      const repositoryConfig = repositoryConfigs[workspaceSlug];
+    .map((repositorySlug: string): DeckRef[] => {
+      const repositoryConfig = repositoryConfigs[repositorySlug];
       const results: DeckRef[] = [];
       if (repositoryConfig.decks) {
         for (const deck of repositoryConfig.decks) {
           results.push({
-            workspaceSlug,
+            repositorySlug,
             key: deck.name,
             name: deck.name,
           });
@@ -397,16 +397,16 @@ function Main() {
 
   useEffect(() => {
     // Load all files to provide them in cmd+k
-    const workspaceSlugs: string[] = staticConfig.workspaces.map(
-      (w: WorkspaceConfig) => w.slug,
+    const repositorySlugs: string[] = staticConfig.repositories.map(
+      (w: RepositoryRefConfig) => w.slug,
     );
 
     const listFiles = async () => {
-      const results: File[] = await window.electron.listFiles(workspaceSlugs);
+      const results: File[] = await window.electron.listFiles(repositorySlugs);
       setFiles(results);
     };
     listFiles();
-  }, [staticConfig.workspaces]);
+  }, [staticConfig.repositories]);
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -419,9 +419,9 @@ function Main() {
     event.preventDefault();
   };
 
-  const selectedWorkspaceSlugs = staticConfig.workspaces
-    .filter((workspace: WorkspaceConfig) => workspace.selected)
-    .map((workspace: WorkspaceConfig) => workspace.slug);
+  const selectedRepositorySlugs = staticConfig.repositories
+    .filter((repository: RepositoryRefConfig) => repository.selected)
+    .map((repository: RepositoryRefConfig) => repository.slug);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -430,7 +430,7 @@ function Main() {
     console.debug(`Searching ${searchQuery}...`);
     const query: Query = {
       q: searchQuery,
-      workspaces: selectedWorkspaceSlugs,
+      repositories: selectedRepositorySlugs,
       blockId: null,
       deskId: null,
       limit: 0,
@@ -456,9 +456,9 @@ function Main() {
     inputElement.current?.focus();
   });
 
-  const handleWorkspaceToggle = (slug: string) => {
+  const handleRepositoryToggle = (slug: string) => {
     dispatch({
-      type: 'toggleWorkspaceSelected',
+      type: 'toggleRepositorySelected',
       payload: slug,
     });
   };
@@ -575,32 +575,34 @@ function Main() {
             value={inputQuery}
             onChange={(event: any) => setInputQuery(event.target.value)}
           />
-          <nav className="WorkspaceButtonGroup">
-            {staticConfig.workspaces.map((workspace: WorkspaceConfig) => (
-              <button
-                type="button"
-                key={workspace.name}
-                className={classNames({ selected: workspace.selected })}
-                onClick={() => handleWorkspaceToggle(workspace.slug)}
-              >
-                {workspace.name}
-              </button>
-            ))}
+          <nav className="RepositoryButtonGroup">
+            {staticConfig.repositories.map(
+              (repository: RepositoryRefConfig) => (
+                <button
+                  type="button"
+                  key={repository.name}
+                  className={classNames({ selected: repository.selected })}
+                  onClick={() => handleRepositoryToggle(repository.slug)}
+                >
+                  {repository.name}
+                </button>
+              ),
+            )}
           </nav>
         </form>
       </header>
 
       <CommandMenu
         // Data
-        workspaces={staticConfig.workspaces}
+        repositories={staticConfig.repositories}
         desks={dynamicConfig.desks}
         decks={deckRefs}
         bookmarks={dynamicConfig.bookmarks}
         files={files}
         // Events
         onActivitySelected={(activitySlug) => switchActivity(activitySlug)}
-        onWorkspaceToggled={(workspace) =>
-          handleWorkspaceToggle(workspace.slug)
+        onRepositoryToggled={(repository) =>
+          handleRepositoryToggle(repository.slug)
         }
         onDeskSelected={handleDeskSelected}
         onDeckSelected={handleDeckSelected}

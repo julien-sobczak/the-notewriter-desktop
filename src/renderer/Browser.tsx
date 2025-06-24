@@ -7,7 +7,7 @@ import TreeView, {
   ITreeViewOnNodeSelectProps,
   flattenTree,
 } from 'react-accessible-treeview';
-import { File, Note, WorkspaceConfig } from '../shared/Model';
+import { File, Note, RepositoryRefConfig } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NoteContainer from './NoteContainer';
 
@@ -31,15 +31,15 @@ function Browser({ file }: BrowserProps) {
 
   const { config } = useContext(ConfigContext);
 
-  // Read configured workspaces (useful to populate the dropdown)
-  const { workspaces } = config.static;
+  // Read configured repositories (useful to populate the dropdown)
+  const { repositories } = config.static;
 
-  // Currently selected workspace(s)
-  const [selectedWorkspace, setSelectedWorkspace] = useState<
+  // Currently selected repositories
+  const [selectedRepository, setSelectedRepository] = useState<
     string | undefined
-  >(getDefaultWorkspaceSlug(file, workspaces));
+  >(getDefaultRepositorySlug(file, repositories));
 
-  // Files in selectedWorkspace
+  // Files in selected repository
   const [files, setFiles] = useState<File[]>([]);
   // Which file?
   const [selectedFile, setSelectedFile] = useState<string | undefined>(
@@ -55,19 +55,20 @@ function Browser({ file }: BrowserProps) {
   // Refresh when props are updated (ex: cmd+k)
   useEffect(() => {
     if (!file) return;
-    setSelectedWorkspace(file.workspaceSlug);
+    setSelectedRepository(file.repositorySlug);
     setSelectedFile(file.relativePath);
     setSelectedDir(dirname(file.relativePath));
   }, [file]);
 
-  // Load files when switching to a new workspace
+  // Load files when switching to a new repository
   useEffect(() => {
     setFiles([]);
 
-    if (!selectedWorkspace) return;
+    if (!selectedRepository) return;
 
     const loadFiles = async () => {
-      const result: File[] = await window.electron.listFiles(selectedWorkspace);
+      const result: File[] =
+        await window.electron.listFiles(selectedRepository);
       // console.log(result);
       // TODO keep filtering journal files to force the use f the Journal viewer?
       const filteredFiles = result.filter(
@@ -76,7 +77,7 @@ function Browser({ file }: BrowserProps) {
       setFiles(filteredFiles);
     };
     loadFiles();
-  }, [selectedWorkspace]);
+  }, [selectedRepository]);
 
   // Load notes when selecting a file
   useEffect(() => {
@@ -86,7 +87,7 @@ function Browser({ file }: BrowserProps) {
 
     const listNotesInFile = async () => {
       const result: Note[] = await window.electron.listNotesInFile(
-        selectedWorkspace,
+        selectedRepository,
         selectedFile,
       );
       setNotes(result);
@@ -94,10 +95,10 @@ function Browser({ file }: BrowserProps) {
     listNotesInFile();
   }, [selectedFile]);
 
-  const handleWorkspaceChange = (workspaceSlug: string) => {
+  const handleRepositoryChange = (repositorySlug: string) => {
     setSelectedFile(undefined);
     setSelectedDir(undefined);
-    setSelectedWorkspace(workspaceSlug);
+    setSelectedRepository(repositorySlug);
   };
 
   // Build the tree representation.
@@ -117,19 +118,19 @@ function Browser({ file }: BrowserProps) {
     setSelectedDir(dirname(selectedRelativePath));
   };
 
-  console.log('<Browser>', selectedWorkspace, selectedDir, selectedFile); // FIXME remove
+  console.log('<Browser>', selectedRepository, selectedDir, selectedFile); // FIXME remove
 
   return (
     <div className="Browser">
       {/* The left panel to select a file */}
       <div className="LeftPanel">
         <select
-          value={selectedWorkspace}
-          onChange={(e) => handleWorkspaceChange(e.target.value)}
+          value={selectedRepository}
+          onChange={(e) => handleRepositoryChange(e.target.value)}
         >
-          {workspaces.map((workspace) => (
-            <option key={workspace.slug} value={workspace.slug}>
-              {workspace.name}
+          {repositories.map((repository) => (
+            <option key={repository.slug} value={repository.slug}>
+              {repository.name}
             </option>
           ))}
         </select>
@@ -275,16 +276,16 @@ function FileIcon({ filename }: any) {
   }
 }
 
-// Return the default workspace to use.
-function getDefaultWorkspaceSlug(
+// Return the default repository to use.
+function getDefaultRepositorySlug(
   file: File | undefined,
-  workspaces: WorkspaceConfig[],
+  repositories: RepositoryRefConfig[],
 ): string | undefined {
   if (file) {
-    return file.workspaceSlug;
+    return file.repositorySlug;
   }
-  if (workspaces.length > 0) {
-    return workspaces[0].slug;
+  if (repositories.length > 0) {
+    return repositories[0].slug;
   }
   return undefined;
 }

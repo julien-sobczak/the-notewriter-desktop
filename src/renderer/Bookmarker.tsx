@@ -28,7 +28,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
 
     console.log(`Searching for bookmark ${selectedBookmark.noteOID}...`);
     const noteRef: NoteRef = {
-      workspaceSlug: selectedBookmark.workspaceSlug,
+      repositorySlug: selectedBookmark.repositorySlug,
       oid: selectedBookmark.noteOID,
     };
     const find = async () => {

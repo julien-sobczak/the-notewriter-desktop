@@ -35,7 +35,7 @@ function Desk({name, template={}}) {
 
 const desk = {
   name: 'My Project',
-  workspace: 'main',
+  repository: 'main',
   root: {
     layout: 'horizontal',
     elements: [

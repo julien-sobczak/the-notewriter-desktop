@@ -3,10 +3,10 @@
 # ~/.nt/editorconfig.yml (in complement to ~/.nt/config.yml for saved searched, etc.)
 
 
-# List of workspaces (= The NoteWriter repositories)
+# List of repositories (= The NoteWriter repositories)
 # Useful when spliting work and life notes in different Git repositories while keeping the options to search across all repositories of notes using the desktop application.
-# (Ex; You can keep Go cheatsheets inside your main collection as can be useful if you change work and still want to search them at work)
-workspaces:
+# (Ex: You can keep Go cheatsheets inside your main collection as can be useful if you change work and still want to search them at work)
+repositories:
 - name: Main
   slug: main # Useful to reference in desks
   path: ~/notes
@@ -22,16 +22,16 @@ inspirations:
   categories:
   # Default can be
   # - name: Quotes
-  #   workspace: all
+  #   repository: all
   #   query: "@kind:quote"
   # - name: Art
-  #   workspace: all
+  #   repository: all
   #   query: "@kind:artwork"
   - name: Life
-    workspace: main
+    repository: main
     query: "path:references/persons (#life or #purpose) @kind:quote"
   - name: Art
-    workspace: main
+    repository: main
     query: "path:references @kind:artwork"
   # Complete with more inspirations
 
@@ -41,7 +41,7 @@ inspirations:
 # The NoteWriter Deskop must load this file at startup and support a save button to persist change in desks or new desks (like VS Code supports editing the configuration).
 desks:
 - name: My Project
-  workspace: main
+  repository: main
   layout: horizontal # vertical | horizontal | container (default)
   elements:
   - width: "70%" # TODO: or just "size"? Accept only percent?

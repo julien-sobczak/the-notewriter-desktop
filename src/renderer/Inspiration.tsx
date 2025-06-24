@@ -14,7 +14,7 @@ function extractQuery(inspiration: InspirationConfig): Query {
   // Convert all queries configured into valid Query
   const result: Query = {
     q: inspiration.query,
-    workspaces: inspiration.workspaces ? inspiration.workspaces : [],
+    repositories: inspiration.repositories ? inspiration.repositories : [],
     deskId: undefined,
     blockId: undefined,
     limit: 1000, // 1000 notes must be enough

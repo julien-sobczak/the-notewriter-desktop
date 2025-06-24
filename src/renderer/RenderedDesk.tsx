@@ -19,21 +19,21 @@ import { capitalize } from './helpers';
 
 // Return all note refs present in a desk recursively.
 function extractNoteRefs(desk: Desk): NoteRef[] {
-  return extractNoteRefsFromBlock(desk, desk.root, desk.root.workspaces);
+  return extractNoteRefsFromBlock(desk, desk.root, desk.root.repositories);
 }
 
 // Same as extractNoteRefs but from a given Block instead.
 function extractNoteRefsFromBlock(
   desk: Desk,
   block: Block,
-  workspaces: string[],
+  repositories: string[],
 ): NoteRef[] {
-  // Determine on which workspace we are working
-  let selectedWorkspaces = [];
-  if (!block.workspaces || block.workspaces.length === 0) {
-    selectedWorkspaces = block.workspaces;
+  // Determine on which repository we are working
+  let selectedRepositories = [];
+  if (!block.repositories || block.repositories.length === 0) {
+    selectedRepositories = block.repositories;
   } else {
-    selectedWorkspaces = workspaces;
+    selectedRepositories = repositories;
   }
 
   const results: NoteRef[] = [];
@@ -44,7 +44,7 @@ function extractNoteRefsFromBlock(
     if (!block.elements) return results;
     for (const element of block.elements) {
       results.push(
-        ...extractNoteRefsFromBlock(desk, element, selectedWorkspaces),
+        ...extractNoteRefsFromBlock(desk, element, selectedRepositories),
       );
     }
   }
@@ -54,21 +54,21 @@ function extractNoteRefsFromBlock(
 
 // Return all queries present in a desk recursively.
 function extractQueries(desk: Desk): Query[] {
-  return extractQueriesFromBlock(desk, desk.root, desk.root.workspaces);
+  return extractQueriesFromBlock(desk, desk.root, desk.root.repositories);
 }
 
 // Same as extractQueries but from a given Block instead.
 function extractQueriesFromBlock(
   desk: Desk,
   block: Block,
-  workspaces: string[],
+  repositories: string[],
 ): Query[] {
-  // Determine on which workspace we are working
-  let selectedWorkspaces = [];
-  if (!block.workspaces || block.workspaces.length === 0) {
-    selectedWorkspaces = block.workspaces;
+  // Determine on which repository we are working
+  let selectedRepositories = [];
+  if (!block.repositories || block.repositories.length === 0) {
+    selectedRepositories = block.repositories;
   } else {
-    selectedWorkspaces = workspaces;
+    selectedRepositories = repositories;
   }
 
   const results: Query[] = [];
@@ -78,7 +78,7 @@ function extractQueriesFromBlock(
       deskId: desk.id,
       blockId: block.id,
       q: block.query,
-      workspaces: selectedWorkspaces,
+      repositories: selectedRepositories,
       limit: 0,
       shuffle: false,
     });
@@ -86,7 +86,7 @@ function extractQueriesFromBlock(
     if (!block.elements) return results;
     for (const element of block.elements) {
       results.push(
-        ...extractQueriesFromBlock(desk, element, selectedWorkspaces),
+        ...extractQueriesFromBlock(desk, element, selectedRepositories),
       );
     }
   }

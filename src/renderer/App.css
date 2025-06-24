@@ -149,11 +149,11 @@ button:focus {
   color: var(--color-text-dimmed);
   text-align: center;
 }
-.TopBar .WorkspaceButtonGroup {
+.TopBar .RepositoryButtonGroup {
   float: right;
   -webkit-app-region: none;
 }
-.TopBar .WorkspaceButtonGroup button {
+.TopBar .RepositoryButtonGroup button {
   padding: 0.25rem 0.5rem;
   margin: 0 0.1rem;
   background: transparent;
@@ -161,7 +161,7 @@ button:focus {
   color: var(--color-text-dimmed);
   border: 1px solid white;
 }
-.TopBar .WorkspaceButtonGroup button.selected {
+.TopBar .RepositoryButtonGroup button.selected {
   border: 1px solid black;
   color: black;
   border-radius: 0.25rem;

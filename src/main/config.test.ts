@@ -18,7 +18,7 @@ describe('ConfigManager', () => {
     fs.writeFileSync(
       path.join(ntHomeDir, 'editorconfig.yaml'),
       `
-workspaces:
+repositories:
 - name: Main
   slug: main
   path: ${ntHomeDir}/main

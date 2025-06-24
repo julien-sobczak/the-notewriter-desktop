@@ -23,7 +23,7 @@ function extractQueries(zenMode: ZenConfig | undefined): Query[] {
   for (const zenQuery of zenMode.queries) {
     results.push({
       q: zenQuery.query,
-      workspaces: zenQuery.workspaces ? zenQuery.workspaces : [],
+      repositories: zenQuery.repositories ? zenQuery.repositories : [],
       deskId: undefined,
       blockId: undefined,
       limit: 1000, // 1000 notes must be enough
@@ -123,7 +123,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
   const handleEdit = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!note) return;
-    window.electron.edit(note.workspaceSlug, note.relativePath, note.line);
+    window.electron.edit(note.repositorySlug, note.relativePath, note.line);
   };
 
   return (
@@ -211,7 +211,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
               <Markdown md={note.title} />
               <br />
               <span>
-                <strong>{note.workspaceSlug}</strong>&nbsp;/&nbsp;
+                <strong>{note.repositorySlug}</strong>&nbsp;/&nbsp;
                 {note.relativePath}
               </span>
             </div>

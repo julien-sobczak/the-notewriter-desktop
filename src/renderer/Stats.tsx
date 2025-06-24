@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useContext } from 'react';
 import { Chart } from 'react-google-charts';
-import { Statistics, WorkspaceConfig } from '../shared/Model';
+import { Statistics, RepositoryRefConfig } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import Loader from './Loader';
 import { nationalities } from './world';
@@ -13,13 +13,15 @@ function Stats() {
   const [statistics, setStatistics] = useState<Statistics | null>(null);
 
   useEffect(() => {
-    // Retrieve the statistics based on currently selected workspaces
-    const selectedWorkspaceSlugs = staticConfig.workspaces
-      .filter((workspace: WorkspaceConfig) => workspace.selected)
-      .map((workspace: WorkspaceConfig) => workspace.slug);
+    // Retrieve the statistics based on currently selected repositories
+    const selectedRepositorySlugs = staticConfig.repositories
+      .filter((repository: RepositoryRefConfig) => repository.selected)
+      .map((repository: RepositoryRefConfig) => repository.slug);
 
     const getStatistics = async () => {
-      const stats = await window.electron.getStatistics(selectedWorkspaceSlugs);
+      const stats = await window.electron.getStatistics(
+        selectedRepositorySlugs,
+      );
       console.log(stats);
       setStatistics(stats);
     };
