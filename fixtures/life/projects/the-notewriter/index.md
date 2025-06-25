@@ -2,6 +2,8 @@
 
 ## TODO: Backlog
 
+`#bookmark`
+
 * [x] Publish the documentation website on GitHub Pages
 * [ ] Speed up medias conversion using goroutines
 * [ ] Add an additional command `nt-reference` to manage references using Zotero [[#Anki Support]]

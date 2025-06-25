@@ -17,7 +17,7 @@ Every action you take is a vote for the type of person you wish to become. No si
 
 ## Quote: Your System vs Your Goals
 
-`#favorite`
+`#life-changing`
 
 You do not rise to the level of your goals. You fall to the level of your systems.
 

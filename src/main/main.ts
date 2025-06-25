@@ -145,13 +145,13 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle('/find', async (_event, noteRef: NoteRef) => {
+ipcMain.handle('find', async (_event, noteRef: NoteRef) => {
   console.debug(`Finding note from ref ${noteRef.oid}`);
   const result = await db.find(noteRef);
-  console.debug(`Found note for ref ${noteRef.oid}`);
+  console.debug(`Found note for ref ${result.oid}`);
   return result;
 });
-ipcMain.handle('/mfind', async (_event, noteRefs: NoteRef[]) => {
+ipcMain.handle('mfind', async (_event, noteRefs: NoteRef[]) => {
   console.debug(`Finding notes for ${noteRefs.length} note ref(s)`);
   const results = await db.multiFind(noteRefs);
   console.debug(`Found ${results.length} note(s)`);
