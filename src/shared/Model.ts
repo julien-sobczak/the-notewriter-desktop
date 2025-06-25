@@ -341,3 +341,40 @@ export interface PackObject {
   description: string;
   data: string;
 }
+
+/* Utils */
+
+// Get the attribute for a given name in the repository configuration
+export function getAttributeConfig(
+  repositoryConfig: RepositoryConfig,
+  name: string,
+): AttributeConfig {
+  const attr = repositoryConfig?.attributes?.[name] ?? {
+    name,
+    aliases: [],
+    type: 'string', // Default to string
+    format: '',
+    min: 0,
+    max: 0,
+    pattern: '',
+    inherit: null, // Default to no inheritance
+  };
+  return attr;
+}
+
+// Extract the source link from a note attributes
+export function extractSourceURL(note: Note): string | undefined {
+  // Search in attributes for a `source` attribute containing an HTTP(s) URL and return it.
+  // Ex: https://example.com/resource must be returned as a string.
+  // Ex: [Alt](https://example.com/resource "Title") must return only the URL.
+  for (const [key, value] of Object.entries(note.attributes)) {
+    if (key === 'source' && typeof value === 'string') {
+      // Extract the first HTTP(S) URL from the string
+      const match = value.match(/https?:\/\/[^\s)"]+/);
+      if (match) {
+        return match[0];
+      }
+    }
+  }
+  return undefined;
+}

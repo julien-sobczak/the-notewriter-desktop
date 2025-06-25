@@ -94,7 +94,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
                 <NoteType value={note.type} />
                 &nbsp;
                 <span className="BookmarkTitle">
-                  <Markdown md={note.longTitle} />
+                  <Markdown md={note.longTitle} inline />
                 </span>
                 <br />
                 <span className="BookmarkRelativePath">
@@ -115,7 +115,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
                 <NoteType value={savedBookmark.noteType} />
                 &nbsp;
                 <span className="BookmarkTitle">
-                  <Markdown md={savedBookmark.noteTitle} />
+                  <Markdown md={savedBookmark.noteTitle} inline />
                 </span>
                 <br />
                 <span className="BookmarkRelativePath">
