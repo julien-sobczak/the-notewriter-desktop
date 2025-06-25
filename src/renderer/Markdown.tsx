@@ -1,4 +1,5 @@
 import { marked, Tokens } from 'marked';
+import { useEffect } from 'react';
 
 type MarkdownProps = {
   md: string;
@@ -25,6 +26,23 @@ renderer.blockquote = ({ text }: Tokens.Blockquote): string => {
   });
   return result;
 };
+// Add copy to clipboard button to code blocks
+renderer.code = ({ text }: Tokens.Code): string => {
+  // Generate a unique id for the code block
+  const codeId = `codeblock-${Math.random().toString(36).slice(2, 11)}`;
+  // Use a button with a data attribute for the code id
+  return `
+    <div class="markdown-codeblock-wrapper" style="position:relative;">
+      <button
+        class="copy-code-btn"
+        data-code-id="${codeId}"
+        style="position:absolute;top:8px;right:8px;z-index:2;"
+        title="Copy code"
+      >📋</button>
+      <pre><code id="${codeId}">${text}</code></pre>
+    </div>
+  `;
+};
 
 export default function Markdown({ md, inline = false }: MarkdownProps) {
   // Preprocessing
@@ -45,6 +63,26 @@ export default function Markdown({ md, inline = false }: MarkdownProps) {
     // Trim the leading and trailing <p> tags for inline rendering to avoid the block CSS element
     html = html.slice(3, -4);
   }
+
+
+  useEffect(() => {
+    const buttons = document.querySelectorAll('.copy-code-btn');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', function (e) {
+        const codeId = (e.currentTarget as HTMLElement).getAttribute('data-code-id');
+        const code = codeId ? document.getElementById(codeId) : null;
+        if (code) {
+          navigator.clipboard.writeText(code.innerText);
+        }
+      });
+    });
+    // Cleanup
+    return () => {
+      buttons.forEach((btn) => {
+        btn.removeEventListener('click', () => {});
+      });
+    };
+  }, [html]);
 
   return (
     <span
