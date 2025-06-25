@@ -317,7 +317,7 @@ function CommandMenu({
                 <NoteType value={savedBookmark.noteType} />
                 &nbsp;
                 <span className="BookmarkTitle">
-                  <Markdown md={savedBookmark.noteTitle} />
+                  <Markdown md={savedBookmark.noteTitle} inline />
                 </span>
                 <span className="CommandItemMeta">
                   <code>{savedBookmark.noteRelativePath}</code>

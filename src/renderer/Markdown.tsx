@@ -2,6 +2,7 @@ import { marked, Tokens } from 'marked';
 
 type MarkdownProps = {
   md: string;
+  inline?: boolean;
 };
 
 // Custom renderer to customize the generated HTML
@@ -25,14 +26,23 @@ renderer.blockquote = ({ text }: Tokens.Blockquote): string => {
   return result;
 };
 
-export default function Markdown({ md }: MarkdownProps) {
-  let html = marked.parse(md, { renderer }) as string;
+export default function Markdown({ md, inline = false }: MarkdownProps) {
+  // Preprocessing
+  let mdProcessed = md.trim();
+  // Check if md contains only an URL and if so, return a link
+  if (/^https?:\/\/[^\s]+$/.test(md)) {
+    mdProcessed = `<a href="${md}" target="_blank">🔗</a>`;
+  }
+
+  let html = marked.parse(mdProcessed, { renderer }) as string;
   html = html.trim();
   if (
+    inline &&
     html.startsWith('<p>') &&
     html.endsWith('</p>') &&
     html.indexOf('<p>', 3) === -1
   ) {
+    // Trim the leading and trailing <p> tags for inline rendering to avoid the block CSS element
     html = html.slice(3, -4);
   }
 

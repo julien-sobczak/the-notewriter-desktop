@@ -7,10 +7,18 @@ import {
   Copy as DragIcon,
   ArrowUp as MoveUpIcon,
   ArrowDown as MoveDownIcon,
-  Star,
+  Star as BookmarkIcon,
+  Link as LinkIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Note, Media, Blob, Bookmark } from '../shared/Model';
+import {
+  Note,
+  Media,
+  Blob,
+  Bookmark,
+  getAttributeConfig,
+  extractSourceURL,
+} from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
@@ -197,6 +205,7 @@ export default function RenderedNote({
   onMouseEnd = () => {},
 }: RenderedNoteProps) {
   const { config, dispatch } = useContext(ConfigContext);
+  const repositoryConfig = config.repositories[note.repositorySlug];
 
   const dragElement = useRef<HTMLDivElement>(null);
   const dragInProgress = useRef<boolean>(false);
@@ -351,6 +360,8 @@ export default function RenderedNote({
       ).length > 0;
   }
 
+  const sourceURL = extractSourceURL(note);
+
   return (
     <div
       ref={dragElement}
@@ -379,8 +390,15 @@ export default function RenderedNote({
           <nav>
             <ul>
               <li>
+                {sourceURL && (
+                  <button type="button" title="Follow source">
+                    <a href={sourceURL} target="_blank">
+                      <LinkIcon />
+                    </a>
+                  </button>
+                )}
                 <button type="button" onClick={handleBookmark} title="Bookmark">
-                  <Star weight={bookmarked ? 'fill' : 'thin'} />
+                  <BookmarkIcon weight={bookmarked ? 'fill' : 'thin'} />
                 </button>
                 <button type="button" onClick={handleMove} title="Move inside">
                   <MoveIcon />
@@ -421,7 +439,7 @@ export default function RenderedNote({
       {showTitle && (
         <div className="RenderedNoteTitle">
           <NoteType value={note.type} />
-          <Markdown md={note.longTitle} />
+          <Markdown md={note.longTitle} inline />
         </div>
       )}
       <div className="RenderedNoteContent">
@@ -441,9 +459,17 @@ export default function RenderedNote({
             Object.keys(filteredAttributes).length > 0 && (
               <ul>
                 {Object.entries(filteredAttributes).map(([key, value]: any) => {
+                  const attributeConfig = getAttributeConfig(
+                    repositoryConfig,
+                    key,
+                  );
                   return (
                     <li key={key}>
-                      @{key}: {value}
+                      @{key}:{' '}
+                      {attributeConfig.type === 'string' && (
+                        <Markdown md={value} inline />
+                      )}
+                      {attributeConfig.type !== 'string' && { value }}
                     </li>
                   );
                 })}
@@ -453,7 +479,7 @@ export default function RenderedNote({
       )}
       {showComment && note.comment && (
         <div className="RenderedNoteComment">
-          <Markdown md={note.comment} />
+          <Markdown md={note.comment} inline />
         </div>
       )}
     </div>
