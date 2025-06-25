@@ -14,7 +14,7 @@ import {
   CornersOut,
   X,
   Icon,
-  Bookmark as BookmarkIcon,
+  Star as BookmarkIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Command } from 'cmdk';

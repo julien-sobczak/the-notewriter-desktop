@@ -516,14 +516,12 @@ export default class DatabaseManager {
         FROM note
         WHERE oid = ?
       `;
-      console.debug(`[${datasourceName}] ${sqlQuery}`);
       db.get(sqlQuery, [noteRef.oid], async (err: any, row: any) => {
         if (err) {
           console.log('Error while searching for note by id', err);
           reject(err);
           return;
         }
-
         const note = this.#rowToNote(row, datasourceName);
         const mediaRelativePaths = extractMediaRelativePaths(note);
 

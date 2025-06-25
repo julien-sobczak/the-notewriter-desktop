@@ -40,7 +40,7 @@ function RenderedDeck({
   // Download flashcard
   useEffect(() => {
     const listTodayFlashcards = async () => {
-      const results = window.electron.listTodayFlashcards(deckRef);
+      const results = await window.electron.listTodayFlashcards(deckRef);
       // TODO support different sorts
       const shuffledFlashcards = results.sort(() => 0.5 - Math.random());
       setFlashcards(shuffledFlashcards);
