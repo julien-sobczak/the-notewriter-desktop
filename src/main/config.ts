@@ -332,7 +332,7 @@ export function studyPath(deckRef: DeckRef): string {
   }
   const filePath = path.join(
     dirPath,
-    `${deckRef.repositorySlug}-${deckRef.key}.yml`,
+    `${deckRef.repositorySlug}-${deckRef.name}.yml`,
   );
   return filePath;
 }

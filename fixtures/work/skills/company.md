@@ -9,7 +9,16 @@
 In **1985**.
 
 
-## Note:Useful Links
+## Flashcard: Tagline
+
+(Company) **Tagline** of _Company Inc._?
+
+---
+
+**Change the world like everyone else**.
+
+
+## Note: Useful Links
 
 * [Ticketing system](https://ticketing.internal.company.com)
 * [Documentation system](https://docs.internal.company.com)

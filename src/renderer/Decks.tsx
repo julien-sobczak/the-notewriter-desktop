@@ -72,9 +72,18 @@ function Decks({ deck }: DecksProps) {
     // Nothing to save as the study object is edited after every review
     // and only committed when explicitly said.
     console.log(
-      `Quitted deck ${deckRef.key} in repository ${deckRef.repositorySlug}`,
+      `Quitted deck ${deckRef.name} in repository ${deckRef.repositorySlug}`,
     );
     setSelectedDeck(undefined);
+  };
+
+  const onCommit = () => {
+    // TODO
+    // Finalize the in-progress pack containing pending studies
+  };
+
+  const onStudy = (clickedDeck: Deck) => {
+    setSelectedDeck({ ...clickedDeck });
   };
 
   return (
@@ -93,22 +102,25 @@ function Decks({ deck }: DecksProps) {
           <tbody>
             {decks.map((currentDeck: Deck) => (
               // eslint-disable-next-line react/no-array-index-key
-              <tr key={currentDeck.key}>
+              <tr key={currentDeck.name}>
                 <td
                   onClick={() =>
                     setSelectedDeck({
                       repositorySlug: currentDeck.repositorySlug,
-                      key: currentDeck.key,
                       name: currentDeck.config.name,
                     })
                   }
                 >
-                  <DeckIcon /> {currentDeck.config.name}
+                  <button type="button" onClick={() => onStudy(currentDeck)}>
+                    <DeckIcon /> {currentDeck.config.name}
+                  </button>
                 </td>
                 <td>{currentDeck.stats.new}</td>
                 <td>{currentDeck.stats.due}</td>
                 <td>
-                  <CommitIcon />
+                  <button type="button" onClick={onCommit}>
+                    <CommitIcon />
+                  </button>
                 </td>
               </tr>
             ))}
