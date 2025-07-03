@@ -146,7 +146,7 @@ export interface SearchConfig {
 
 export interface Deck {
   repositorySlug: string;
-  key: string;
+  name: string;
   config: DeckConfig;
   stats: StatsDeck;
 }
@@ -156,7 +156,6 @@ export interface StatsDeck {
 }
 export interface DeckRef {
   repositorySlug: string;
-  key: string;
   name: string;
 }
 

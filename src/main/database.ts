@@ -775,7 +775,7 @@ export default class DatabaseManager {
           COUNT(CASE WHEN flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}' THEN 1 END) as count_due,
           COUNT(CASE WHEN flashcard.due_at IS NULL OR flashcard.due_at = '' THEN 1 END) as count_new
         FROM note_fts JOIN note on note.oid = note_fts.oid
-        JOIN flashcard on flashcard.note_oid = note.oid WHERE note.kind='flashcard'`;
+        JOIN flashcard on flashcard.note_oid = note.oid WHERE note.note_type='Flashcard'`;
       const whereContent = queryPart2sql(deckConfig.query);
       if (whereContent) {
         sql += ` AND ${whereContent}`;
@@ -812,19 +812,18 @@ export default class DatabaseManager {
           flashcard.file_oid,
           flashcard.note_oid,
           note.relative_path,
-          note.line,
           note.short_title,
           note.tags,
           note.attributes,
-          flashcard.front_html,
-          flashcard.back_html,
+          flashcard.front,
+          flashcard.back,
           flashcard.due_at,
           flashcard.studied_at,
           flashcard.settings
         FROM note_fts JOIN note on note.oid = note_fts.oid
         JOIN flashcard on flashcard.note_oid = note.oid
-        WHERE note.kind='flashcard'
-        AND flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}'
+        WHERE note.note_type='Flashcard'
+        AND (flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}')
         AND ${queryPart2sql(deckConfig.query)}
 
         UNION
@@ -837,19 +836,19 @@ export default class DatabaseManager {
           note.short_title,
           note.tags,
           note.attributes,
-          flashcard.front_html,
-          flashcard.back_html,
+          flashcard.front,
+          flashcard.back,
           flashcard.due_at,
           flashcard.studied_at,
           flashcard.settings
         FROM note_fts JOIN note on note.oid = note_fts.oid
         JOIN flashcard on flashcard.note_oid = note.oid
-        WHERE note.kind='flashcard'
-        AND flashcard.due_at IS NULL OR flashcard.due_at = ''
+        WHERE note.note_type='Flashcard'
+        AND (flashcard.due_at IS NULL OR flashcard.due_at = '')
         AND ${queryPart2sql(deckConfig.query)}
         `;
 
-      db.all(sql, calculateDueDate(), (err: any, rows: any[]) => {
+      db.all(sql, (err: any, rows: any[]) => {
         if (err) {
           console.log('Error while searching for due flashcards', err);
           reject(err);

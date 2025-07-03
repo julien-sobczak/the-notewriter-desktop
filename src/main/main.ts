@@ -206,22 +206,33 @@ ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
 ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
   console.debug(`Listing decks for repositories ${repositorySlugs}`);
   const decks: Deck[] = [];
+  const statsPromises: Promise<void>[] = [];
   for (const repositorySlug of repositorySlugs) {
     const repositoryConfig = config.repositoryConfigs[repositorySlug];
-    const deckKeys = Object.keys(repositoryConfig.decks);
+    if (!repositoryConfig.decks) continue; // No decks configured for this repository
+
     for (let i = 0; i < repositoryConfig.decks.length; i++) {
       const deckConfig = repositoryConfig.decks[i];
-      // TODO find a better syntax to retrieve stats in parallel
-      // eslint-disable-next-line no-await-in-loop
-      const deckStats = await db.getDeckStats(repositorySlug, deckConfig);
-      decks.push({
-        repositorySlug,
-        key: deckKeys[i],
-        config: deckConfig,
-        stats: deckStats,
-      });
+      console.log(
+        `Retrieving stats for deck ${deckConfig.name} in repository ${repositorySlug}`,
+      );
+      const promise = db
+        .getDeckStats(repositorySlug, deckConfig)
+        .then((deckStats) => {
+          console.debug(`Found stats for deck ${deckConfig.name}`);
+          // BUG FIXME now what if no rows are returned?????
+          decks.push({
+            repositorySlug,
+            name: deckConfig.name,
+            config: deckConfig,
+            stats: deckStats,
+          });
+        });
+      statsPromises.push(promise); // FIXME remove Seems empty
     }
   }
+
+  await Promise.all(statsPromises);
 
   console.debug(
     `Found ${decks.length} decks for repositories ${repositorySlugs}`,
@@ -230,14 +241,14 @@ ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
 });
 ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
   console.debug(
-    `Listing flashcards for today for repository ${deckRef.repositorySlug} and deck ${deckRef.key}`,
+    `Listing flashcards for today for repository ${deckRef.repositorySlug} and deck ${deckRef.name}`,
   );
   const repositoryConfig = config.repositoryConfigs[deckRef.repositorySlug];
 
   // Find the deck config
   let deckConfig: DeckConfig | undefined;
   for (const deck of repositoryConfig.decks) {
-    if (deck.name === deckRef.key) {
+    if (deck.name === deckRef.name) {
       deckConfig = deck;
       break;
     }
@@ -245,7 +256,7 @@ ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
 
   if (!deckConfig) {
     console.error(
-      `No deck configuration found for key ${deckRef.key} in repository ${deckRef.repositorySlug}`,
+      `No deck configuration found for key ${deckRef.name} in repository ${deckRef.repositorySlug}`,
     );
     return []; // Send an empty array as response to stop the execution
   }
@@ -255,7 +266,7 @@ ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
     deckConfig,
   );
   console.debug(
-    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.key} in repository ${deckRef.repositorySlug}`,
+    `Found ${flashcards.length} flashcards to study today for deck ${deckRef.name} in repository ${deckRef.repositorySlug}`,
   );
   return flashcards;
 });
@@ -263,21 +274,21 @@ ipcMain.handle(
   'update-flashcard',
   async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {
     console.debug(
-      `Updating flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.key} and review ${review.feedback}`, // TODO reword this message
+      `Updating flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} and review ${review.feedback}`, // TODO reword this message
     );
 
     // 1. Update in DB
     const repositoryConfig = config.repositoryConfigs[deckRef.repositorySlug];
     let deckConfig: DeckConfig | undefined;
     for (const deck of repositoryConfig.decks) {
-      if (deck.name === deckRef.key) {
+      if (deck.name === deckRef.name) {
         deckConfig = deck;
         break;
       }
     }
     if (!deckConfig) {
       console.error(
-        `No deck configuration found for key ${deckRef.key} in repository ${deckRef.repositorySlug}`,
+        `No deck configuration found for key ${deckRef.name} in repository ${deckRef.repositorySlug}`,
       );
       // Do nothing and simply return the flashcard
       return flashcard;
@@ -288,7 +299,7 @@ ipcMain.handle(
     await db.updateFlashcard(deckRef.repositorySlug, deckConfig, flashcard);
 
     console.debug(
-      `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.key} in repository ${deckRef.repositorySlug}`,
+      `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.name} in repository ${deckRef.repositorySlug}`,
     );
     return flashcard;
   },

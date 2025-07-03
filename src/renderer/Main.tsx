@@ -354,7 +354,6 @@ function Main() {
         for (const deck of repositoryConfig.decks) {
           results.push({
             repositorySlug,
-            key: deck.name,
             name: deck.name,
           });
         }
