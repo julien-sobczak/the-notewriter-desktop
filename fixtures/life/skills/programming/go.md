@@ -5,7 +5,7 @@ tags: go
 
 # Go
 
-## Note:Constants
+## Note: Constants
 
 `@source: https://tour.golang.org/basics/15`
 
@@ -31,7 +31,28 @@ const (
 ```
 
 
-## Note:Hello World
+## Flashcard: `iota`
+
+(Golang) What is the **value of `Sunday`**?
+
+```go
+const (
+  Sunday = iota
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+)
+```
+
+---
+
+`iota` is reinitialized to `0` after every `const`.
+
+
+## Note: Hello World
 
 ```go
 package main
@@ -60,7 +81,7 @@ Or use the [Go repl](https://repl.it/languages/go).
 ## Basic Types
 
 
-### Note:Strings
+### Note: Strings
 
 ```go
 str := "Hello"
@@ -69,7 +90,20 @@ string`
 ```
 
 
-### Note:Numbers
+### Flashcard: Multiline Strings
+
+(Golang) Syntax for **multiline strings**?
+
+---
+
+Use **backticks**.
+
+```go
+str := `Multiline
+string`
+```
+
+### Note: Numbers
 
 ```go
 num := 3          // int
@@ -85,7 +119,7 @@ var p float32 = 22.7  // 32-bit float
 ## Flow Control
 
 
-### Note:Conditional
+### Note: Conditional
 
 ```go
 if day == "sunday" || day == "saturday" {
@@ -100,7 +134,7 @@ if day == "sunday" || day == "saturday" {
 See [`if`](https://tour.golang.org/flowcontrol/5)
 
 
-### Note:Statements in `if`
+### Note: Statements in `if`
 
 ```go
 if _, err := doThing(); err != nil {
@@ -108,12 +142,12 @@ if _, err := doThing(); err != nil {
 }
 ```
 
-A condition in an if statement can be preceded with a statement before a ;. Variables declared by the statement are only in scope until the end of the if.
+A condition in an if statement can be preceded with a statement before a `;`. Variables declared by the statement are only in scope until the end of the `if`.
 
 See: [If with a short statement](https://tour.golang.org/flowcontrol/6)
 
 
-### Note:Switch
+### Note: Switch
 
 ```go
 switch day {
@@ -132,7 +166,30 @@ switch day {
 See: [Switch](https://github.com/golang/go/wiki/Switch)
 
 
-### Note:For-Range loop
+#### Flashcard: Switch
+
+(Golang) Why the **keyword `fallthrough`**?
+
+```go
+switch day {
+  case "sunday":
+    // cases don't "fall through" by default!
+    fallthrough
+
+  case "saturday":
+    rest()
+
+  default:
+    work()
+}
+```
+
+---
+
+Golang doesn't require `break`. There is **no fallthrough by default**.
+
+
+### Note: For-Range loop
 
 ```go
 entry := []string{"Jack","John","Jones"}
@@ -144,7 +201,7 @@ for i, val := range entry {
 See: [For-Range loops](https://gobyexample.com/range)
 
 
-### Note:For loop
+### Note: For loop
 
 ```go
 for count := 0; count <= 10; count++ {
@@ -155,7 +212,27 @@ for count := 0; count <= 10; count++ {
 See: [For loops](https://tour.golang.org/flowcontrol/1)
 
 
-### Note:While loop
+### Flashcard: For range over integers
+
+(Golang) **Rewrite** using more idiomatic syntax?
+
+```go
+for i := 0; i <= 10; i++ {
+  fmt.Println(i+1)
+}
+```
+
+---
+
+Use a **for-range**.
+
+```go
+for i := range 10 {
+    fmt.Println(i+1)
+}
+```
+
+### Note: While loop
 
 ```go
 n := 0
@@ -166,3 +243,16 @@ for n != x {
 ```
 
 See: [Go’s "while"](https://tour.golang.org/flowcontrol/3)
+
+
+### Flashcard: Infinite Loop
+
+(Golang) Syntax for an **infinite loop**?
+
+---
+
+```go
+for {
+  // do something
+}
+```

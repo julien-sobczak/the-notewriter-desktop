@@ -78,6 +78,10 @@ button:focus {
   outline: revert;
 }
 
+svg {
+  display: inline-block;
+}
+
 /* Common */
 
 .hidden {

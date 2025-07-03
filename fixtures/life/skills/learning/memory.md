@@ -5,10 +5,58 @@ tags: learning
 # Memory
 
 
+## Theory
+
+
+### Flashcard: The "7 ± 2" rule
+
+(Memory) What is the **"7 ± 2" rule** in short-term memory?
+
+---
+
+Humans can hold about **5 to 9 items in short-term memory**, according to George Miller.
+
+
+### Flashcard: The Role of Hippocampus
+
+(Memory) Which **part of the brain** is most involved in forming **new memories**?
+
+---
+
+The **hippocampus**.
+
+
+### Flashcard: The Serial Position Effect
+
+(Memory) What is the **serial position effect**?
+
+---
+
+The tendency to **better remember items at the beginning** (primacy) **and end** (recency) of a list.
+
+
+### Flashcard: Procedural Memory
+
+(Memory) What is **procedural memory**?
+
+---
+
+A **type of long-term memory** related to **skills and tasks**, like riding a bike.
+
+
+### Flashcard: The Spacing Effect
+
+(Memory) What is the **spacing effect**?
+
+---
+
+Learning is more effective **when study sessions are spaced out over time**.
+
+
 ## Anti-Patterns
 
 
-### Reference Rote Learning
+### Reference: Rote Learning
 
 `@source: https://en.wikipedia.org/wiki/Rote_learning`
 
@@ -18,14 +66,14 @@ _Rote learning_ is a memorization technique based on repetition. The method rest
 ## Patterns
 
 
-### Note:Flashcards
+### Note: Flashcards
 
 `@source: https://en.wikipedia.org/wiki/Spaced_repetition`
 
 _Spaced repetition_ is an evidence-based learning technique that is usually performed with flashcards. Newly introduced and more difficult flashcards are shown more frequently, while older and less difficult flashcards are shown less frequently in order to exploit the psychological spacing effect. The use of spaced repetition has been proven to increase the rate of learning.
 
 
-### Note:Testing effect
+### Note: Testing effect
 
 `@source: https://en.wikipedia.org/wiki/Testing_effect`
 
@@ -35,14 +83,14 @@ The _testing effect_ (also known as _retrieval practice_, _active recall_, _prac
 ## Techniques
 
 
-### Note:Method of Loci
+### Note: Method of Loci
 
 `@source: https://en.wikipedia.org/wiki/Method_of_loci`
 
 The _method of loci_ is a strategy for memory enhancement, which **uses visualizations of familiar spatial environments** in order to enhance the recall of information. The method of loci is also known as the _memory journey_, _memory palace_, _journey method_, _memory spaces_, or _mind palace technique_.
 
 
-### Note:Major System
+### Note: Major System
 
 `@source: https://en.wikipedia.org/wiki/Mnemonic_major_system`
 

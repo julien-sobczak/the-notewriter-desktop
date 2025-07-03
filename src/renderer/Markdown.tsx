@@ -64,12 +64,13 @@ export default function Markdown({ md, inline = false }: MarkdownProps) {
     html = html.slice(3, -4);
   }
 
-
   useEffect(() => {
     const buttons = document.querySelectorAll('.copy-code-btn');
     buttons.forEach((btn) => {
-      btn.addEventListener('click', function (e) {
-        const codeId = (e.currentTarget as HTMLElement).getAttribute('data-code-id');
+      btn.addEventListener('click', (e) => {
+        const codeId = (e.currentTarget as HTMLElement).getAttribute(
+          'data-code-id',
+        );
         const code = codeId ? document.getElementById(codeId) : null;
         if (code) {
           navigator.clipboard.writeText(code.innerText);
