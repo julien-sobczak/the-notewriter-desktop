@@ -1,5 +1,5 @@
 import { useEffect, useContext, useState } from 'react';
-import { X as CloseIcon } from '@phosphor-icons/react';
+import { SkipForward as SkipIcon, X as CloseIcon } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
 import { DeckRef, Flashcard, Review } from '../shared/Model';
 import Loader from './Loader';
@@ -49,12 +49,21 @@ function RenderedDeck({
     listTodayFlashcards();
   }, [deckRef]);
 
+  const onSkip = () => {
+    if (!flashcards) return;
+    if (flashcardIndex + 1 < flashcards.length - 1) {
+      setFlashcardIndex(flashcardIndex + 1);
+    } else {
+      onQuit(deckRef);
+    }
+  };
+
   // Called when the user completes the review of a single flashcard
   const onReviewed = (flashcard: Flashcard, review: Review) => {
     // Apply SRS algorithm based on SRS Settings
 
     onFlashcardReviewed(deckRef, flashcard, review);
-    if (flashcardIndex === flashcards?.length) {
+    if (flashcardIndex + 1 === flashcards?.length) {
       onQuit(deckRef);
     } else {
       setFlashcardIndex(flashcardIndex + 1);
@@ -71,6 +80,16 @@ function RenderedDeck({
               <ul>
                 <li>
                   {flashcardIndex + 1} / <strong>{flashcards.length}</strong>
+                </li>
+                <li>
+                  <button
+                    disabled={flashcardIndex === flashcards.length - 1}
+                    type="button"
+                    onClick={onSkip}
+                    title="Skip"
+                  >
+                    <SkipIcon />
+                  </button>
                 </li>
                 <li>
                   <button

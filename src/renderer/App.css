@@ -92,6 +92,24 @@ svg {
   width: 100%;
 }
 
+table.List {
+  border-collapse: collapse;
+  border-spacing: 0.5rem;
+
+  td, th {
+    padding: 0.5em 1em;
+  }
+
+  tbody tr {
+    /* Ensure borders are visible across the row */
+    border-collapse: separate;
+  }
+
+  tbody tr + tr {
+    border-top: 1px solid var(--color-separator-dark); /* Or any color you prefer */
+  }
+}
+
 .top-left {
   position: absolute;
   left: 0.5rem;
@@ -104,6 +122,18 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* <Slug> */
+
+.Slug {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-dimmed);
+  background-color: var(--color-background-light);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--desktop-layout-radius);
+  border: 1px solid var(--color-separator-dark);
 }
 
 /* <DailyQuote> */
@@ -863,3 +893,98 @@ ul.categories li {
 
 /* <Decks> */
 
+.Decks {
+  background-color: var(--color-background-light);
+}
+
+
+/* <RenderedFlashcard> */
+
+.RenderedFlashcard {
+  background-color: white;
+
+  /* Make sure the buttons are always positioning at the same place on screen */
+  width: 30rem;
+  min-height: 60vh;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.RenderedFlashcard hr {
+  margin: 1em 0;
+}
+
+.RenderedFlashcard .Source {
+  font-size: 50%;
+  text-align: right;
+  padding: 0.5em;
+  color: gray;
+  font-style: italic;
+}
+.RenderedFlashcard .ButtonGroup {
+  margin-top: 1em;
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* or: space-evenly */
+  align-items: center;            /* optional: vertical alignment */
+}
+.ShowAnswerButton {
+  background-color: #465A64;
+  color: white;
+  flex: 1;
+  text-align: center;
+}
+.FeedbackButton {
+  padding: 0.5em 1em;
+  flex: 1;             /* each child takes equal space */
+  text-align: center;
+  transition: width 3s ease;
+}
+.FeedbackTooHard, .FeedbackTooEasy, .FeedbackConfirmation {
+  color: yellow;
+  background-color: black;
+}
+.FeedbackCancellation {
+  background-color: darkred;
+  flex: 0.2; /* Make the cancel button smaller as "Too" buttons are already difficult to reach. Confirmation is only a safe guard but the user will almost always confirm. */
+}
+.FeedbackTooHard, .FeedbackTooEasy {
+  flex: 0.3; /* "Too" options are exceptional, make them smaller */
+  flex-grow: 1;
+}
+.FeedbackHard {
+  background-color: #D32F2D;
+  color: white;
+}
+.FeedbackAgain {
+  background-color: #465A64;
+  color: white;
+}
+.FeedbackGood {
+  background-color: #4CB050;
+  color: white;
+}
+.FeedbackEasy {
+  background-color: #36A9F5;
+  color: white;
+}
+
+/* Flashcard Markdown Content Formatting */
+.RenderedFlashcard .Content {
+  padding: 1em;
+
+  /* Flashcard height is fixed to stick the feedback buttons. */
+  flex-grow: 1;
+  overflow-y: auto; /* show scrollbar only when needed */
+
+  p {
+    margin: 0.5em 0;
+  }
+  pre {
+    border: 1px solid var(--color-separator-dark);
+    padding: 0.5em;
+    background-color: var(--color-background-light);
+    overflow-x: auto; /* show scrollbar only when needed */
+  }
+}
