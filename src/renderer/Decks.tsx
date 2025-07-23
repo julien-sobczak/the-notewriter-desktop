@@ -124,7 +124,10 @@ function Decks({ deck }: DecksProps) {
                 <td>{currentDeck.stats.new}</td>
                 <td>{currentDeck.stats.due}</td>
                 <td>
-                  <button type="button" onClick={onCommit}>
+                  <button
+                    type="button"
+                    onClick={onCommit(currentDeck.repositorySlug)}
+                  >
                     <CommitIcon />
                   </button>
                 </td>
