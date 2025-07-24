@@ -270,8 +270,10 @@ ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
   );
   return flashcards;
 });
+
+ipcMain.handle('commit', async (_event, repositorySlugs: string[]) => {
 ipcMain.handle(
-  'update-flashcard',
+  'update-flashcard', // TODO really useful?
   async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {
     console.debug(
       `Updating flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} and review ${review.feedback}`, // TODO reword this message

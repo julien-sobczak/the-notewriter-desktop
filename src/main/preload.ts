@@ -49,6 +49,11 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.invoke('list-today-flashcards', deckRef),
   updateFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
     ipcRenderer.invoke('update-flashcard', deckRef, flashcard, review),
+
+  // Operations
+  commit: (deckRefs: DeckRef[]) => ipcRenderer.invoke('commit', deckRefs),
+  reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
+    ipcRenderer.invoke('review-flashcard', deckRef, flashcard, review),
 });
 
 // export type ElectronHandler = typeof electronHandler;
