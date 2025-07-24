@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld('electron', {
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
   search: (query: Query) => ipcRenderer.invoke('search', query),
-  mearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
+  msearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
   listNotesInFile: (repositorySlug: string, filePath: string) =>
     ipcRenderer.invoke('list-notes-in-file', repositorySlug, filePath),
   listFiles: (repositorySlug: string) =>

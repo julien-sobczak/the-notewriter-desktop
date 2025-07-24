@@ -13,6 +13,7 @@ import {
 } from '../shared/Model';
 import Loader from './Loader';
 import RenderedDeck from './RenderedDeck';
+import Slug from './Slug';
 
 type DecksProps = {
   deck: DeckRef | undefined;
@@ -64,6 +65,7 @@ function Decks({ deck }: DecksProps) {
       console.log(`Flashcard ${updatedFlashcard.shortTitle} saved`);
     };
     updateFlashcard();
+    // TODO Append study to in-progress pack file
   };
 
   // Called when the user completes all flashcards in a deck or
@@ -78,8 +80,7 @@ function Decks({ deck }: DecksProps) {
   };
 
   const onCommit = () => {
-    // TODO
-    // Finalize the in-progress pack containing pending studies
+    // TODO Finalize the in-progress pack file containing pending studies
   };
 
   const onStudy = (clickedDeck: Deck) => {
@@ -90,9 +91,10 @@ function Decks({ deck }: DecksProps) {
     <div className="Decks centered">
       {!decks && <Loader />}
       {!selectedDeck && decks && decks.length > 0 && (
-        <table>
+        <table className="List">
           <thead>
             <tr>
+              <th>&nbsp;</th>
               <th>&nbsp;</th>
               <th>New</th>
               <th>Due</th>
@@ -103,6 +105,7 @@ function Decks({ deck }: DecksProps) {
             {decks.map((currentDeck: Deck) => (
               // eslint-disable-next-line react/no-array-index-key
               <tr key={currentDeck.name}>
+                <td><Slug value={currentDeck.repositorySlug} /></td>
                 <td
                   onClick={() =>
                     setSelectedDeck({
