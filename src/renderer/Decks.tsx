@@ -10,6 +10,7 @@ import {
   Flashcard,
   Review,
   RepositoryRefConfig,
+  PackFile,
 } from '../shared/Model';
 import Loader from './Loader';
 import RenderedDeck from './RenderedDeck';
@@ -51,21 +52,17 @@ function Decks({ deck }: DecksProps) {
   }, [repositories]);
 
   // Called every time a new flashcard has been reviewed.
-  const onFlashcardReviewed = (
+  const onFlashcardReviewed = async (
     deckRef: DeckRef,
     flashcard: Flashcard,
     review: Review,
   ) => {
-    const updateFlashcard = async () => {
-      const updatedFlashcard = await window.electron.updateFlashcard(
-        deckRef,
-        flashcard,
-        review,
-      );
-      console.log(`Flashcard ${updatedFlashcard.shortTitle} saved`);
-    };
-    updateFlashcard();
-    // TODO Append study to in-progress pack file
+    const updatedFlashcard = await window.electron.reviewFlashcard(
+      deckRef,
+      flashcard,
+      review,
+    );
+    console.log(`Flashcard ${updatedFlashcard.shortTitle} updated`);
   };
 
   // Called when the user completes all flashcards in a deck or
@@ -79,8 +76,12 @@ function Decks({ deck }: DecksProps) {
     setSelectedDeck(undefined);
   };
 
-  const onCommit = () => {
-    // TODO Finalize the in-progress pack file containing pending studies
+  const onCommit = (repositorySlug: string) => async () => {
+    const result: PackFile =
+      await window.electron.commitOperations(repositorySlug);
+    console.log(
+      `Wrote new pack file ${result.oid} with pending operations for repository ${repositorySlug}`,
+    );
   };
 
   const onStudy = (clickedDeck: Deck) => {
@@ -105,7 +106,9 @@ function Decks({ deck }: DecksProps) {
             {decks.map((currentDeck: Deck) => (
               // eslint-disable-next-line react/no-array-index-key
               <tr key={currentDeck.name}>
-                <td><Slug value={currentDeck.repositorySlug} /></td>
+                <td>
+                  <Slug value={currentDeck.repositorySlug} />
+                </td>
                 <td
                   onClick={() =>
                     setSelectedDeck({

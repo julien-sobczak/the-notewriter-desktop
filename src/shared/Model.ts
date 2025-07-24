@@ -196,7 +196,8 @@ export interface QueryResult {
 
 export interface Blob {
   oid: string;
-  mime: string;
+  mimeType: string;
+  attributes: { [name: string]: any };
   tags: string[];
 }
 
@@ -329,9 +330,11 @@ export interface PackFileRef {
 }
 export interface PackFile {
   oid: string;
+  fileMtime: string;
+  fileSize: number;
   ctime: string;
   packObjects: PackObject[];
-  blobs: Blob[];
+  blobRefs: Blob[];
 }
 export interface PackObject {
   oid: string;
