@@ -40,12 +40,17 @@ import {
   DeckConfig,
   EditorDynamicConfig,
 } from '../shared/Model';
+import OperationsManager from './operations';
 
 const config = new ConfigManager();
 const db = new DatabaseManager();
 config
   .repositories()
   .forEach((repository) => db.registerRepository(repository));
+const op = new OperationsManager();
+config
+  .repositories()
+  .forEach((repository) => op.registerRepository(repository));
 let configSaved = false; // true after saving configuration back to file before closing the application
 
 class AppUpdater {
@@ -271,7 +276,24 @@ ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
   return flashcards;
 });
 
-ipcMain.handle('commit', async (_event, repositorySlugs: string[]) => {
+ipcMain.handle(
+  'commit-operations',
+  async (_event, repositorySlugs: string[]) => {
+    // TODO implement
+    console.debug(
+      `Committing operations for repositories ${repositorySlugs.join(', ')}`, // TODO reword this message
+    );
+  },
+);
+ipcMain.handle(
+  'review-flashcard',
+  async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {
+    // TODO implement
+    console.debug(
+      `Reviewing flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} and review ${review.feedback}`, // TODO reword this message
+    );
+  },
+);
 ipcMain.handle(
   'update-flashcard', // TODO really useful?
   async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {

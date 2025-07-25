@@ -115,7 +115,8 @@ export default class DatabaseManager {
           if (lastMediaOid === row.oid) {
             medias[medias.length - 1].blobs.push({
               oid: row.blobOid,
-              mime: row.blobMime,
+              mimeType: row.blobMime,
+              attributes: {}, // not used for now
               tags: blobTags,
             });
           } else {
@@ -128,7 +129,8 @@ export default class DatabaseManager {
               blobs: [
                 {
                   oid: row.blobOid,
-                  mime: row.blobMime,
+                  mimeType: row.blobMime,
+                  attributes: {}, // not used for now
                   tags: blobTags,
                 },
               ],
@@ -178,7 +180,8 @@ export default class DatabaseManager {
           if (lastMediaOid === row.oid) {
             medias[medias.length - 1].blobs.push({
               oid: row.blobOid,
-              mime: row.blobMime,
+              mimeType: row.blobMime,
+              attributes: {}, // not used for now
               tags: blobTags,
             });
           } else {
@@ -191,7 +194,8 @@ export default class DatabaseManager {
               blobs: [
                 {
                   oid: row.blobOid,
-                  mime: row.blobMime,
+                  mimeType: row.blobMime,
+                  attributes: {}, // not used for now
                   tags: blobTags,
                 },
               ],

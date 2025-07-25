@@ -3,8 +3,10 @@
 ## TODO: Sprint
 
 * [x] Update deps from `https://github.com/electron-react-boilerplate/electron-react-boilerplate/tree/8d3efc1426e91bae90e85b829ca338b14f61be03` to latest
-* [x] Debug `<Decks>` screen
-* [ ] Merge branch
+* [ ] Run `srs.test.ts`
+* [ ] Complete tests with `NoteWriterSRS`
+* [ ] Use `intervalFn` in `RenderedFlashcard` to display the interval on feedback buttons
+* [ ] Resume work on `operations.ts` and use a structed JSON WAL!
 * [ ] Add support for list `RenderedNote`
 
 ## TODO: Bugfixes
