@@ -189,6 +189,7 @@ export default class ConfigManager {
 
   // eslint-disable-next-line class-methods-use-this
   appendReviewToStudy(deckRef: DeckRef, review: Review) {
+    // FIXME still useful?
     const studyFilePath = studyPath(deckRef);
 
     const now = new Date();
@@ -255,9 +256,11 @@ export default class ConfigManager {
     // Create a new pack file
     const packFile: PackFile = {
       oid: uuidv4(),
+      fileMtime: '',
+      fileSize: 0,
       ctime: now.toISOString(),
       packObjects: [],
-      blobs: [],
+      blobRefs: [],
     };
     for (const study of studies) {
       packFile.packObjects.push({
@@ -326,6 +329,7 @@ export default class ConfigManager {
 
 // Returns the file path where uncommitted studies are persisted locally on-disk.
 export function studyPath(deckRef: DeckRef): string {
+  // FIXME still usefu;?
   const dirPath = path.join(homeDir(), 'studies');
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath);

@@ -92,7 +92,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
     // Try to find a blob matching every tags
     let foundBlob: Blob | null = null;
     for (const blob of media.blobs) {
-      if (media.kind === 'video' && blob.mime.startsWith('image/')) {
+      if (media.kind === 'video' && blob.mimeType.startsWith('image/')) {
         // Ignore for now the blob containing the first frame of videos
         continue;
       }
@@ -116,7 +116,7 @@ export function formatContent(note: Note, tags: string[] = []): string {
         continue;
       }
       foundBlob = media.blobs[0];
-      if (media.kind === 'video' && foundBlob.mime.startsWith('image/')) {
+      if (media.kind === 'video' && foundBlob.mimeType.startsWith('image/')) {
         // Ignore for now the blob containing the first frame of videos
         foundBlob = media.blobs[1];
       }
@@ -135,14 +135,14 @@ export function formatContent(note: Note, tags: string[] = []): string {
     if (media.kind === 'audio') {
       result = result.replace(
         mediaTag,
-        `<audio controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></audio>`,
+        `<audio controls title="${title}"><source src="file:${blobPath}" type="${blob.mimeType}"></audio>`,
       );
       continue;
     }
     if (media.kind === 'video') {
       result = result.replace(
         mediaTag,
-        `<video controls title="${title}"><source src="file:${blobPath}" type="${blob.mime}"></video>`,
+        `<video controls title="${title}"><source src="file:${blobPath}" type="${blob.mimeType}"></video>`,
       );
       continue;
     }
