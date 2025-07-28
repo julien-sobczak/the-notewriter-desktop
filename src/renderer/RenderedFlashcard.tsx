@@ -12,10 +12,15 @@ import Markdown from './Markdown';
 
 type RenderedFlashcardProps = {
   flashcard: Flashcard;
+  intervalFn?: (flashcard: Flashcard, feedback: string) => string; // Optional function to describe interval based on feedback
   onReviewed?: (review: Review) => void;
 };
 
-function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
+function RenderedFlashcard({
+  flashcard,
+  intervalFn,
+  onReviewed,
+}: RenderedFlashcardProps) {
   // TODO useEffect to support key bindings to answers (like arrows)
 
   const [startTime] = useState<Date>(new Date());
@@ -114,6 +119,11 @@ function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
                   className="FeedbackButton FeedbackHard"
                 >
                   Hard
+                  {intervalFn && (
+                    <sup className="Interval">
+                      {intervalFn(flashcard, 'hard')}
+                    </sup>
+                  )}
                 </button>
               )}
               {!confirmationPending && (
@@ -123,6 +133,11 @@ function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
                   className="FeedbackButton FeedbackAgain"
                 >
                   Again
+                  {intervalFn && (
+                    <sup className="Interval">
+                      {intervalFn(flashcard, 'again')}
+                    </sup>
+                  )}
                 </button>
               )}
               {!confirmationPending && (
@@ -132,6 +147,11 @@ function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
                   className="FeedbackButton FeedbackGood"
                 >
                   Good
+                  {intervalFn && (
+                    <sup className="Interval">
+                      {intervalFn(flashcard, 'good')}
+                    </sup>
+                  )}
                 </button>
               )}
               {!confirmationPending && (
@@ -141,6 +161,11 @@ function RenderedFlashcard({ flashcard, onReviewed }: RenderedFlashcardProps) {
                   className="FeedbackButton FeedbackEasy"
                 >
                   Easy
+                  {intervalFn && (
+                    <sup className="Interval">
+                      {intervalFn(flashcard, 'easy')}
+                    </sup>
+                  )}
                 </button>
               )}
               {(!confirmationPending || confirmationPending === 'too-easy') && (
