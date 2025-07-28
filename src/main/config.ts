@@ -256,14 +256,14 @@ export default class ConfigManager {
     // Create a new pack file
     const packFile: PackFile = {
       oid: uuidv4(),
-      fileMtime: '',
-      fileSize: 0,
+      file_mtime: '',
+      file_size: 0,
       ctime: now.toISOString(),
-      packObjects: [],
-      blobRefs: [],
+      objects: [],
+      blobs: [],
     };
     for (const study of studies) {
-      packFile.packObjects.push({
+      packFile.objects.push({
         oid: study.oid,
         kind: 'study',
         description: 'Study',

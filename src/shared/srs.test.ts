@@ -75,6 +75,45 @@ describe('Interval', () => {
     });
   });
 
+  describe('Middle', () => {
+    it('returns the middle between two minute intervals', () => {
+      const i1 = Interval.parse('10m');
+      const i2 = Interval.parse('50m');
+      const mid = Interval.middle(i1, i2);
+      expect(mid.value).toBe(30);
+      expect(mid.unit).toBe('m');
+    });
+    it('returns the middle between hour and minute', () => {
+      const i1 = Interval.parse('1h');
+      const i2 = Interval.parse('30m');
+      const mid = Interval.middle(i1, i2);
+      expect(mid.value).toBe(45);
+      expect(mid.unit).toBe('m');
+    });
+    it('returns the middle between two hour intervals', () => {
+      const i1 = Interval.parse('2h');
+      const i2 = Interval.parse('4h');
+      const mid = Interval.middle(i1, i2);
+      expect(mid.value).toBe(3);
+      expect(mid.unit).toBe('h');
+    });
+    it('returns the middle between hour and day', () => {
+      const i1 = Interval.parse('1d');
+      const i2 = Interval.parse('2h');
+      const mid = Interval.middle(i1, i2);
+      // (1440 + 120) / 2 = 780 -> 13h
+      expect(mid.value).toBe(13);
+      expect(mid.unit).toBe('h');
+    });
+    it('returns the middle between two days', () => {
+      const i1 = Interval.parse('1d');
+      const i2 = Interval.parse('3d');
+      const mid = Interval.middle(i1, i2);
+      expect(mid.value).toBe(2);
+      expect(mid.unit).toBe('d');
+    });
+  });
+
   describe('toString', () => {
     it('returns string representation', () => {
       expect(new Interval(10, 'm').toString()).toBe('10m');

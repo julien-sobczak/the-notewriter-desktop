@@ -4,7 +4,7 @@ import { DeckConfig, Flashcard, Review } from './Model';
 
 export interface SRSAlgorithm {
   schedule(config: DeckConfig, card: Flashcard, review: Review): Flashcard;
-  interval(config: DeckConfig, card: Flashcard, review: Review): number; // in minutes?
+  interval(config: DeckConfig, card: Flashcard, review: Review): string;
 }
 
 const defaultEasyFactor = 2.5; // Default easy factor for new cards graduating to learning queue
@@ -51,9 +51,15 @@ export class NoteWriterSRS implements SRSAlgorithm {
             newSettings.interval = steps[0];
             break;
           case 'again':
+            if (newSettings.step + 1 < steps.length - 1) {
+              // Slightly increase the step to avoid having "hard" and "again" equal
+              const step1 = Interval.parse(steps[newSettings.step]);
+              const step2 = Interval.parse(steps[newSettings.step + 1]);
+              newSettings.interval = Interval.middle(step1, step2).toString();
+            }
             break;
           case 'good':
-            if (newSettings.step >= steps.length - 1) {
+            if (newSettings.step > steps.length - 1) {
               newSettings.step += 1;
               newSettings.interval = steps[newSettings.step];
             } else {
@@ -73,7 +79,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
             newSettings.easyFactor =
               newSettings.easyFactor || defaultEasyFactor;
             newSettings.interval = NoteWriterSRS.nextInterval(
-              newSettings.interval,
+              maxStep,
               newSettings.easyFactor,
             );
             break;
@@ -83,7 +89,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
             newSettings.easyFactor =
               (newSettings.easyFactor || defaultEasyFactor) * 1.3;
             newSettings.interval = NoteWriterSRS.nextInterval(
-              newSettings.interval,
+              maxStep,
               newSettings.easyFactor,
             );
             break;
@@ -150,6 +156,12 @@ export class NoteWriterSRS implements SRSAlgorithm {
     }
 
     newSettings.repetitions = (newSettings.repetitions || 0) + 1;
+
+    console.log(
+      `New settings for flashcard ${study.flashcardOID}:`,
+      newSettings,
+    ); // Debug log
+
     return newSettings;
   }
 
@@ -165,7 +177,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
     };
   }
 
-  interval(config: DeckConfig, card: Flashcard, study: Review): number {
+  interval(config: DeckConfig, card: Flashcard, study: Review): string {
     const newSettings = this.newSettings(config, card.settings, study);
     return newSettings.interval;
   }
@@ -218,6 +230,14 @@ export class Interval {
     }
   }
 
+  // Returns the middle interval between two intervals
+  static middle(i1: Interval, i2: Interval): Interval {
+    const min1 = i1.toMinutes();
+    const min2 = i2.toMinutes();
+    const avg = (min1 + min2) / 2;
+    return Interval.fromMinutes(avg);
+  }
+
   // Convert from minutes to best unit
   static fromMinutes(minutes: number): Interval {
     if (minutes >= 1440) {
@@ -247,9 +267,9 @@ export class Interval {
 // Factory function using currying to pass easily the core logic of an SRS algorithm to a React component without needing this component to know about the DeckConfig or the algorithm.
 export function intervalFn(
   config: DeckConfig,
-  algorithm: SRSAlgorithm,
-): (card: Flashcard, feedback: string) => number {
-  return (card: Flashcard, feedback: string): number => {
+): (card: Flashcard, feedback: string) => string {
+  const algorithm: SRSAlgorithm = new NoteWriterSRS();
+  return (card: Flashcard, feedback: string): string => {
     const review: Review = {
       flashcardOID: card.oid,
       durationInMs: 0,

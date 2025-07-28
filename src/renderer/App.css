@@ -969,6 +969,14 @@ ul.categories li {
   background-color: #36A9F5;
   color: white;
 }
+.RenderedFlashcard sup.Interval {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 60%;
+  padding: 0.25em 0.5em;
+  margin-left: 0.25em;
+  border-radius: 0.25em;
+}
 
 /* Flashcard Markdown Content Formatting */
 .RenderedFlashcard .Content {

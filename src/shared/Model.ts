@@ -330,11 +330,11 @@ export interface PackFileRef {
 }
 export interface PackFile {
   oid: string;
-  fileMtime: string;
-  fileSize: number;
+  file_mtime: string;
+  file_size: number;
   ctime: string;
-  packObjects: PackObject[];
-  blobRefs: Blob[];
+  objects: PackObject[];
+  blobs: Blob[];
 }
 export interface PackObject {
   oid: string;
@@ -342,6 +342,14 @@ export interface PackObject {
   ctime: string;
   description: string;
   data: string;
+}
+
+export interface Operation {
+  oid: string;
+  object_oid: string;
+  name: string;
+  timestamp: string; // ISO format
+  extras: { [key: string]: any };
 }
 
 /* Utils */

@@ -4,6 +4,7 @@ import { ConfigContext } from './ConfigContext';
 import { DeckRef, Flashcard, Review } from '../shared/Model';
 import Loader from './Loader';
 import RenderedFlashcard from './RenderedFlashcard';
+import { intervalFn } from '../shared/srs';
 
 type RenderedDeckProps = {
   deckRef: DeckRef;
@@ -32,7 +33,12 @@ function RenderedDeck({
       }
     }
   }
-  console.log(deckConfig?.name); // FIXME remove
+  if (!deckConfig) {
+    // throw an error instead
+    throw new Error(
+      `Deck ${deckRef.name} not found in repository ${deckRef.repositorySlug}`,
+    );
+  }
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>();
   const [flashcardIndex, setFlashcardIndex] = useState<number>(0);
@@ -105,6 +111,7 @@ function RenderedDeck({
           </div>
           <RenderedFlashcard
             flashcard={flashcards[flashcardIndex]}
+            intervalFn={intervalFn(deckConfig)}
             onReviewed={(review: Review) =>
               onReviewed(flashcards[flashcardIndex], review)
             }
