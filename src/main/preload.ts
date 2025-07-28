@@ -47,11 +47,10 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.invoke('list-decks', repositorySlugs),
   listTodayFlashcards: (deckRef: DeckRef) =>
     ipcRenderer.invoke('list-today-flashcards', deckRef),
-  updateFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
-    ipcRenderer.invoke('update-flashcard', deckRef, flashcard, review),
 
   // Operations
-  commit: (deckRefs: DeckRef[]) => ipcRenderer.invoke('commit', deckRefs),
+  flushOperations: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('flush-operations', repositorySlugs),
   reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
     ipcRenderer.invoke('review-flashcard', deckRef, flashcard, review),
 });

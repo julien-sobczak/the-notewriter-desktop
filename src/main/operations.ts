@@ -45,7 +45,11 @@ export default class OperationsManager {
   }
 
   registerRepository(repository: RepositoryRefConfig): this {
-    this.repositories.set(repository.slug, repository);
+    const savedRepository = {
+      ...repository,
+      path: normalizePath(repository.path), // Replace ~ or $PWD
+    };
+    this.repositories.set(repository.slug, savedRepository);
     return this;
   }
 
@@ -144,8 +148,8 @@ export default class OperationsManager {
       // Create a PackFile from the operations
       const packFile: PackFile = {
         oid: generateOid(), // Generate a unique OID for the pack file
-        file_mtime: new Date().toISOString(),
-        file_size: fs.statSync(walFilePath).size,
+        file_mtime: '',
+        file_size: 0,
         ctime: new Date().toISOString(),
         objects: packObjects,
         blobs: [], // No blobs in operations for now
