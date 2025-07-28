@@ -35,8 +35,8 @@ function RenderedFlashcard({
       feedback,
       durationInMs: completionTime.getTime() - startTime.getTime(),
       completedAt: completionTime.toISOString(),
-      dueAt: completionTime.toISOString(), // FIXME calculate next due date based on SRS settings
-      settings: flashcard.settings, // FIXME update settings based on feedback
+      dueAt: completionTime.toISOString(),
+      settings: flashcard.settings,
     });
     setRevealed(false);
   };

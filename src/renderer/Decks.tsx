@@ -1,17 +1,10 @@
 import { useEffect, useContext, useState } from 'react';
 import {
   StackSimple as DeckIcon,
-  FilePlus as CommitIcon,
+  FilePlus as FlushIcon,
 } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
-import {
-  Deck,
-  DeckRef,
-  Flashcard,
-  Review,
-  RepositoryRefConfig,
-  PackFile,
-} from '../shared/Model';
+import { Deck, DeckRef, RepositoryRefConfig } from '../shared/Model';
 import Loader from './Loader';
 import RenderedDeck from './RenderedDeck';
 import Slug from './Slug';
@@ -28,11 +21,6 @@ function Decks({ deck }: DecksProps) {
 
   const [decks, setDecks] = useState<Deck[]>();
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>(deck);
-
-  // TODO remove Find decks to study with the number of cards to study today
-  // onClick => Find flashcards to study, randomize them
-  // onAnswer => Update flashcards in DB to save new SRS settings + append to current Study object in current "study" commit (NB: create the Study object if first card to be reviewed today)
-  // onCommit => Push last Study objects to a new commit + update the commit-graph (otherwise the file will not be downloaded)
 
   // Download decks
   useEffect(() => {
@@ -51,20 +39,6 @@ function Decks({ deck }: DecksProps) {
     listDecks();
   }, [repositories]);
 
-  // Called every time a new flashcard has been reviewed.
-  const onFlashcardReviewed = async (
-    deckRef: DeckRef,
-    flashcard: Flashcard,
-    review: Review,
-  ) => {
-    const updatedFlashcard = await window.electron.reviewFlashcard(
-      deckRef,
-      flashcard,
-      review,
-    );
-    console.log(`Flashcard ${updatedFlashcard.shortTitle} updated`);
-  };
-
   // Called when the user completes all flashcards in a deck or
   // when exited prematurely when clicking on the icon.
   const onDeckQuitted = (deckRef: DeckRef) => {
@@ -76,12 +50,13 @@ function Decks({ deck }: DecksProps) {
     setSelectedDeck(undefined);
   };
 
-  const onCommit = (repositorySlug: string) => async () => {
-    const result: PackFile =
-      await window.electron.commitOperations(repositorySlug);
-    console.log(
-      `Wrote new pack file ${result.oid} with pending operations for repository ${repositorySlug}`,
-    );
+  const onFlush = (repositorySlug: string) => async () => {
+    await window.electron.flushOperations([
+      {
+        repositorySlug,
+      },
+    ]);
+    console.log(`Flushed pending operations for repository ${repositorySlug}`);
   };
 
   const onStudy = (clickedDeck: Deck) => {
@@ -124,8 +99,12 @@ function Decks({ deck }: DecksProps) {
                 <td>{currentDeck.stats.new}</td>
                 <td>{currentDeck.stats.due}</td>
                 <td>
-                  <button type="button" onClick={onCommit}>
-                    <CommitIcon />
+                  {/* IMPROVEMENT move the button below decks as we flush per repository, not per deck really. */}
+                  <button
+                    type="button"
+                    onClick={onFlush(currentDeck.repositorySlug)}
+                  >
+                    <FlushIcon />
                   </button>
                 </td>
               </tr>
@@ -134,11 +113,7 @@ function Decks({ deck }: DecksProps) {
         </table>
       )}
       {selectedDeck && (
-        <RenderedDeck
-          deckRef={selectedDeck}
-          onFlashcardReviewed={onFlashcardReviewed}
-          onQuit={onDeckQuitted}
-        />
+        <RenderedDeck deckRef={selectedDeck} onQuit={onDeckQuitted} />
       )}
     </div>
   );
