@@ -11,19 +11,13 @@ import {
   Link as LinkIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import {
-  Note,
-  Media,
-  Blob,
-  Bookmark,
-  getAttributeConfig,
-  extractSourceURL,
-} from '../shared/Model';
+import { Note, Media, Blob, Bookmark, extractSourceURL } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
+import RenderedMetadata from './RenderedMetadata';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -161,9 +155,6 @@ export function formatContent(note: Note, tags: string[] = []): string {
   return result;
 }
 
-// List of attributes that must be hidden (as duplicating information already displayed elsewhere)
-const omitAttributes = ['tags', 'title'];
-
 interface LastPosition {
   left?: number;
   top?: number;
@@ -205,7 +196,6 @@ export default function RenderedNote({
   onMouseEnd = () => {},
 }: RenderedNoteProps) {
   const { config, dispatch } = useContext(ConfigContext);
-  const repositoryConfig = config.repositories[note.repositorySlug];
 
   const dragElement = useRef<HTMLDivElement>(null);
   const dragInProgress = useRef<boolean>(false);
@@ -214,14 +204,6 @@ export default function RenderedNote({
     top: undefined,
   });
 
-  // Remove extra attributes
-  const filteredAttributes = Object.fromEntries(
-    Object.entries(note.attributes).filter(
-      ([key]) => !omitAttributes.includes(key),
-    ),
-  );
-
-  const noteHasMetadata = note.tags || filteredAttributes;
   const metadataVisible = showTags || showAttributes;
 
   const handleDragClick = (event: React.MouseEvent) => {
@@ -445,37 +427,12 @@ export default function RenderedNote({
       <div className="RenderedNoteContent">
         <Markdown md={formatContent(note, ['preview'])} />
       </div>
-      {metadataVisible && noteHasMetadata && (
-        <div className="RenderedNoteMetadata">
-          {showTags && note.tags && note.tags.length > 0 && (
-            <ul>
-              {note.tags.map((tag: string) => {
-                return <li key={tag}>#{tag}</li>;
-              })}
-            </ul>
-          )}
-          {showAttributes &&
-            filteredAttributes &&
-            Object.keys(filteredAttributes).length > 0 && (
-              <ul>
-                {Object.entries(filteredAttributes).map(([key, value]: any) => {
-                  const attributeConfig = getAttributeConfig(
-                    repositoryConfig,
-                    key,
-                  );
-                  return (
-                    <li key={key}>
-                      @{key}:{' '}
-                      {attributeConfig.type === 'string' && (
-                        <Markdown md={value} inline />
-                      )}
-                      {attributeConfig.type !== 'string' && { value }}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-        </div>
+      {metadataVisible && (
+        <RenderedMetadata
+          note={note}
+          showTags={showTags}
+          showAttributes={showAttributes}
+        />
       )}
       {showComment && note.comment && (
         <div className="RenderedNoteComment">

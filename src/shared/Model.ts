@@ -93,7 +93,6 @@ export interface RepositoryConfig {
   core: CoreConfig | null;
   attributes: { [key: string]: AttributeConfig };
   types: { [key: string]: TypeConfig };
-  remote: RemoteConfig | null;
   decks: DeckConfig[];
   searches: { [key: string]: SearchConfig };
   // Ignore linter and references sections
@@ -118,15 +117,6 @@ export interface TypeConfig {
   preprocessors: string[];
   requiredAttributes: string[];
   optionalAttributes: string[];
-}
-export interface RemoteConfig {
-  type: string;
-  dir: string;
-  endpoint: string;
-  accessKey: string;
-  secretKey: string;
-  bucketName: string;
-  secure: boolean;
 }
 export interface DeckConfig {
   name: string;
