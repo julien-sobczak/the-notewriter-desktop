@@ -14,6 +14,7 @@ import {
   Review,
   PackFile,
   Study,
+  DeckConfig,
 } from '../shared/Model';
 import { normalizePath } from './util';
 
@@ -189,6 +190,7 @@ export default class ConfigManager {
 
   // eslint-disable-next-line class-methods-use-this
   appendReviewToStudy(deckRef: DeckRef, review: Review) {
+    // FIXME still useful?
     const studyFilePath = studyPath(deckRef);
 
     const now = new Date();
@@ -255,12 +257,14 @@ export default class ConfigManager {
     // Create a new pack file
     const packFile: PackFile = {
       oid: uuidv4(),
+      file_mtime: '',
+      file_size: 0,
       ctime: now.toISOString(),
-      packObjects: [],
+      objects: [],
       blobs: [],
     };
     for (const study of studies) {
-      packFile.packObjects.push({
+      packFile.objects.push({
         oid: study.oid,
         kind: 'study',
         description: 'Study',
@@ -311,7 +315,7 @@ export default class ConfigManager {
     return objectsPath;
   }
 
-  // Returns the config for the given repository.
+  // Returns the config ref for the given repository.
   mustGetRepositoryRefConfig(repositorySlug: string): RepositoryRefConfig {
     for (const repositoryConfig of this.editorStaticConfig.repositories) {
       if (repositoryConfig.slug === repositorySlug) {
@@ -320,12 +324,43 @@ export default class ConfigManager {
     }
     throw new Error(`No repository with slug ${repositorySlug}`);
   }
+
+  // Returns the config for the given repository.
+  mustGetRepositoryConfig(repositorySlug: string): RepositoryConfig {
+    // Iterate over this.repositoryConfigs
+    const repositoryConfig = this.repositoryConfigs[repositorySlug];
+    if (!repositoryConfig) {
+      throw new Error(`No repository config for slug ${repositorySlug}`);
+    }
+    return repositoryConfig;
+  }
+
+  // Returns the deck config.
+  mustGetDeckConfig(deckRef: DeckRef): DeckConfig {
+    const repositoryConfig = this.mustGetRepositoryConfig(
+      deckRef.repositorySlug,
+    );
+    if (!repositoryConfig.decks) {
+      throw new Error(
+        `No decks found for repository ${deckRef.repositorySlug}`,
+      );
+    }
+    for (const deck of repositoryConfig.decks) {
+      if (deck.name === deckRef.name) {
+        return deck;
+      }
+    }
+    throw new Error(
+      `No deck with name ${deckRef.name} in repository ${deckRef.repositorySlug}`,
+    );
+  }
 }
 
 /* Helpers */
 
 // Returns the file path where uncommitted studies are persisted locally on-disk.
 export function studyPath(deckRef: DeckRef): string {
+  // FIXME still usefu;?
   const dirPath = path.join(homeDir(), 'studies');
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath);

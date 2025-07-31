@@ -70,7 +70,6 @@ function Stats() {
 
   return (
     <div className="Stats Screen">
-      <h1>Stats!</h1>
       {!statistics && <Loader />}
       {statistics && (
         <div>

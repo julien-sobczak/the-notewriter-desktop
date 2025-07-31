@@ -27,12 +27,14 @@ This is a basic note with an image.
       blobs: [
         {
           oid: '91cc7e00705770801948780fc639ad6d95db087a',
-          mime: 'image/avif',
+          mimeType: 'image/avif',
+          attributes: {},
           tags: ['preview', 'lossy'],
         },
         {
           oid: '808263e6d73dfe907317bf7869e0512268221fca',
-          mime: 'image/avif',
+          mimeType: 'image/avif',
+          attributes: {},
           tags: ['large', 'lossy'],
         },
       ],
@@ -65,12 +67,14 @@ This is a basic note with a video.
       blobs: [
         {
           oid: '91cc7e00705770801948780fc639ad6d95db087a',
-          mime: 'image/avif',
+          mimeType: 'image/avif',
+          attributes: {},
           tags: ['preview', 'lossy'],
         },
         {
           oid: '808263e6d73dfe907317bf7869e0512268221fca',
-          mime: 'video/webm',
+          mimeType: 'video/webm',
+          attributes: {},
           tags: ['original', 'lossy'],
         },
       ],
@@ -103,7 +107,8 @@ This is a basic note with an audio.
       blobs: [
         {
           oid: '808263e6d73dfe907317bf7869e0512268221fca',
-          mime: 'audio/mpeg',
+          mimeType: 'audio/mpeg',
+          attributes: {},
           tags: ['original', 'lossy'],
         },
       ],
@@ -136,7 +141,8 @@ This is a basic note with a document link.
       blobs: [
         {
           oid: '91cc7e00705770801948780fc639ad6d95db087a',
-          mime: 'application/pdf',
+          mimeType: 'application/pdf',
+          attributes: {},
           tags: ['original', 'lossless'],
         },
       ],

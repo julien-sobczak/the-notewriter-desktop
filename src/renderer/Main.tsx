@@ -622,6 +622,7 @@ function Main() {
                 <button
                   type="button"
                   onClick={() => switchActivity(currentActivity.slug)}
+                  title={currentActivity.name}
                   aria-label={currentActivity.name}
                 >
                   <currentActivity.icon

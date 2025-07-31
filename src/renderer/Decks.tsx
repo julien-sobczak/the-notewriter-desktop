@@ -1,18 +1,13 @@
 import { useEffect, useContext, useState } from 'react';
 import {
   StackSimple as DeckIcon,
-  FilePlus as CommitIcon,
+  FilePlus as FlushIcon,
 } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
-import {
-  Deck,
-  DeckRef,
-  Flashcard,
-  Review,
-  RepositoryRefConfig,
-} from '../shared/Model';
+import { Deck, DeckRef, RepositoryRefConfig } from '../shared/Model';
 import Loader from './Loader';
 import RenderedDeck from './RenderedDeck';
+import Slug from './Slug';
 
 type DecksProps = {
   deck: DeckRef | undefined;
@@ -26,11 +21,6 @@ function Decks({ deck }: DecksProps) {
 
   const [decks, setDecks] = useState<Deck[]>();
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>(deck);
-
-  // TODO remove Find decks to study with the number of cards to study today
-  // onClick => Find flashcards to study, randomize them
-  // onAnswer => Update flashcards in DB to save new SRS settings + append to current Study object in current "study" commit (NB: create the Study object if first card to be reviewed today)
-  // onCommit => Push last Study objects to a new commit + update the commit-graph (otherwise the file will not be downloaded)
 
   // Download decks
   useEffect(() => {
@@ -49,23 +39,6 @@ function Decks({ deck }: DecksProps) {
     listDecks();
   }, [repositories]);
 
-  // Called every time a new flashcard has been reviewed.
-  const onFlashcardReviewed = (
-    deckRef: DeckRef,
-    flashcard: Flashcard,
-    review: Review,
-  ) => {
-    const updateFlashcard = async () => {
-      const updatedFlashcard = await window.electron.updateFlashcard(
-        deckRef,
-        flashcard,
-        review,
-      );
-      console.log(`Flashcard ${updatedFlashcard.shortTitle} saved`);
-    };
-    updateFlashcard();
-  };
-
   // Called when the user completes all flashcards in a deck or
   // when exited prematurely when clicking on the icon.
   const onDeckQuitted = (deckRef: DeckRef) => {
@@ -77,9 +50,13 @@ function Decks({ deck }: DecksProps) {
     setSelectedDeck(undefined);
   };
 
-  const onCommit = () => {
-    // TODO
-    // Finalize the in-progress pack containing pending studies
+  const onFlush = (repositorySlug: string) => async () => {
+    await window.electron.flushOperations([
+      {
+        repositorySlug,
+      },
+    ]);
+    console.log(`Flushed pending operations for repository ${repositorySlug}`);
   };
 
   const onStudy = (clickedDeck: Deck) => {
@@ -90,9 +67,10 @@ function Decks({ deck }: DecksProps) {
     <div className="Decks centered">
       {!decks && <Loader />}
       {!selectedDeck && decks && decks.length > 0 && (
-        <table>
+        <table className="List">
           <thead>
             <tr>
+              <th>&nbsp;</th>
               <th>&nbsp;</th>
               <th>New</th>
               <th>Due</th>
@@ -103,6 +81,9 @@ function Decks({ deck }: DecksProps) {
             {decks.map((currentDeck: Deck) => (
               // eslint-disable-next-line react/no-array-index-key
               <tr key={currentDeck.name}>
+                <td>
+                  <Slug value={currentDeck.repositorySlug} />
+                </td>
                 <td
                   onClick={() =>
                     setSelectedDeck({
@@ -118,8 +99,12 @@ function Decks({ deck }: DecksProps) {
                 <td>{currentDeck.stats.new}</td>
                 <td>{currentDeck.stats.due}</td>
                 <td>
-                  <button type="button" onClick={onCommit}>
-                    <CommitIcon />
+                  {/* IMPROVEMENT move the button below decks as we flush per repository, not per deck really. */}
+                  <button
+                    type="button"
+                    onClick={onFlush(currentDeck.repositorySlug)}
+                  >
+                    <FlushIcon />
                   </button>
                 </td>
               </tr>
@@ -128,11 +113,7 @@ function Decks({ deck }: DecksProps) {
         </table>
       )}
       {selectedDeck && (
-        <RenderedDeck
-          deckRef={selectedDeck}
-          onFlashcardReviewed={onFlashcardReviewed}
-          onQuit={onDeckQuitted}
-        />
+        <RenderedDeck deckRef={selectedDeck} onQuit={onDeckQuitted} />
       )}
     </div>
   );
