@@ -93,7 +93,6 @@ export interface RepositoryConfig {
   core: CoreConfig | null;
   attributes: { [key: string]: AttributeConfig };
   types: { [key: string]: TypeConfig };
-  remote: RemoteConfig | null;
   decks: DeckConfig[];
   searches: { [key: string]: SearchConfig };
   // Ignore linter and references sections
@@ -118,15 +117,6 @@ export interface TypeConfig {
   preprocessors: string[];
   requiredAttributes: string[];
   optionalAttributes: string[];
-}
-export interface RemoteConfig {
-  type: string;
-  dir: string;
-  endpoint: string;
-  accessKey: string;
-  secretKey: string;
-  bucketName: string;
-  secure: boolean;
 }
 export interface DeckConfig {
   name: string;
@@ -196,7 +186,8 @@ export interface QueryResult {
 
 export interface Blob {
   oid: string;
-  mime: string;
+  mimeType: string;
+  attributes: { [name: string]: any };
   tags: string[];
 }
 
@@ -329,8 +320,10 @@ export interface PackFileRef {
 }
 export interface PackFile {
   oid: string;
+  file_mtime: string;
+  file_size: number;
   ctime: string;
-  packObjects: PackObject[];
+  objects: PackObject[];
   blobs: Blob[];
 }
 export interface PackObject {
@@ -339,6 +332,14 @@ export interface PackObject {
   ctime: string;
   description: string;
   data: string;
+}
+
+export interface Operation {
+  oid: string;
+  object_oid: string;
+  name: string;
+  timestamp: string; // ISO format
+  extras: { [key: string]: any };
 }
 
 /* Utils */

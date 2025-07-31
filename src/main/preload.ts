@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld('electron', {
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
   search: (query: Query) => ipcRenderer.invoke('search', query),
-  mearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
+  msearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
   listNotesInFile: (repositorySlug: string, filePath: string) =>
     ipcRenderer.invoke('list-notes-in-file', repositorySlug, filePath),
   listFiles: (repositorySlug: string) =>
@@ -47,8 +47,12 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.invoke('list-decks', repositorySlugs),
   listTodayFlashcards: (deckRef: DeckRef) =>
     ipcRenderer.invoke('list-today-flashcards', deckRef),
-  updateFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
-    ipcRenderer.invoke('update-flashcard', deckRef, flashcard, review),
+
+  // Operations
+  flushOperations: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('flush-operations', repositorySlugs),
+  reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
+    ipcRenderer.invoke('review-flashcard', deckRef, flashcard, review),
 });
 
 // export type ElectronHandler = typeof electronHandler;

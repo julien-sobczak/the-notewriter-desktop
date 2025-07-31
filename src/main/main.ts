@@ -40,12 +40,19 @@ import {
   DeckConfig,
   EditorDynamicConfig,
 } from '../shared/Model';
+import OperationsManager from './operations';
+import { generateOid } from './oid';
+import { NoteWriterSRS } from '../shared/srs';
 
 const config = new ConfigManager();
 const db = new DatabaseManager();
 config
   .repositories()
   .forEach((repository) => db.registerRepository(repository));
+const op = new OperationsManager();
+config
+  .repositories()
+  .forEach((repository) => op.registerRepository(repository));
 let configSaved = false; // true after saving configuration back to file before closing the application
 
 class AppUpdater {
@@ -270,38 +277,72 @@ ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
   );
   return flashcards;
 });
+
 ipcMain.handle(
-  'update-flashcard',
-  async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review) => {
+  'flush-operations',
+  async (_event, repositorySlugs: string[]) => {
+    for (const repositorySlug of repositorySlugs) {
+      console.debug(`Flushing operations for repository ${repositorySlug}...`);
+      // eslint-disable-next-line no-await-in-loop
+      await op.flushWalToPackFiles(repositorySlug);
+      console.debug(`Flushed operations for repository ${repositorySlug}`);
+    }
+  },
+);
+ipcMain.handle(
+  'review-flashcard',
+  async (
+    _event,
+    deckRef: DeckRef,
+    flashcard: Flashcard,
+    review: Review,
+  ): Promise<Flashcard> => {
+    const deckConfig = config.mustGetDeckConfig(deckRef);
+    const algorithmName = deckConfig.algorithm || 'default';
+    // IMPROVEMENT use algorithmSettings to customize the algorithm
+    if (algorithmName !== 'default' && algorithmName !== 'Anki2') {
+      throw new Error(`Algorithm ${algorithmName} is not supported yet`);
+    }
+
+    // Reschedule the flashcard using the SRS algorithm
+    const algorithm = new NoteWriterSRS();
+    const scheduledFlashcard = algorithm.schedule(
+      deckConfig,
+      flashcard,
+      review,
+    );
+    // Update SRS settings based on the feedback
+    review.dueAt = scheduledFlashcard.dueAt;
+    review.settings = scheduledFlashcard.settings;
+
+    // Record the operation in the WAL
+    op.appendOperationToWal(deckRef.repositorySlug, {
+      oid: generateOid(),
+      object_oid: flashcard.oid,
+      name: 'review-flashcard',
+      timestamp: new Date().toISOString(),
+      extras: { review },
+    });
     console.debug(
-      `Updating flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} and review ${review.feedback}`, // TODO reword this message
+      `Reviewing flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} and review ${review.feedback}`, // TODO reword this message
     );
 
-    // 1. Update in DB
-    const repositoryConfig = config.repositoryConfigs[deckRef.repositorySlug];
-    let deckConfig: DeckConfig | undefined;
-    for (const deck of repositoryConfig.decks) {
-      if (deck.name === deckRef.name) {
-        deckConfig = deck;
-        break;
-      }
-    }
-    if (!deckConfig) {
-      console.error(
-        `No deck configuration found for key ${deckRef.name} in repository ${deckRef.repositorySlug}`,
-      );
-      // Do nothing and simply return the flashcard
-      return flashcard;
-    }
-
-    // 2. Append review to local study
-    // TODO
-    await db.updateFlashcard(deckRef.repositorySlug, deckConfig, flashcard);
-
-    console.debug(
-      `Flashcard ${flashcard.shortTitle} updated for deck ${deckRef.name} in repository ${deckRef.repositorySlug}`,
-    );
-    return flashcard;
+    // Update the SQLite database immediately.
+    // Avoid having to load the pack files when the WAL will be flushed
+    // (and useful as the flashcard may be rescheduled before the next flush).
+    return db
+      .updateFlashcard(deckRef.repositorySlug, deckConfig, scheduledFlashcard)
+      .then((updatedFlashcard: Flashcard) => {
+        console.debug(
+          `Flashcard ${updatedFlashcard.oid} updated with new settings:`,
+          updatedFlashcard.settings,
+        );
+        return updatedFlashcard;
+      })
+      .catch((error: unknown) => {
+        console.error('Error updating flashcard:', error);
+        return flashcard; // Return the original flashcard in case of error
+      });
   },
 );
 
