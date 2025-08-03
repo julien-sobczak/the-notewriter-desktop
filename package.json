@@ -34,7 +34,7 @@
     "start:renderer": "NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true NODE_OPTIONS='-r ts-node/register --no-warnings' webpack serve --config ./.erb/configs/webpack.config.renderer.dev.ts",
     "test": "jest",
     "cloc": "gocloc --match-d='^src' --not-match-d='node_modules' --exclude-ext='json' .",
-    "fixtures": "fixtures/build.sh $PWD/fixtures"
+    "fixtures": "./fixtures/build.sh $PWD/fixtures"
   },
   "browserslist": [
     "extends browserslist-config-erb"
