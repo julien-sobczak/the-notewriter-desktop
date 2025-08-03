@@ -4,25 +4,25 @@
 
 `@artist: Leonardo da Vinci`
 
-![](medias/painting-mona-lisa.png)
+![Mona Lisa](medias/painting-mona-lisa.png "Most famous painting")
 
 
 ## Artwork: Starry Night
 
 `@artist: Vincent Van Gogh`
 
-![](medias/painting-starry-night.png)
+![Starry Night](medias/painting-starry-night.png)
 
 
 ## Artwork: The Scream
 
 `@artist: Edvard Munch`
 
-![](medias/painting-the-scream.png)
+![The Scream](medias/painting-the-scream.png)
 
 
 ## Artwork: Guernica
 
 `@artist: Pablo Picasso`
 
-![](medias/painting-guernica.png)
+![Guernica](medias/painting-guernica.png)
