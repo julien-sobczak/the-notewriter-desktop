@@ -10,7 +10,7 @@ import {
   Review,
 } from '../shared/Model';
 
-contextBridge.exposeInMainWorld('electron', {
+const electronHandler = {
   // Main to renderer
   onConfigurationLoaded: (callback: any) =>
     ipcRenderer.on('configuration-loaded', (_event, value) => callback(value)),
@@ -53,6 +53,8 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.invoke('flush-operations', repositorySlugs),
   reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
     ipcRenderer.invoke('review-flashcard', deckRef, flashcard, review),
-});
+};
 
-// export type ElectronHandler = typeof electronHandler;
+contextBridge.exposeInMainWorld('electron', electronHandler);
+
+export type ElectronHandler = typeof electronHandler;
