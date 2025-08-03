@@ -8,19 +8,19 @@ repositories:
   selected: false
 
 dailyQuote:
-  query: "path:references @kind:quote"
+  query: "path:references @type:Quote"
   repositories: [life]
 
 inspirations:
 - name: Life
-  query: "path:references/persons (#life or #purpose) @kind:quote"
+  query: "path:references/quotes (#life or #life-changing) @type:Quote"
   repositories: [life]
 - name: Art
-  query: "path:references @kind:artwork"
+  query: "path:references/art @type:Artwork"
   repositories: [life]
 
 zenMode:
   queries:
-  - query: "path:references @kind:quote"
+  - query: "path:references @type:Quote"
     repositories: [life]
   - query: "path:thoughts"

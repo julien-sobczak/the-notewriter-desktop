@@ -7,8 +7,8 @@ import {
 } from '@phosphor-icons/react';
 import { InspirationConfig, Note, Query, QueryResult } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
-import RenderedNote from './RenderedNote';
 import useKeyDown from './useKeyDown';
+import FullScreenNote from './FullScreenNote';
 
 function extractQuery(inspiration: InspirationConfig): Query {
   // Convert all queries configured into valid Query
@@ -128,16 +128,7 @@ function Inspiration() {
             </nav>
           </div>
           <div className="Content">
-            {!note && <SmileyXEyes size={48} />}
-            {note && (
-              <RenderedNote
-                note={note}
-                showAttributes={false}
-                showTags={false}
-                showActions={false}
-                showTitle={false}
-              />
-            )}
+            {note && <FullScreenNote note={note} />}
           </div>
         </>
       )}

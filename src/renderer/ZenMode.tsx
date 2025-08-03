@@ -2,7 +2,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   Pause,
-  PencilSimple,
   PersonSimpleRun,
   PersonSimpleWalk,
   Play,
@@ -11,9 +10,8 @@ import {
 } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
 import { Note, ZenConfig, Query, QueryResult } from '../shared/Model';
-import RenderedNote from './RenderedNote';
 import useKeyDown from './useKeyDown';
-import Markdown from './Markdown';
+import FullScreenNote from './FullScreenNote';
 
 function extractQueries(zenMode: ZenConfig | undefined): Query[] {
   if (!zenMode) return [];
@@ -119,13 +117,6 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
   // The current note to display (in any)
   const note: Note | undefined = notes.length ? notes[index] : undefined;
 
-  // Triggered when the user clicks in the footer to browse to the file externally
-  const handleEdit = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (!note) return;
-    window.electron.edit(note.repositorySlug, note.relativePath, note.line);
-  };
-
   return (
     <div className="Screen ZenMode">
       {/* Print an icon when no notes are found */}
@@ -196,34 +187,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
             </nav>
           </div>
           <div className="Content">
-            {/* Disable all "extra" information */}
-            <RenderedNote
-              note={note}
-              showAttributes={false}
-              showTags={false}
-              showActions={false}
-              showComment={false}
-              showTitle={false}
-            />
-          </div>
-          <div className="Footer">
-            <div>
-              <Markdown md={note.title} />
-              <br />
-              <span>
-                <strong>{note.repositorySlug}</strong>&nbsp;/&nbsp;
-                {note.relativePath}
-              </span>
-            </div>
-            <div>
-              <button
-                type="button"
-                title="Edit in external editor"
-                onClick={handleEdit}
-              >
-                <PencilSimple />
-              </button>
-            </div>
+            <FullScreenNote note={note} />
           </div>
         </>
       )}

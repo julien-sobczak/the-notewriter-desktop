@@ -7,8 +7,8 @@
 
 ## TODO: Bugfixes
 
-* [ ] Dynamic bookmarks display the `title` where static bookmarks display the `long_title`
+* TODO
 
 ## TODO: Improvement
 
-* [ ] Switch to [project `react-markdown`](https://github.com/remarkjs/react-markdown)
+* TODO
