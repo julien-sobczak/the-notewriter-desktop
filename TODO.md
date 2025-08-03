@@ -12,4 +12,3 @@
 ## TODO: Improvement
 
 * [ ] Switch to [project `react-markdown`](https://github.com/remarkjs/react-markdown)
-* [ ] Remove in a new commit `"trailingComma": "none"` in `package.json` and add missing commas in the codebase
