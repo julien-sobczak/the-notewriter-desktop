@@ -136,41 +136,6 @@ table.List {
   border: 1px solid var(--color-separator-dark);
 }
 
-/* <DailyQuote> */
-
-.DailyQuote {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  font-family: 'Poiret One', cursive;
-  padding: 4rem;
-}
-.DailyQuoteContent {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-
-  .DailyQuoteSymbol {
-    margin-bottom: 1rem;
-  }
-  .DailyQuoteAuthor {
-    margin-top: 1rem;
-    font-family: 'Pacifico', cursive;
-    color: darkblue;
-    font-size: 1rem;
-  }
-}
-.DailyQuoteTitle {
-  font-size: 90%;
-}
-.DailyQuoteMetadata {
-  font-size: 90%;
-}
-
 .Main {
   width: 100%;
   height: 100vh;
@@ -246,6 +211,16 @@ table.List {
 }
 .ActivityBar li.selected {
   color: black;
+}
+
+/* <DailyQuote> */
+
+.DailyQuote {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 4rem;
 }
 
 /* Note */
