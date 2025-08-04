@@ -10,8 +10,6 @@ import {
   Review,
 } from '../shared/Model';
 
-contextBridge.exposeInMainWorld('electron', electronHandler);
-
 const electronHandler = {
   // Main to renderer
   onConfigurationLoaded: (callback: any) =>
@@ -56,5 +54,7 @@ const electronHandler = {
   reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
     ipcRenderer.invoke('review-flashcard', deckRef, flashcard, review),
 };
+
+contextBridge.exposeInMainWorld('electron', electronHandler);
 
 export type ElectronHandler = typeof electronHandler;
