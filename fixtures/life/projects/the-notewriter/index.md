@@ -11,6 +11,14 @@
 * [ ] Reflect on using GitHub as a remote
 
 
+## Note: Repository
+
+* [GitHub Repository](https://github.com/julien-sobczak/the-notewriter/${page:[issues,pulls,actions,...] "#go/nt/github")
+* [Documentation](https://julien-sobczak.github.io/the-notewriter/ "#go/nt/doc")
+* [GitHub Demo](https://github.com/${org}/${repo} "#go/github")
+* [Blog](https://juliensobczak.com/categories/${category:[read,write,inspect]} "#go/blog")
+
+
 ## Features
 
 

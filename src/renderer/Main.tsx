@@ -26,6 +26,7 @@ import {
   DeckRef,
   Bookmark,
   File,
+  GoLink,
 } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
@@ -73,6 +74,9 @@ function CommandMenu({
   onBookmarkSelected = () => {},
   onFileSelected = () => {},
 }: CommandMenuProps) {
+  const { config } = useContext(ConfigContext);
+  const staticConfig = config.static;
+
   /*
    * Implementation based on project https://cmdk.paco.me/ (https://github.com/pacocoursey/cmdk)
    * Examples are available in GitHub. The linear style was used as the baseline:
@@ -81,8 +85,25 @@ function CommandMenu({
    */
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
+  const [goLinks, setGoLinks] = useState<GoLink[]>([]);
   const [pages, setPages] = useState<string[]>([]);
   const page = pages[pages.length - 1];
+
+  useEffect(() => {
+    // Retrieve the statistics based on currently selected repositories
+    const selectedRepositorySlugs = staticConfig.repositories
+      .filter((repository: RepositoryRefConfig) => repository.selected)
+      .map((repository: RepositoryRefConfig) => repository.slug);
+
+    const listGoLinks = async () => {
+      const results = await window.electron.listGoLinks(
+        selectedRepositorySlugs,
+      );
+      setGoLinks(results);
+    };
+
+    listGoLinks();
+  }, [staticConfig.repositories]);
 
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
@@ -136,6 +157,13 @@ function CommandMenu({
     onActivitySelected('browser');
   };
 
+  const handleGoLinkSelected = (goLink: GoLink) => {
+    // Open the link in a new tab
+    window.electron.browseUrl(goLink.url);
+    closeMenu();
+    // Do not change the activity
+  };
+
   return (
     <Command.Dialog
       className="CmdK"
@@ -172,6 +200,30 @@ function CommandMenu({
             </Command.Item>
           )}
           <Command.Separator />
+
+          {!page && (
+            <Command.Item
+              onSelect={() => {
+                setPages([...pages, 'goLinks']);
+                setSearch('');
+              }}
+            >
+              Go...
+            </Command.Item>
+          )}
+          {page === 'goLinks' && (
+            <>
+              {goLinks.map((goLink: GoLink) => (
+                <Command.Item
+                  key={goLink.oid}
+                  value={goLink.goName}
+                  onSelect={() => handleGoLinkSelected(goLink)}
+                >
+                  Go <code>{goLink.goName}</code>
+                </Command.Item>
+              ))}
+            </>
+          )}
 
           {!page && (
             <Command.Item
@@ -401,7 +453,9 @@ function Main() {
     );
 
     const listFiles = async () => {
-      const results: File[] = await window.electron.listFiles(repositorySlugs);
+      const results: File[] = await window.electron.listFiles(
+        repositorySlugs[0], // FIXME use all repositories?
+      );
       setFiles(results);
     };
     listFiles();

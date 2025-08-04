@@ -102,6 +102,13 @@ ipcMain.on('edit', (_event, repositorySlug, relativePath, line) => {
   });
 });
 
+ipcMain.on('browse-url', (_event, url) => {
+  console.debug(`Browsing URL: ${url}`);
+  shell.openExternal(url).catch((error) => {
+    console.error(`Failed to open URL ${url}`, error);
+  });
+});
+
 ipcMain.on('copy', (event, text) => {
   // 1. Use the clipboard API
   clipboard.writeText(text);
@@ -151,6 +158,12 @@ ipcMain.handle(
     return result;
   },
 );
+
+ipcMain.handle('list-golinks', async (_event, repositorySlugs: string[]) => {
+  const goLinks = await db.getGoLinks(repositorySlugs);
+  console.debug(`Found ${goLinks.length} Go links in all repositories`);
+  return goLinks;
+});
 
 ipcMain.handle('find', async (_event, noteRef: NoteRef) => {
   console.debug(`Finding note from ref ${noteRef.oid}`);
