@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Quotes } from '@phosphor-icons/react';
 import { Note } from '../shared/Model';
 import useKeyDown from './useKeyDown';
-import Markdown from './Markdown';
-import RenderedMetadata from './RenderedMetadata';
+import FullScreenNote from './FullScreenNote';
 
 function DailyQuote({ onClose }: any) {
   const [dailyQuote, setDailyQuote] = useState<Note | undefined>(undefined);
@@ -33,32 +31,7 @@ function DailyQuote({ onClose }: any) {
 
   return (
     <div className="DailyQuote">
-      {dailyQuote && (
-        <>
-          <div className="DailyQuoteContent">
-            <span className="DailyQuoteSymbol">
-              <Quotes size={32} weight="fill" color="darkblue" />
-            </span>
-            <Markdown md={dailyQuote.body} />
-            {dailyQuote.attributes?.author && (
-              <span className="DailyQuoteAuthor">
-                {dailyQuote.attributes.author}
-              </span>
-            )}
-            {dailyQuote.attributes?.name && (
-              <span className="DailyQuoteAuthor">
-                {dailyQuote.attributes.name}
-              </span>
-            )}
-          </div>
-          <div className="DailyQuoteMetadata">
-            <RenderedMetadata note={dailyQuote} showAttributes />
-          </div>
-          <div className="DailyQuoteTitle">
-            <Markdown md={dailyQuote.longTitle} inline />
-          </div>
-        </>
-      )}
+      {dailyQuote && <FullScreenNote note={dailyQuote} />}
     </div>
   );
 }
