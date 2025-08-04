@@ -18,21 +18,21 @@ repositories:
 
 # "Get inspired by" action
 inspirations:
-  dailyQuote: "path:references @kind:quote"
+  dailyQuote: "path:references @type:quote"
   categories:
   # Default can be
   # - name: Quotes
   #   repository: all
-  #   query: "@kind:quote"
+  #   query: "@type:quote"
   # - name: Art
   #   repository: all
-  #   query: "@kind:artwork"
+  #   query: "@type:artwork"
   - name: Life
     repository: main
-    query: "path:references/persons (#life or #purpose) @kind:quote"
+    query: "path:references/persons (#life or #purpose) @type:quote"
   - name: Art
     repository: main
-    query: "path:references @kind:artwork"
+    query: "path:references @type:artwork"
   # Complete with more inspirations
 
 

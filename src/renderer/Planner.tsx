@@ -13,7 +13,7 @@ function Planner() {
 
   return (
     <div className="Planner">
-      <h1>Inspiration!</h1>
+      <h1>Planner!</h1>
     </div>
   );
 }
