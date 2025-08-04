@@ -53,7 +53,7 @@ export interface Bookmark {
   noteOID: string;
   // Copy some attributes to make easy to list favorites and jump to them
   noteType: string;
-  noteTitle: string;
+  noteLongTitle: string;
   noteRelativePath: string;
   noteLine: number;
 }

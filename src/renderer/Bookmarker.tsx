@@ -43,6 +43,10 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
       const results: QueryResult = await window.electron.search({
         q: '#bookmark',
         repositories: selectedRepositorySlugs,
+        deskId: null,
+        blockId: null,
+        limit: 0,
+        shuffle: false,
       });
       console.info(`Found ${results.notes.length} note(s)...`);
       setNotes(results.notes);
@@ -115,7 +119,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
                 <NoteType value={savedBookmark.noteType} />
                 &nbsp;
                 <span className="BookmarkTitle">
-                  <Markdown md={savedBookmark.noteTitle} inline />
+                  <Markdown md={savedBookmark.noteLongTitle} inline />
                 </span>
                 <br />
                 <span className="BookmarkRelativePath">

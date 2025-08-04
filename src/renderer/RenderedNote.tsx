@@ -324,7 +324,7 @@ export default function RenderedNote({
       repositorySlug: note.repositorySlug,
       noteOID: note.oid,
       noteType: note.type,
-      noteTitle: note.title,
+      noteLongTitle: note.longTitle,
       noteRelativePath: note.relativePath,
       noteLine: note.line,
     };

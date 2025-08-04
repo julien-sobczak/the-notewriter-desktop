@@ -42,7 +42,7 @@ export default function configReducer(draft: Config, action: Action): any {
     case 'edit-desk': {
       if (!draft.dynamic.desks) draft.dynamic.desks = [];
       const index = draft.dynamic.desks.findIndex(
-        (d: Desk) => d.id === action.payload.id
+        (d: Desk) => d.id === action.payload.id,
       );
       draft.dynamic.desks[index] = action.payload;
       break;
@@ -50,7 +50,7 @@ export default function configReducer(draft: Config, action: Action): any {
     case 'delete-desk': {
       if (!draft.dynamic.desks) draft.dynamic.desks = [];
       return draft.dynamic.desks.filter(
-        (d: Desk) => d.id !== action.payload.id
+        (d: Desk) => d.id !== action.payload.id,
       );
     }
     case 'add-bookmark': {
