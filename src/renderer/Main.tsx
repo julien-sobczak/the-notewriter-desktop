@@ -1,5 +1,8 @@
+/* eslint-disable react/no-array-index-key */
+/* eslint-disable no-cond-assign */
+/* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable react/jsx-no-useless-fragment */
-import { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 // import { v4 as uuidv4 } from 'uuid'; // uuidv4()
 import {
   HandWaving,
@@ -15,6 +18,8 @@ import {
   X,
   Icon,
   Star as BookmarkIcon,
+  XCircle as CancelIcon,
+  CheckCircle as OpenIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Command } from 'cmdk';
@@ -46,8 +51,183 @@ import Reminders from './Reminders';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
 
+const goLinkRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g;
+
+type GoLinkPlaceholderProps = {
+  name: string;
+  values?: string[];
+  value: string;
+  onChange: (name: string, value: string) => void;
+  inputRef?: React.Ref<any>;
+};
+
+// Placeholder for GoLink variables.
+// If a predefined list of options is provided, use a <select> element, otherwise use an <input>.
+//
+// Ex (no options):
+//   ${name}
+//   => <input type="text" placeholder="name" />
+//
+// Ex (predefined options):
+//   ${name:[Alice,Bob,Charlie]}
+//   => <select><option>Alice</option><option>Bob</option><option>Charlie</option></select>
+//
+// Ex (example options):
+//   ${name:[Alice,Bob,...]}
+//   => <input type="text" placeholder="Alice,Bob,..."/>
+function GoLinkPlaceholder({
+  name,
+  values,
+  value,
+  onChange,
+  // Use a ref to focus the first input/select in parent form
+  inputRef,
+}: GoLinkPlaceholderProps) {
+  return (
+    <span className="GoLinkPlaceholder">
+      <div className="GoLinkPlaceholderName">{name}</div>
+      {values && values.length > 0 && !values.includes('...') ? (
+        <select
+          ref={inputRef}
+          value={value}
+          onChange={(e) => onChange(name, e.target.value)}
+          required
+        >
+          <option value="" disabled>
+            {name}
+          </option>
+          {values.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(name, e.target.value)}
+          placeholder={values ? values.join(',') : name}
+          required
+        />
+      )}
+    </span>
+  );
+}
+
+type GoLinkFormProps = {
+  url: string;
+  onSubmit: (evaluatedUrl: string) => void;
+  onCancel: () => void;
+};
+
+// Form to evaluate a GoLink URL containing variable placeholders
+function GoLinkForm({ url, onSubmit, onCancel }: GoLinkFormProps) {
+  const [values, setValues] = useState<Record<string, string>>({});
+
+  // Keep a ref to the first form element to focus
+  const firstInputRef = useRef<HTMLInputElement | HTMLSelectElement>(null);
+
+  // Split the URL into parts: text and variable placeholders
+  type Part =
+    | { type: 'text'; value: string }
+    | { type: 'placeholder'; name: string; values?: string[] };
+
+  const parts: Part[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  goLinkRegex.lastIndex = 0;
+  while ((match = goLinkRegex.exec(url)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', value: url.slice(lastIndex, match.index) });
+    }
+    const name = match[1];
+    const optionsRaw = match[2];
+    let options: string[] | undefined;
+    if (optionsRaw) {
+      options = optionsRaw.split(',').map((s) => s.trim());
+    }
+    parts.push({ type: 'placeholder', name, values: options });
+    lastIndex = goLinkRegex.lastIndex;
+  }
+  if (lastIndex < url.length) {
+    parts.push({ type: 'text', value: url.slice(lastIndex) });
+  }
+
+  const handleChange = (name: string, value: string) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let evaluatedUrl = '';
+    for (const part of parts) {
+      if (part.type === 'text') {
+        evaluatedUrl += part.value;
+      } else if (part.type === 'placeholder') {
+        evaluatedUrl += values[part.name] || '';
+      }
+    }
+    onSubmit(evaluatedUrl);
+  };
+
+  // Cancel on ESC key
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onCancel]);
+
+  // Focus the first placeholder
+  useEffect(() => {
+    firstInputRef.current?.focus();
+  }, []);
+
+  let firstPlaceholderRendered = false;
+
+  return (
+    <div className="GoLinkForm">
+      <form onSubmit={handleSubmit}>
+        <div className="GoLinkFormURL">
+          {parts.map((part, idx) => {
+            if (part.type === 'text') {
+              return <span key={idx}>{part.value}</span>;
+            }
+            if (part.type === 'placeholder') {
+              const ref = !firstPlaceholderRendered ? firstInputRef : undefined;
+              firstPlaceholderRendered = true;
+              return (
+                <GoLinkPlaceholder
+                  key={part.name + idx}
+                  name={part.name}
+                  values={part.values}
+                  value={values[part.name] || ''}
+                  onChange={handleChange}
+                  inputRef={ref}
+                />
+              );
+            }
+            return null;
+          })}
+          <button type="submit">
+            <OpenIcon size={32} />
+          </button>
+          <button type="button" onClick={onCancel}>
+            <CancelIcon size={32} />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 type CommandMenuProps = {
-  // Style
   repositories: RepositoryRefConfig[];
   desks: Desk[] | null | undefined;
   decks: DeckRef[] | null | undefined;
@@ -86,6 +266,7 @@ function CommandMenu({
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
   const [goLinks, setGoLinks] = useState<GoLink[]>([]);
+  const [goLinkFormURL, setGoLinkFormURL] = useState<string | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const page = pages[pages.length - 1];
 
@@ -158,228 +339,249 @@ function CommandMenu({
   };
 
   const handleGoLinkSelected = (goLink: GoLink) => {
-    // Open the link in a new tab
-    window.electron.browseUrl(goLink.url);
+    goLinkRegex.lastIndex = 0;
+    if (goLinkRegex.test(goLink.url)) {
+      closeMenu();
+      setGoLinkFormURL(goLink.url);
+    } else {
+      window.electron.browseUrl(goLink.url);
+      closeMenu();
+    }
+  };
+
+  const handleGoLinkFormSubmit = (evaluatedUrl: string) => {
+    window.electron.browseUrl(evaluatedUrl);
+    setGoLinkFormURL(null);
     closeMenu();
-    // Do not change the activity
   };
 
   return (
-    <Command.Dialog
-      className="CmdK"
-      open={open}
-      onOpenChange={setOpen}
-      label="Global Command Menu"
-      onKeyDown={(e) => {
-        // Escape goes to previous page
-        // Backspace goes to previous page when search is empty
-        if (e.key === 'Escape' || (e.key === 'Backspace' && !search)) {
-          e.preventDefault();
-          setPages((currentPages) => currentPages.slice(0, -1));
-        }
-      }}
-    >
-      <Command.Input
-        value={search}
-        onValueChange={setSearch}
-        autoFocus
-        placeholder="Type a command or search..."
-      />
-      <Command.List>
-        <Command.Empty>No results found.</Command.Empty>
+    <>
+      <Command.Dialog
+        className="CmdK"
+        open={open}
+        onOpenChange={setOpen}
+        label="Global Command Menu"
+        onKeyDown={(e) => {
+          // Escape goes to previous page
+          // Backspace goes to previous page when search is empty
+          if (e.key === 'Escape' || (e.key === 'Backspace' && !search)) {
+            e.preventDefault();
+            setPages((currentPages) => currentPages.slice(0, -1));
+          }
+        }}
+      >
+        <Command.Input
+          value={search}
+          onValueChange={setSearch}
+          autoFocus
+          placeholder="Type a command or search..."
+        />
+        <Command.List>
+          <Command.Empty>No results found.</Command.Empty>
 
-        <Command.Group heading="Commands">
-          {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('hi')}>
-              Hello
-            </Command.Item>
-          )}
-          {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('hi')}>
-              Bye
-            </Command.Item>
-          )}
-          <Command.Separator />
-
-          {!page && (
-            <Command.Item
-              onSelect={() => {
-                setPages([...pages, 'goLinks']);
-                setSearch('');
-              }}
-            >
-              Go...
-            </Command.Item>
-          )}
-          {page === 'goLinks' && (
-            <>
-              {goLinks.map((goLink: GoLink) => (
-                <Command.Item
-                  key={goLink.oid}
-                  value={goLink.goName}
-                  onSelect={() => handleGoLinkSelected(goLink)}
-                >
-                  Go <code>{goLink.goName}</code>
-                </Command.Item>
-              ))}
-            </>
-          )}
-
-          {!page && (
-            <Command.Item
-              onSelect={() => {
-                setPages([...pages, 'repositories']);
-                setSearch('');
-              }}
-            >
-              Toggle repository...
-            </Command.Item>
-          )}
-          {page === 'repositories' && (
-            <>
-              {repositories.map((repository: RepositoryRefConfig) => (
-                <Command.Item
-                  key={repository.slug}
-                  value={repository.name}
-                  onSelect={() => handleRepositoryToggled(repository)}
-                >
-                  Toggle repository <em>{repository.name}</em>
-                </Command.Item>
-              ))}
-            </>
-          )}
-
-          <Command.Separator />
-
-          {!page && (
-            <Command.Item
-              onSelect={() => {
-                setPages([...pages, 'files']);
-                setSearch('');
-              }}
-            >
-              Open file...
-            </Command.Item>
-          )}
-          {/* Show results after a few characters */}
-          {page === 'files' && files && search && search.length > 3 && (
-            <>
-              {files.map((file: File) => {
-                // Filter files
-                if (!file.relativePath.includes(search)) return null;
-                return (
-                  <Command.Item
-                    key={file.oid}
-                    value={file.relativePath}
-                    onSelect={() => handleFileSelected(file)}
-                  >
-                    Open file&nbsp;
-                    <em>
-                      <code>{file.relativePath}</code>
-                    </em>
-                  </Command.Item>
-                );
-              })}
-            </>
-          )}
-
-          {!page && (
-            <Command.Item
-              onSelect={() => {
-                setPages([...pages, 'desks']);
-                setSearch('');
-              }}
-            >
-              Open desk...
-            </Command.Item>
-          )}
-          {page === 'desks' && desks && (
-            <>
-              {desks.map((desk: Desk) => (
-                <Command.Item
-                  key={desk.id}
-                  value={desk.name}
-                  onSelect={() => handleDeskSelected(desk)}
-                >
-                  Open desk <em>{desk.name}</em>
-                </Command.Item>
-              ))}
-            </>
-          )}
-
-          <Command.Separator />
-
-          {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('decks')}>
-              Study
-            </Command.Item>
-          )}
-          {!page && (
-            <Command.Item
-              onSelect={() => {
-                setPages([...pages, 'decks']);
-                setSearch('');
-              }}
-            >
-              Study deck...
-            </Command.Item>
-          )}
-          {page === 'decks' && decks && (
-            <>
-              {decks.map((deck: DeckRef) => (
-                <Command.Item
-                  key={deck.name}
-                  value={deck.name}
-                  onSelect={() => handleDeckSelected(deck)}
-                >
-                  Study deck <em>{deck.name}</em>
-                </Command.Item>
-              ))}
-            </>
-          )}
-
-          <Command.Separator />
-
-          {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('zen')}>
-              Launch Zen Mode
-            </Command.Item>
-          )}
-
-          <Command.Separator />
-
-          {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('reminders')}>
-              Show reminders
-            </Command.Item>
-          )}
-          {!page && (
-            <Command.Item onSelect={() => handleActivitySelected('stats')}>
-              Show statistics
-            </Command.Item>
-          )}
-        </Command.Group>
-        {!page && bookmarks && (
-          <Command.Group heading="Bookmarks">
-            {bookmarks.map((savedBookmark: Bookmark) => (
-              <Command.Item
-                key={savedBookmark.noteOID}
-                onSelect={() => handleBookmarkSelected(savedBookmark)}
-              >
-                <NoteType value={savedBookmark.noteType} />
-                &nbsp;
-                <span className="BookmarkTitle">
-                  <Markdown md={savedBookmark.noteLongTitle} inline />
-                </span>
-                <span className="CommandItemMeta">
-                  <code>{savedBookmark.noteRelativePath}</code>
-                </span>
+          <Command.Group heading="Commands">
+            {!page && (
+              <Command.Item onSelect={() => handleActivitySelected('hi')}>
+                Hello
               </Command.Item>
-            ))}
+            )}
+            {!page && (
+              <Command.Item onSelect={() => handleActivitySelected('hi')}>
+                Bye
+              </Command.Item>
+            )}
+            <Command.Separator />
+
+            {!page && (
+              <Command.Item
+                onSelect={() => {
+                  setPages([...pages, 'goLinks']);
+                  setSearch('');
+                }}
+              >
+                Go...
+              </Command.Item>
+            )}
+            {page === 'goLinks' && (
+              <>
+                {goLinks.map((goLink: GoLink) => (
+                  <Command.Item
+                    key={goLink.oid}
+                    value={goLink.goName}
+                    onSelect={() => handleGoLinkSelected(goLink)}
+                  >
+                    Go <code>{goLink.goName}</code>
+                  </Command.Item>
+                ))}
+              </>
+            )}
+
+            {!page && (
+              <Command.Item
+                onSelect={() => {
+                  setPages([...pages, 'repositories']);
+                  setSearch('');
+                }}
+              >
+                Toggle repository...
+              </Command.Item>
+            )}
+            {page === 'repositories' && (
+              <>
+                {repositories.map((repository: RepositoryRefConfig) => (
+                  <Command.Item
+                    key={repository.slug}
+                    value={repository.name}
+                    onSelect={() => handleRepositoryToggled(repository)}
+                  >
+                    Toggle repository <em>{repository.name}</em>
+                  </Command.Item>
+                ))}
+              </>
+            )}
+
+            <Command.Separator />
+
+            {!page && (
+              <Command.Item
+                onSelect={() => {
+                  setPages([...pages, 'files']);
+                  setSearch('');
+                }}
+              >
+                Open file...
+              </Command.Item>
+            )}
+            {/* Show results after a few characters */}
+            {page === 'files' && files && search && search.length > 3 && (
+              <>
+                {files.map((file: File) => {
+                  // Filter files
+                  if (!file.relativePath.includes(search)) return null;
+                  return (
+                    <Command.Item
+                      key={file.oid}
+                      value={file.relativePath}
+                      onSelect={() => handleFileSelected(file)}
+                    >
+                      Open file&nbsp;
+                      <em>
+                        <code>{file.relativePath}</code>
+                      </em>
+                    </Command.Item>
+                  );
+                })}
+              </>
+            )}
+
+            {!page && (
+              <Command.Item
+                onSelect={() => {
+                  setPages([...pages, 'desks']);
+                  setSearch('');
+                }}
+              >
+                Open desk...
+              </Command.Item>
+            )}
+            {page === 'desks' && desks && (
+              <>
+                {desks.map((desk: Desk) => (
+                  <Command.Item
+                    key={desk.id}
+                    value={desk.name}
+                    onSelect={() => handleDeskSelected(desk)}
+                  >
+                    Open desk <em>{desk.name}</em>
+                  </Command.Item>
+                ))}
+              </>
+            )}
+
+            <Command.Separator />
+
+            {!page && (
+              <Command.Item onSelect={() => handleActivitySelected('decks')}>
+                Study
+              </Command.Item>
+            )}
+            {!page && (
+              <Command.Item
+                onSelect={() => {
+                  setPages([...pages, 'decks']);
+                  setSearch('');
+                }}
+              >
+                Study deck...
+              </Command.Item>
+            )}
+            {page === 'decks' && decks && (
+              <>
+                {decks.map((deck: DeckRef) => (
+                  <Command.Item
+                    key={deck.name}
+                    value={deck.name}
+                    onSelect={() => handleDeckSelected(deck)}
+                  >
+                    Study deck <em>{deck.name}</em>
+                  </Command.Item>
+                ))}
+              </>
+            )}
+
+            <Command.Separator />
+
+            {!page && (
+              <Command.Item onSelect={() => handleActivitySelected('zen')}>
+                Launch Zen Mode
+              </Command.Item>
+            )}
+
+            <Command.Separator />
+
+            {!page && (
+              <Command.Item
+                onSelect={() => handleActivitySelected('reminders')}
+              >
+                Show reminders
+              </Command.Item>
+            )}
+            {!page && (
+              <Command.Item onSelect={() => handleActivitySelected('stats')}>
+                Show statistics
+              </Command.Item>
+            )}
           </Command.Group>
-        )}
-      </Command.List>
-    </Command.Dialog>
+          {!page && bookmarks && (
+            <Command.Group heading="Bookmarks">
+              {bookmarks.map((savedBookmark: Bookmark) => (
+                <Command.Item
+                  key={savedBookmark.noteOID}
+                  onSelect={() => handleBookmarkSelected(savedBookmark)}
+                >
+                  <NoteType value={savedBookmark.noteType} />
+                  &nbsp;
+                  <span className="BookmarkTitle">
+                    <Markdown md={savedBookmark.noteLongTitle} inline />
+                  </span>
+                  <span className="CommandItemMeta">
+                    <code>{savedBookmark.noteRelativePath}</code>
+                  </span>
+                </Command.Item>
+              ))}
+            </Command.Group>
+          )}
+        </Command.List>
+      </Command.Dialog>
+      {goLinkFormURL && (
+        <GoLinkForm
+          url={goLinkFormURL}
+          onSubmit={handleGoLinkFormSubmit}
+          onCancel={() => setGoLinkFormURL(null)}
+        />
+      )}
+    </>
   );
 }
 
