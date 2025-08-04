@@ -68,7 +68,8 @@
     ],
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/.erb/mocks/fileMock.js",
-      "\\.(css|less|sass|scss)$": "identity-obj-proxy"
+      "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+      "^react-markdown$": "<rootDir>/src/__mocks__/react-markdown.tsx"
     },
     "setupFiles": [
       "./.erb/scripts/check-build-exists.ts"
@@ -97,12 +98,12 @@
     "electron-log": "^5.3.2",
     "electron-updater": "^6.3.9",
     "js-yaml": "^4.1.0",
-    "marked": "^15.0.12",
     "node-abi": "^4.9.0",
     "react": "^19.0.0",
     "react-accessible-treeview": "^2.11.1",
     "react-dom": "^19.0.0",
     "react-google-charts": "^5.2.1",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.3.0",
     "sqlite": "^5.1.1",
     "use-immer": "^0.11.0",
