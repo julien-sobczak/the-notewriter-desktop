@@ -5,6 +5,12 @@ tags: go
 
 # Go
 
+
+## Note: History
+
+[Golang](https://go.dev/doc/ "#go/go") was designed by Robert Greisemer, Rob Pike, and Ken Thompson at Google in 2007.
+
+
 ## Note: Constants
 
 `@source: https://tour.golang.org/basics/15`

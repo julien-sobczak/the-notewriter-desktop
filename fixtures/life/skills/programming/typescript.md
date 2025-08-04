@@ -8,6 +8,11 @@ tags: typescript
 TypeScript is just like ES2015 with type-checking. All ES2015 (classes, etc) should work.
 
 
+## Note: History
+
+[TypeScript](https://www.typescriptlang.org/ "#go/typescript") was released to the public in October 2012 after two years of internal development at Microsoft.
+
+
 ## Note: Declarations
 
 ```typescript

@@ -22,6 +22,7 @@ const electronHandler = {
   // 1-way renderer to main
   edit: (repositorySlug: string, filePath: string, line: number) =>
     ipcRenderer.send('edit', repositorySlug, filePath, line),
+  browseUrl: (url: string) => ipcRenderer.send('browse-url', url),
 
   // 2-way renderer to main
   getDailyQuote: () => ipcRenderer.invoke('get-daily-quote'),
@@ -34,6 +35,8 @@ const electronHandler = {
     ipcRenderer.invoke('list-notes-in-file', repositorySlug, filePath),
   listFiles: (repositorySlug: string) =>
     ipcRenderer.invoke('list-files', repositorySlug),
+  listGoLinks: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('list-golinks', repositorySlugs),
   // Statistics
   getStatistics: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-statistics', repositorySlugs),

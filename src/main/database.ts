@@ -77,6 +77,62 @@ export default class DatabaseManager {
     return absolutePath;
   }
 
+  // Retrieve all Go links.
+  async getGoLinks(repositorySlugs: string[]): Promise<Model.GoLink[]> {
+    const repositoryResults: Promise<Model.GoLink[]>[] = [];
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+        repositoryResults.push(
+          new Promise<Model.GoLink[]>((resolve, reject) => {
+            db.all(
+              `
+                SELECT oid, text, url, title, go_name, created_at
+                FROM link
+              `,
+              (err: any, rows: any) => {
+                if (err) {
+                  console.log('Error while fetching Go links', err);
+                  reject(err);
+                } else {
+                  const result: Model.GoLink[] = [];
+                  for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    result.push({
+                      oid: row.oid,
+                      oidNote: row.note_oid,
+                      relativePath: row.relative_path,
+                      text: row.text,
+                      url: row.url,
+                      title: row.title,
+                      goName: row.go_name,
+                    });
+                  }
+                  resolve(result);
+                }
+              },
+            );
+          }),
+        );
+      }
+    }
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      return new Promise<Model.GoLink[]>((resolve) => {
+        const result: Model.GoLink[] = [];
+        for (const repositoryResult of allRepositoryResults) {
+          result.push(...repositoryResult);
+        }
+        resolve(result);
+      });
+    });
+  }
+
   async searchMediasByRelativePaths(
     relativePaths: string[],
     datasourceName: string,
