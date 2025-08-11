@@ -77,9 +77,9 @@ export default class DatabaseManager {
     return absolutePath;
   }
 
-  // Retrieve all Go links.
-  async getGoLinks(repositorySlugs: string[]): Promise<Model.GoLink[]> {
-    const repositoryResults: Promise<Model.GoLink[]>[] = [];
+  // Retrieve all Goto links.
+  async getGotos(repositorySlugs: string[]): Promise<Model.Goto[]> {
+    const repositoryResults: Promise<Model.Goto[]>[] = [];
     for (const datasourceName of this.datasources.keys()) {
       if (
         repositorySlugs.length === 0 ||
@@ -90,18 +90,18 @@ export default class DatabaseManager {
           throw new Error(`No datasource ${datasourceName} found`);
         }
         repositoryResults.push(
-          new Promise<Model.GoLink[]>((resolve, reject) => {
+          new Promise<Model.Goto[]>((resolve, reject) => {
             db.all(
               `
-                SELECT oid, text, url, title, go_name, created_at
-                FROM link
+                SELECT oid, text, url, title, name, created_at
+                FROM goto
               `,
               (err: any, rows: any) => {
                 if (err) {
-                  console.log('Error while fetching Go links', err);
+                  console.log('Error while fetching Goto links', err);
                   reject(err);
                 } else {
-                  const result: Model.GoLink[] = [];
+                  const result: Model.Goto[] = [];
                   for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
                     result.push({
@@ -111,7 +111,7 @@ export default class DatabaseManager {
                       text: row.text,
                       url: row.url,
                       title: row.title,
-                      goName: row.go_name,
+                      name: row.name,
                     });
                   }
                   resolve(result);
@@ -123,8 +123,8 @@ export default class DatabaseManager {
       }
     }
     return Promise.all(repositoryResults).then((allRepositoryResults) => {
-      return new Promise<Model.GoLink[]>((resolve) => {
-        const result: Model.GoLink[] = [];
+      return new Promise<Model.Goto[]>((resolve) => {
+        const result: Model.Goto[] = [];
         for (const repositoryResult of allRepositoryResults) {
           result.push(...repositoryResult);
         }
