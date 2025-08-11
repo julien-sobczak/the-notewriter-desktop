@@ -277,9 +277,7 @@ function CommandMenu({
       .map((repository: RepositoryRefConfig) => repository.slug);
 
     const listGotos = async () => {
-      const results = await window.electron.listGotos(
-        selectedRepositorySlugs,
-      );
+      const results = await window.electron.listGotos(selectedRepositorySlugs);
       setGotos(results);
     };
 
