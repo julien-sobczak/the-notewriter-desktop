@@ -223,9 +223,9 @@ table.List {
   padding: 4rem;
 }
 
-/* <GoLinkForm> */
+/* <GotoForm> */
 
-.GoLinkForm {
+.GotoForm {
   width: 100%;
   height: 100vh;
   display: flex;
@@ -1033,9 +1033,9 @@ ul.categories li {
   }
 }
 
-/* <GoLinkForm> */
+/* <GotoForm> */
 
-.GoLinkFormURL {
+.GotoFormURL {
   word-break: break-all;
   font-family: monospace;
   display: flex;
@@ -1050,12 +1050,12 @@ ul.categories li {
     align-items: flex-end;  /* push text to bottom */
   }
 }
-.GoLinkPlaceholder {
+.GotoPlaceholder {
   display: flex;
   flex-direction: column;
   margin: 0 4px
 }
-.GoLinkPlaceholderName {
+.GotoPlaceholderName {
   font-size: 0.8em;
   color: #888;
   margin-bottom: 2px;

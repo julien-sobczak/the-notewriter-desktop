@@ -35,8 +35,8 @@ const electronHandler = {
     ipcRenderer.invoke('list-notes-in-file', repositorySlug, filePath),
   listFiles: (repositorySlug: string) =>
     ipcRenderer.invoke('list-files', repositorySlug),
-  listGoLinks: (repositorySlugs: string[]) =>
-    ipcRenderer.invoke('list-golinks', repositorySlugs),
+  listGotos: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('list-gotos', repositorySlugs),
   // Statistics
   getStatistics: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-statistics', repositorySlugs),

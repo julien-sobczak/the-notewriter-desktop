@@ -31,7 +31,7 @@ import {
   DeckRef,
   Bookmark,
   File,
-  GoLink,
+  Goto,
 } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
@@ -51,9 +51,9 @@ import Reminders from './Reminders';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
 
-const goLinkRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g;
+const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g;
 
-type GoLinkPlaceholderProps = {
+type GotoPlaceholderProps = {
   name: string;
   values?: string[];
   value: string;
@@ -61,7 +61,7 @@ type GoLinkPlaceholderProps = {
   inputRef?: React.Ref<any>;
 };
 
-// Placeholder for GoLink variables.
+// Placeholder for Goto variables.
 // If a predefined list of options is provided, use a <select> element, otherwise use an <input>.
 //
 // Ex (no options):
@@ -75,17 +75,17 @@ type GoLinkPlaceholderProps = {
 // Ex (example options):
 //   ${name:[Alice,Bob,...]}
 //   => <input type="text" placeholder="Alice,Bob,..."/>
-function GoLinkPlaceholder({
+function GotoPlaceholder({
   name,
   values,
   value,
   onChange,
   // Use a ref to focus the first input/select in parent form
   inputRef,
-}: GoLinkPlaceholderProps) {
+}: GotoPlaceholderProps) {
   return (
-    <span className="GoLinkPlaceholder">
-      <div className="GoLinkPlaceholderName">{name}</div>
+    <span className="GotoPlaceholder">
+      <div className="GotoPlaceholderName">{name}</div>
       {values && values.length > 0 && !values.includes('...') ? (
         <select
           ref={inputRef}
@@ -116,14 +116,14 @@ function GoLinkPlaceholder({
   );
 }
 
-type GoLinkFormProps = {
+type GotoFormProps = {
   url: string;
   onSubmit: (evaluatedUrl: string) => void;
   onCancel: () => void;
 };
 
-// Form to evaluate a GoLink URL containing variable placeholders
-function GoLinkForm({ url, onSubmit, onCancel }: GoLinkFormProps) {
+// Form to evaluate a Goto URL containing variable placeholders
+function GotoForm({ url, onSubmit, onCancel }: GotoFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
 
   // Keep a ref to the first form element to focus
@@ -137,8 +137,8 @@ function GoLinkForm({ url, onSubmit, onCancel }: GoLinkFormProps) {
   const parts: Part[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
-  goLinkRegex.lastIndex = 0;
-  while ((match = goLinkRegex.exec(url)) !== null) {
+  gotoRegex.lastIndex = 0;
+  while ((match = gotoRegex.exec(url)) !== null) {
     if (match.index > lastIndex) {
       parts.push({ type: 'text', value: url.slice(lastIndex, match.index) });
     }
@@ -149,7 +149,7 @@ function GoLinkForm({ url, onSubmit, onCancel }: GoLinkFormProps) {
       options = optionsRaw.split(',').map((s) => s.trim());
     }
     parts.push({ type: 'placeholder', name, values: options });
-    lastIndex = goLinkRegex.lastIndex;
+    lastIndex = gotoRegex.lastIndex;
   }
   if (lastIndex < url.length) {
     parts.push({ type: 'text', value: url.slice(lastIndex) });
@@ -192,9 +192,9 @@ function GoLinkForm({ url, onSubmit, onCancel }: GoLinkFormProps) {
   let firstPlaceholderRendered = false;
 
   return (
-    <div className="GoLinkForm">
+    <div className="GotoForm">
       <form onSubmit={handleSubmit}>
-        <div className="GoLinkFormURL">
+        <div className="GotoFormURL">
           {parts.map((part, idx) => {
             if (part.type === 'text') {
               return <span key={idx}>{part.value}</span>;
@@ -203,7 +203,7 @@ function GoLinkForm({ url, onSubmit, onCancel }: GoLinkFormProps) {
               const ref = !firstPlaceholderRendered ? firstInputRef : undefined;
               firstPlaceholderRendered = true;
               return (
-                <GoLinkPlaceholder
+                <GotoPlaceholder
                   key={part.name + idx}
                   name={part.name}
                   values={part.values}
@@ -265,8 +265,8 @@ function CommandMenu({
    */
   const [open, setOpen] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
-  const [goLinks, setGoLinks] = useState<GoLink[]>([]);
-  const [goLinkFormURL, setGoLinkFormURL] = useState<string | null>(null);
+  const [gotos, setGotos] = useState<Goto[]>([]);
+  const [gotoFormURL, setGotoFormURL] = useState<string | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const page = pages[pages.length - 1];
 
@@ -276,14 +276,12 @@ function CommandMenu({
       .filter((repository: RepositoryRefConfig) => repository.selected)
       .map((repository: RepositoryRefConfig) => repository.slug);
 
-    const listGoLinks = async () => {
-      const results = await window.electron.listGoLinks(
-        selectedRepositorySlugs,
-      );
-      setGoLinks(results);
+    const listGotos = async () => {
+      const results = await window.electron.listGotos(selectedRepositorySlugs);
+      setGotos(results);
     };
 
-    listGoLinks();
+    listGotos();
   }, [staticConfig.repositories]);
 
   // Toggle the menu when ⌘K is pressed
@@ -338,20 +336,20 @@ function CommandMenu({
     onActivitySelected('browser');
   };
 
-  const handleGoLinkSelected = (goLink: GoLink) => {
-    goLinkRegex.lastIndex = 0;
-    if (goLinkRegex.test(goLink.url)) {
+  const handleGotoSelected = (goto: Goto) => {
+    gotoRegex.lastIndex = 0;
+    if (gotoRegex.test(goto.url)) {
       closeMenu();
-      setGoLinkFormURL(goLink.url);
+      setGotoFormURL(goto.url);
     } else {
-      window.electron.browseUrl(goLink.url);
+      window.electron.browseUrl(goto.url);
       closeMenu();
     }
   };
 
-  const handleGoLinkFormSubmit = (evaluatedUrl: string) => {
+  const handleGotoFormSubmit = (evaluatedUrl: string) => {
     window.electron.browseUrl(evaluatedUrl);
-    setGoLinkFormURL(null);
+    setGotoFormURL(null);
     closeMenu();
   };
 
@@ -396,22 +394,22 @@ function CommandMenu({
             {!page && (
               <Command.Item
                 onSelect={() => {
-                  setPages([...pages, 'goLinks']);
+                  setPages([...pages, 'gotos']);
                   setSearch('');
                 }}
               >
-                Go...
+                Goto...
               </Command.Item>
             )}
-            {page === 'goLinks' && (
+            {page === 'gotos' && (
               <>
-                {goLinks.map((goLink: GoLink) => (
+                {gotos.map((goto: Goto) => (
                   <Command.Item
-                    key={goLink.oid}
-                    value={goLink.goName}
-                    onSelect={() => handleGoLinkSelected(goLink)}
+                    key={goto.oid}
+                    value={goto.name}
+                    onSelect={() => handleGotoSelected(goto)}
                   >
-                    Go <code>{goLink.goName}</code>
+                    Goto <code>{goto.name}</code>
                   </Command.Item>
                 ))}
               </>
@@ -574,11 +572,11 @@ function CommandMenu({
           )}
         </Command.List>
       </Command.Dialog>
-      {goLinkFormURL && (
-        <GoLinkForm
-          url={goLinkFormURL}
-          onSubmit={handleGoLinkFormSubmit}
-          onCancel={() => setGoLinkFormURL(null)}
+      {gotoFormURL && (
+        <GotoForm
+          url={gotoFormURL}
+          onSubmit={handleGotoFormSubmit}
+          onCancel={() => setGotoFormURL(null)}
         />
       )}
     </>
