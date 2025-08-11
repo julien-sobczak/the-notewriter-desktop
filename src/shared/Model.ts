@@ -303,7 +303,7 @@ export interface Goto {
   text: string; // in Markdown
   url: string;
   title?: string; // Optional title for the link
-  goName: string;
+  name: string;
 }
 
 export interface Study {

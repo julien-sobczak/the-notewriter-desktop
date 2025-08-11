@@ -406,10 +406,10 @@ function CommandMenu({
                 {gotos.map((goto: Goto) => (
                   <Command.Item
                     key={goto.oid}
-                    value={goto.goName}
+                    value={goto.name}
                     onSelect={() => handleGotoSelected(goto)}
                   >
-                    Goto <code>{goto.goName}</code>
+                    Goto <code>{goto.name}</code>
                   </Command.Item>
                 ))}
               </>
