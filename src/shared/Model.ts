@@ -296,7 +296,7 @@ export interface File {
   shortTitle: string;
 }
 
-export interface GoLink {
+export interface Goto {
   oid: string;
   oidNote: string;
   relativePath: string;

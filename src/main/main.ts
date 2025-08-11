@@ -159,10 +159,10 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle('list-golinks', async (_event, repositorySlugs: string[]) => {
-  const goLinks = await db.getGoLinks(repositorySlugs);
-  console.debug(`Found ${goLinks.length} Go links in all repositories`);
-  return goLinks;
+ipcMain.handle('list-gotos', async (_event, repositorySlugs: string[]) => {
+  const gotos = await db.getGotos(repositorySlugs);
+  console.debug(`Found ${gotos.length} Goto links in all repositories`);
+  return gotos;
 });
 
 ipcMain.handle('find', async (_event, noteRef: NoteRef) => {
