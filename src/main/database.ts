@@ -93,7 +93,7 @@ export default class DatabaseManager {
           new Promise<Model.Goto[]>((resolve, reject) => {
             db.all(
               `
-                SELECT oid, text, url, title, go_name, created_at
+                SELECT oid, text, url, title, name, created_at
                 FROM goto
               `,
               (err: any, rows: any) => {
@@ -111,7 +111,7 @@ export default class DatabaseManager {
                       text: row.text,
                       url: row.url,
                       title: row.title,
-                      goName: row.go_name,
+                      name: row.name,
                     });
                   }
                   resolve(result);
