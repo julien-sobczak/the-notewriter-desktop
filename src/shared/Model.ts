@@ -296,14 +296,14 @@ export interface File {
   shortTitle: string;
 }
 
-export interface GoLink {
+export interface Goto {
   oid: string;
   oidNote: string;
   relativePath: string;
   text: string; // in Markdown
   url: string;
   title?: string; // Optional title for the link
-  goName: string;
+  name: string;
 }
 
 export interface Study {
