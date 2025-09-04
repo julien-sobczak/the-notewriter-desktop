@@ -5,16 +5,17 @@ local srsAlgorithmSettings = {
 };
 
 {
-    Types: nt.DefaultTypes,
+    attributes: nt.DefaultAttributes,
+    types: nt.DefaultTypes,
 
-    Searches: {
+    searches: {
         favoriteQuotes: {
             title: "Favorite Quotes",
             q: "-#ignore @object:quote",
         },
     },
 
-    Decks: [
+    decks: [
         {
             name: "Programming",
             query: "path:skills/programming",

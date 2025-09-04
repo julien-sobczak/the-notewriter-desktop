@@ -110,13 +110,21 @@ export interface AttributeConfig {
   max: number;
   pattern: string;
   inherit: boolean | null;
+  allowedValues: string[];
+  shorthands: { [key: string]: any };
+  preserveShorthand?: boolean;
+  defaultValue?: any;
 }
 export interface TypeConfig {
   name: string;
   pattern: string;
   preprocessors: string[];
-  requiredAttributes: string[];
-  optionalAttributes: string[];
+  attributes: TypeAttributeConfig[];
+}
+export interface TypeAttributeConfig {
+  name: string;
+  required?: boolean;
+  inline?: boolean;
 }
 export interface DeckConfig {
   name: string;
