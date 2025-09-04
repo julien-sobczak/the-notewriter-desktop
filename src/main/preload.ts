@@ -5,6 +5,7 @@ import {
   DeckRef,
   EditorDynamicConfig,
   Flashcard,
+  Note,
   NoteRef,
   Query,
   Review,
@@ -56,6 +57,9 @@ const electronHandler = {
     ipcRenderer.invoke('flush-operations', repositorySlugs),
   reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) =>
     ipcRenderer.invoke('review-flashcard', deckRef, flashcard, review),
+
+  // Hooks
+  runHooks: (note: Note) => ipcRenderer.invoke('run-hooks', note),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
