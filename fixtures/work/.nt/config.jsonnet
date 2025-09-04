@@ -5,9 +5,10 @@ local srsAlgorithmSettings = {
 };
 
 {
-    Types: nt.DefaultTypes,
+    attributes: nt.DefaultAttributes,
+    types: nt.DefaultTypes,
 
-    Decks: [
+    decks: [
         {
             name: "Work",
             query: "path:skills",
