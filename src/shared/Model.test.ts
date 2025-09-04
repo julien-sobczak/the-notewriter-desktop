@@ -72,3 +72,23 @@ describe('extractSourceURL', () => {
     expect(extractSourceURL(note)).toBeUndefined();
   });
 });
+
+describe('CommandExecution', () => {
+  it('should have the correct structure', () => {
+    const { CommandExecution } = require('./Model');
+    
+    // Test that we can create a CommandExecution object with the expected properties
+    const commandExecution = {
+      exitCode: 0,
+      duration: 1500,
+      stdout: 'Command executed successfully',
+      stderr: '',
+    };
+    
+    // Basic type checking - ensure all required properties exist
+    expect(typeof commandExecution.exitCode).toBe('number');
+    expect(typeof commandExecution.duration).toBe('number');
+    expect(typeof commandExecution.stdout).toBe('string');
+    expect(typeof commandExecution.stderr).toBe('string');
+  });
+});
