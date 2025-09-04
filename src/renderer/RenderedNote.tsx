@@ -9,6 +9,7 @@ import {
   ArrowDown as MoveDownIcon,
   Star as BookmarkIcon,
   Link as LinkIcon,
+  Play as RunHooksIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Note, Media, Blob, Bookmark, extractSourceURL } from '../shared/Model';
@@ -334,6 +335,20 @@ export default function RenderedNote({
     });
   };
 
+  const handleRunHooks = async (event: React.MouseEvent) => {
+    console.log('Running hooks for note:', note.wikilink);
+    event.stopPropagation();
+
+    try {
+      const result = await window.electron.runHooks(note);
+      console.log('Hook execution result:', result);
+      // IMPROVEMENT: output message to an application footer (not existing for now)
+    } catch (error) {
+      console.error('Error running hooks:', error);
+      // IMPROVEMENT: output error message to an application footer (not existing for now)
+    }
+  };
+
   let bookmarked = false;
   if (config.dynamic && config.dynamic.bookmarks) {
     bookmarked =
@@ -404,6 +419,15 @@ export default function RenderedNote({
                     title="Layer down"
                   >
                     <MoveDownIcon />
+                  </button>
+                )}
+                {note.attributes.hook && (
+                  <button
+                    type="button"
+                    onClick={handleRunHooks}
+                    title="Run Hooks"
+                  >
+                    <RunHooksIcon />
                   </button>
                 )}
                 <button

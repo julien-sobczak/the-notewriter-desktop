@@ -352,6 +352,13 @@ export interface Operation {
   extras: { [key: string]: any };
 }
 
+export interface CommandExecution {
+  exitCode: number;
+  duration: number; // in milliseconds
+  stdout: string;
+  stderr: string;
+}
+
 /* Utils */
 
 // Get the attribute for a given name in the repository configuration

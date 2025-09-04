@@ -39,6 +39,8 @@ import {
   Review,
   DeckConfig,
   EditorDynamicConfig,
+  Note,
+  CommandExecution,
 } from '../shared/Model';
 import OperationsManager from './operations';
 import { generateOid } from './oid';
@@ -356,6 +358,57 @@ ipcMain.handle(
         console.error('Error updating flashcard:', error);
         return flashcard; // Return the original flashcard in case of error
       });
+  },
+);
+
+ipcMain.handle(
+  'run-hooks',
+  async (_event, note: Note): Promise<CommandExecution> => {
+    console.debug(`Running hooks for note ${note.wikilink}`);
+
+    const startTime = Date.now();
+
+    return new Promise((resolve) => {
+      const subprocess = spawn('nt', ['run-hook', '--vvv', note.wikilink], {
+        cwd: note.repositoryPath,
+        stdio: 'pipe',
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      subprocess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      subprocess.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      subprocess.on('close', (exitCode) => {
+        const duration = Date.now() - startTime;
+        const result: CommandExecution = {
+          exitCode: exitCode || 0,
+          duration,
+          stdout,
+          stderr,
+        };
+        console.debug(`Hook execution completed for ${note.wikilink}:`, result);
+        resolve(result);
+      });
+
+      subprocess.on('error', (error) => {
+        const duration = Date.now() - startTime;
+        const result: CommandExecution = {
+          exitCode: 1,
+          duration,
+          stdout,
+          stderr: stderr + error.message,
+        };
+        console.error(`Error running hooks for ${note.wikilink}:`, error);
+        resolve(result);
+      });
+    });
   },
 );
 
