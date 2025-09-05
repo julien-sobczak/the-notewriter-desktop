@@ -24,7 +24,6 @@ export default function Markdown({ md, inline = false }: MarkdownProps) {
   }
 
   mdProcessed = mdProcessed.replace(/file:/g, 'https://notewriter.app');
-  console.log('Processed Markdown:', mdProcessed); // Debug FIXME remove
 
   const codeRef = useRef<HTMLDivElement>(null);
   const components: Components = {
@@ -123,7 +122,6 @@ export default function Markdown({ md, inline = false }: MarkdownProps) {
     // Restore file: URLs from placeholders
     img: ({ ...props }) => {
       const src = props.src?.replace('https://notewriter.app', 'file:') || '';
-      console.log('IMG component called with:', props.src, src); // FIXME remove Debug
       return <img {...props} src={src} />;
     },
     audio: ({ ...props }) => {
