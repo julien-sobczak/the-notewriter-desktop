@@ -745,7 +745,6 @@ function Main() {
   };
 
   const handleFileSelected = (file: File) => {
-    console.log('[Main] select file', file.relativePath); // FIXME remove
     setSelectedFile(file);
   };
 

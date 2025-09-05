@@ -29,11 +29,8 @@ function Decks({ deck }: DecksProps) {
       .filter((w: RepositoryRefConfig) => w.selected)
       .map((w: RepositoryRefConfig) => w.slug);
 
-    console.log('<Decks> slugs', repositorySlugs); // FIXME remove
-
     const listDecks = async () => {
       const results: Deck[] = await window.electron.listDecks(repositorySlugs);
-      console.log('<Decks> decks', results); // FIXME remove
       setDecks(results);
     };
     listDecks();
@@ -51,11 +48,7 @@ function Decks({ deck }: DecksProps) {
   };
 
   const onFlush = (repositorySlug: string) => async () => {
-    await window.electron.flushOperations([
-      {
-        repositorySlug,
-      },
-    ]);
+    await window.electron.flushOperations([repositorySlug]);
     console.log(`Flushed pending operations for repository ${repositorySlug}`);
   };
 

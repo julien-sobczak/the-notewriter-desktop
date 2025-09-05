@@ -78,24 +78,6 @@ function NoteContainer({
     setShowSortMenu(!showSortMenu);
   };
 
-  // Close sort menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        showSortMenu &&
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setShowSortMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showSortMenu]);
-
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
     // Add the target element's id to the data transfer object
     if (!event.target || !event.dataTransfer) return;
@@ -177,50 +159,58 @@ function NoteContainer({
           <nav>
             <ul>
               <li>
-                <div className="SortContainer">
-                  <button
-                    type="button"
-                    className="SortButton"
-                    onClick={toggleSortMenu}
-                    title="Sort notes"
-                  >
-                    <ListNumbers />
-                  </button>
-                  {showSortMenu && (
-                    <div className="SortSubmenu">
-                      <button
-                        type="button"
-                        className={classNames({
-                          selected: sortOrder === 'ascending',
-                        })}
-                        onClick={handleSortAscending}
-                        title="Sort ascending"
-                      >
-                        <SortAscending />
-                      </button>
-                      <button
-                        type="button"
-                        className={classNames({
-                          selected: sortOrder === 'descending',
-                        })}
-                        onClick={handleSortDescending}
-                        title="Sort descending"
-                      >
-                        <SortDescending />
-                      </button>
-                      <button
-                        type="button"
-                        className={classNames({
-                          selected: sortOrder === 'shuffle',
-                        })}
-                        onClick={handleShuffle}
-                        title="Shuffle"
-                      >
-                        <Shuffle />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className="SortButton"
+                  onClick={toggleSortMenu}
+                  title="Sort notes"
+                >
+                  <ListNumbers />
+                </button>
+                {showSortMenu && (
+                  <div className="SubactionsMenu">
+                    <nav>
+                      <ul>
+                        <li>
+                          <button
+                            type="button"
+                            className={classNames({
+                              selected: sortOrder === 'ascending',
+                            })}
+                            onClick={handleSortAscending}
+                            title="Sort ascending"
+                          >
+                            <SortAscending />
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className={classNames({
+                              selected: sortOrder === 'descending',
+                            })}
+                            onClick={handleSortDescending}
+                            title="Sort descending"
+                          >
+                            <SortDescending />
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className={classNames({
+                              selected: sortOrder === 'shuffle',
+                            })}
+                            onClick={handleShuffle}
+                            title="Shuffle"
+                          >
+                            <Shuffle />
+                          </button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                )}
                 {layoutSelectable && (
                   <button
                     type="button"
