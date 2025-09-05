@@ -369,8 +369,13 @@ ipcMain.handle(
     const startTime = Date.now();
 
     return new Promise((resolve) => {
+      console.log(`Executing hooks for ${note.wikilink} from ${note.repositoryPath}...`);
       const subprocess = spawn('nt', ['run-hook', '--vvv', note.wikilink], {
         cwd: note.repositoryPath,
+        env: {
+          ...process.env,
+          NT_HOME: '', // Avoid propagating NT_HOME also used by the-notewriter-desktop
+        },
         stdio: 'pipe',
       });
 

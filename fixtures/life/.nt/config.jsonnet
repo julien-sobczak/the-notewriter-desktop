@@ -6,7 +6,12 @@ local srsAlgorithmSettings = {
 
 {
     attributes: nt.DefaultAttributes,
-    types: nt.DefaultTypes,
+    types: nt.DefaultTypes + {
+        BookReview: nt.DefaultTypes.Note + {
+            name: "BookReview",
+            hooks: ["blog_review"],
+        },
+    },
 
     searches: {
         favoriteQuotes: {
