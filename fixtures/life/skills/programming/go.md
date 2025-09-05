@@ -15,7 +15,7 @@ tags: go
 
 `@source: https://tour.golang.org/basics/15`
 
-Constants can be character, string, boolean, or numeric values.
+Constants can be character, [[#Note: Strings]], boolean, or numeric values.
 
 ```go
 const Phi = 1.618
