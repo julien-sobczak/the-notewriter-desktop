@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/mouse-events-have-key-events */
+/* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable react/jsx-props-no-spreading */
@@ -14,21 +16,36 @@ import { Copy as CopyIcon, Link as LinkIcon } from '@phosphor-icons/react';
 type MarkdownProps = {
   md: string;
   inline?: boolean;
+  onWikilinkClick?: (wikilink: string) => void;
 };
 
-export default function Markdown({ md, inline = false }: MarkdownProps) {
+export default function Markdown({
+  md,
+  inline = false,
+  onWikilinkClick,
+}: MarkdownProps) {
   // Check if md contains only an URL and if so, return a link
   let mdProcessed = md.trim();
   if (/^https?:\/\/[^\s]+$/.test(mdProcessed)) {
     mdProcessed = `<a href="${mdProcessed}" target="_blank">🔗</a>`;
   }
 
-  mdProcessed = mdProcessed.replace(/file:/g, 'https://notewriter.app');
+  // Check if md contains wikilinks and rewrite them with standard links
+  const wikilinkRegex = /\[\[([^\]|]+)(\|([^\]]+))?\]\]/g;
+  mdProcessed = mdProcessed.replace(
+    wikilinkRegex,
+    (_, linkTarget: string, __: string, linkText: string) => {
+      const text = linkText || linkTarget;
+      // Here we assume that linkTarget is a relative path to a markdown file
+      return `<a href="${linkTarget}">${text}</a>`;
+    },
+  );
 
   const codeRef = useRef<HTMLDivElement>(null);
   const components: Components = {
     // Replace 🔗 by a consistent icon <Link/>
     a: ({ children, ...props }) => {
+      // Render source links using an icon
       if (
         children &&
         typeof children === 'string' &&
@@ -41,6 +58,29 @@ export default function Markdown({ md, inline = false }: MarkdownProps) {
           </a>
         );
       }
+
+      // Listen for mouse over wikilinks to render them on top
+      const href = props.href;
+      if (href?.startsWith('#')) {
+        const wikilink = href;
+        if (onWikilinkClick) {
+          return (
+            <a
+              href="#"
+              className="wikilink"
+              onClick={() => onWikilinkClick(wikilink)}
+            >
+              {children}
+            </a>
+          );
+        }
+        return (
+          <a href="#" className="wikilink">
+            {children}
+          </a>
+        );
+      }
+
       return <a {...props}>{children}</a>;
     },
 

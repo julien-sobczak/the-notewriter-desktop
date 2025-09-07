@@ -546,6 +546,57 @@ export default class DatabaseManager {
     });
   }
 
+  async findByWikilink(repositorySlug: string, wikilink: string): Promise<Model.Note> {
+    const datasourceName = repositorySlug;
+    const db = this.datasources.get(datasourceName);
+    if (!db) {
+      throw new Error(`No datasource ${datasourceName} found`);
+    }
+    return new Promise<Model.Note>((resolve, reject) => {
+      const sqlQuery = `
+        SELECT
+          oid,
+          file_oid,
+          slug,
+          note_type,
+          relative_path,
+          wikilink,
+          attributes,
+          title,
+          long_title,
+          short_title,
+          attributes,
+          tags,
+          line,
+          content,
+          body,
+          comment,
+          marked,
+          annotations
+        FROM note
+        WHERE wikilink LIKE '%${wikilink}'
+      `;
+      db.get(sqlQuery, [], async (err: any, row: any) => {
+        if (err) {
+          console.log('Error while searching for note by wikilink', err);
+          reject(err);
+          return;
+        }
+        const note = this.#rowToNote(row, datasourceName);
+        const mediaRelativePaths = extractMediaRelativePaths(note);
+
+        // Append found medias on note
+        const foundMedias = await this.searchMediasByRelativePaths(
+          mediaRelativePaths,
+          datasourceName,
+        );
+        note.medias.push(...foundMedias);
+
+        resolve(note);
+      });
+    });
+  }
+
   async find(noteRef: Model.NoteRef): Promise<Model.Note> {
     const datasourceName = noteRef.repositorySlug;
     const db = this.datasources.get(datasourceName);

@@ -2,7 +2,7 @@
 
 ## TODO: Backlog
 
-`#bookmark`
+`#bookmark` `#todo/code`
 
 * [x] Publish the documentation website on GitHub Pages
 * [ ] Speed up medias conversion using goroutines

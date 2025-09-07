@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
-import React, { useRef, useContext } from 'react';
+import React, { useRef, useContext, useState } from 'react';
 import {
   ArrowsOutCardinal as MoveIcon,
   PencilSimple as EditIcon,
@@ -20,6 +20,7 @@ import NoteType from './NoteType';
 import Markdown from './Markdown';
 import RenderedMetadata from './RenderedMetadata';
 import { Action, Actions } from './Actions';
+import HoveredNote from './HoveredNote';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -199,6 +200,26 @@ export default function RenderedNote({
 }: RenderedNoteProps) {
   const { config, dispatch } = useContext(ConfigContext);
 
+  const [hoveredNote, setHoveredNote] = useState<Note | null>(null);
+
+  const handleWikilinkClick = async (wikilink: string) => {
+    const foundHoveredNote: Note = await window.electron.findByWikilink(
+      note.repositorySlug,
+      wikilink,
+    );
+    if (foundHoveredNote) {
+      setHoveredNote(foundHoveredNote);
+      console.log(
+        `Found note ${foundHoveredNote.oid} ${foundHoveredNote.longTitle}...`,
+      );
+    } else {
+      setHoveredNote(null);
+    }
+  };
+  const handleWikilinkClose = () => {
+    setHoveredNote(null);
+  };
+
   const dragElement = useRef<HTMLDivElement>(null);
   const dragInProgress = useRef<boolean>(false);
   const lastPosition = useRef<LastPosition>({
@@ -374,6 +395,9 @@ export default function RenderedNote({
       onDrag={onDrag}
       onDragEnd={onDragEnd}
     >
+      {hoveredNote && (
+        <HoveredNote note={hoveredNote} onClose={handleWikilinkClose} />
+      )}
       {showActions && (
         <div
           // Support basic drag to move notes inside a free container.
@@ -451,7 +475,10 @@ export default function RenderedNote({
         </div>
       )}
       <div className="RenderedNoteContent">
-        <Markdown md={formatContent(note, ['preview'])} />
+        <Markdown
+          md={formatContent(note, ['preview'])}
+          onWikilinkClick={handleWikilinkClick}
+        />
       </div>
       {metadataVisible && (
         <RenderedMetadata
