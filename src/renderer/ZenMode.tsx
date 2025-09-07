@@ -12,6 +12,7 @@ import { ConfigContext } from './ConfigContext';
 import { Note, ZenConfig, Query, QueryResult } from '../shared/Model';
 import useKeyDown from './useKeyDown';
 import FullScreenNote from './FullScreenNote';
+import { Action, Actions, Indicator } from './Actions';
 
 function extractQueries(zenMode: ZenConfig | undefined): Query[] {
   if (!zenMode) return [];
@@ -124,68 +125,44 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
 
       {queriesLoaded && note && (
         <>
-          <div className="Actions">
-            <nav>
-              <ul>
-                {/* Make the timer the first icon to keep buttons at the same place even when the timer is hidden */}
-                {!paused && (
-                  <li>
-                    {/* Use a unique key to restart the countdown after every render */}
-                    <Timer key={getRandomInt()} duration={speed} />
-                  </li>
-                )}
-                {!paused && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setPaused(true)}
-                      title="Pause"
-                    >
-                      <Pause />
-                    </button>
-                  </li>
-                )}
-                {paused && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setPaused(false)}
-                      title="Play"
-                    >
-                      <Play />
-                    </button>
-                  </li>
-                )}
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => onClose()}
-                    title="Exit Zen Mode"
-                  >
-                    <Stop />
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setSpeed(speed * 2)}
-                    title="Speed down"
-                  >
-                    <PersonSimpleWalk />
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setSpeed(Math.round(speed / 2))}
-                    title="Speed up"
-                  >
-                    <PersonSimpleRun />
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
+          <Actions>
+            {/* Make the timer the first icon to keep buttons at the same place even when the timer is hidden */}
+            {!paused && (
+              <Indicator>
+                {/* Use a unique key to restart the countdown after every render */}
+                <Timer key={getRandomInt()} duration={speed} />
+              </Indicator>
+            )}
+            {!paused && (
+              <Action
+                icon={<Pause />}
+                title="Pause"
+                onClick={() => setPaused(true)}
+              />
+            )}
+            {paused && (
+              <Action
+                icon={<Play />}
+                title="Play"
+                onClick={() => setPaused(false)}
+              />
+            )}
+            <Action
+              icon={<Stop />}
+              title="Exit Zen Mode"
+              onClick={() => onClose()}
+            />
+            <Action
+              icon={<PersonSimpleWalk />}
+              title="Speed down"
+              onClick={() => setSpeed(speed * 2)}
+            />
+            <Action
+              icon={<PersonSimpleRun />}
+              title="Speed up"
+              onClick={() => setSpeed(Math.round(speed / 2))}
+            />
+          </Actions>
           <div className="Content">
             <FullScreenNote note={note} />
           </div>
