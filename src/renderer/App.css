@@ -320,7 +320,7 @@ table.List {
 .RenderedNoteMetadata ul li,
 .Actions ul li {
   list-style-type: none;
-  margin: 0.25em 0.5em;
+  margin: 0.25em;
   padding: 0.25em;
   border-radius: var(--desktop-layout-radius);
 }
@@ -560,36 +560,6 @@ table.List {
   /* If we don't disable text selection, the drag stops as soon as the user hover some text. */
   user-select: none;
 }
-
-/* Subactions */
-.Subactions {
-  position: relative;
-  display: inline-block;
-  cursor: move;
-  line-height: 1;
-}
-.SubactionsMenu {
-  position: absolute;
-  right: 0;
-  background-color: white;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1; /* Ensure the menu is on top of other elements */
-}
-.SubactionsMenu ul {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  padding: 0;
-  justify-content: flex-end;
-}
-
-.SubactionsMenu ul li {
-  list-style-type: none;
-  margin: 0.25em 0.5em;
-  padding: 0.25em;
-  border-radius: var(--desktop-layout-radius);
-}
-
 
 .dragging {
   border: 2px solid gray;

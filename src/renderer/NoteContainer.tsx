@@ -13,6 +13,7 @@ import classNames from 'classnames';
 import { Note } from '../shared/Model';
 import RenderedNote from './RenderedNote';
 import { capitalize } from './helpers';
+import { Action, Actions, Subaction } from './Actions';
 
 type NoteContainerProps = {
   name?: string | null | undefined;
@@ -30,10 +31,6 @@ function NoteContainer({
   onClose = () => {}, // do nothing
 }: NoteContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout);
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [sortOrder, setSortOrder] = useState<
-    'ascending' | 'descending' | 'shuffle'
-  >('ascending');
   const [originalNotes, setOriginalNotes] = useState<Note[]>([]);
   const [sortedNotes, setSortedNotes] = useState<Note[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,24 +55,14 @@ function NoteContainer({
 
   const handleSortAscending = () => {
     setSortedNotes([...originalNotes]);
-    setSortOrder('ascending');
-    setShowSortMenu(false);
   };
 
   const handleSortDescending = () => {
     setSortedNotes([...originalNotes].reverse());
-    setSortOrder('descending');
-    setShowSortMenu(false);
   };
 
   const handleShuffle = () => {
     setSortedNotes(shuffleArray(originalNotes));
-    setSortOrder('shuffle');
-    setShowSortMenu(false);
-  };
-
-  const toggleSortMenu = () => {
-    setShowSortMenu(!showSortMenu);
   };
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
@@ -155,105 +142,47 @@ function NoteContainer({
     <div className="NoteContainer">
       <div className="Header">
         {name && <div className="Name">{name}</div>}
-        <div className="Actions">
-          <nav>
-            <ul>
-              <li>
-                <button
-                  type="button"
-                  className="SortButton"
-                  onClick={toggleSortMenu}
-                  title="Sort notes"
-                >
-                  <ListNumbers />
-                </button>
-                {showSortMenu && (
-                  <div className="SubactionsMenu">
-                    <nav>
-                      <ul>
-                        <li>
-                          <button
-                            type="button"
-                            className={classNames({
-                              selected: sortOrder === 'ascending',
-                            })}
-                            onClick={handleSortAscending}
-                            title="Sort ascending"
-                          >
-                            <SortAscending />
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            className={classNames({
-                              selected: sortOrder === 'descending',
-                            })}
-                            onClick={handleSortDescending}
-                            title="Sort descending"
-                          >
-                            <SortDescending />
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            className={classNames({
-                              selected: sortOrder === 'shuffle',
-                            })}
-                            onClick={handleShuffle}
-                            title="Shuffle"
-                          >
-                            <Shuffle />
-                          </button>
-                        </li>
-                      </ul>
-                    </nav>
-                  </div>
-                )}
-                {layoutSelectable && (
-                  <button
-                    type="button"
-                    className={classNames({
-                      selected: selectedLayout === 'list',
-                    })}
-                    onClick={() => changeLayout('list')}
-                    title="List layout"
-                  >
-                    <ListIcon />
-                  </button>
-                )}
-                {layoutSelectable && (
-                  <button
-                    type="button"
-                    className={classNames({
-                      selected: selectedLayout === 'grid',
-                    })}
-                    onClick={() => changeLayout('grid')}
-                    title="Grid layout"
-                  >
-                    <GridIcon />
-                  </button>
-                )}
-                {layoutSelectable && (
-                  <button
-                    type="button"
-                    className={classNames({
-                      selected: selectedLayout === 'free',
-                    })}
-                    onClick={() => changeLayout('free')}
-                    title="Free layout"
-                  >
-                    <FreeIcon />
-                  </button>
-                )}
-                <button type="button" onClick={onClose} title="Close panel">
-                  <CloseIcon />
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+        <Actions>
+          <Action title="Sort notes" icon={<ListNumbers />}>
+            <Subaction
+              title="Sort ascending"
+              onClick={handleSortAscending}
+              icon={<SortAscending />}
+            />
+            <Subaction
+              title="Sort descending"
+              onClick={handleSortDescending}
+              icon={<SortDescending />}
+            />
+            <Subaction
+              title="Shuffle"
+              onClick={handleShuffle}
+              icon={<Shuffle />}
+            />
+          </Action>
+          {layoutSelectable && (
+            <Action
+              title="List layout"
+              onClick={() => changeLayout('list')}
+              icon={<ListIcon />}
+            />
+          )}
+          {layoutSelectable && (
+            <Action
+              title="Grid layout"
+              onClick={() => changeLayout('grid')}
+              icon={<GridIcon />}
+            />
+          )}
+          {layoutSelectable && (
+            <Action
+              title="Free layout"
+              onClick={() => changeLayout('free')}
+              icon={<FreeIcon />}
+            />
+          )}
+          <Action title="Close panel" onClick={onClose} icon={<CloseIcon />} />
+        </Actions>
       </div>
       <div
         className={classNames([
