@@ -16,6 +16,7 @@ import {
 import NoteContainer from './NoteContainer';
 import Loader from './Loader';
 import { capitalize } from './helpers';
+import { Action, Actions } from './Actions';
 
 // Return all note refs present in a desk recursively.
 function extractNoteRefs(desk: Desk): NoteRef[] {
@@ -180,18 +181,10 @@ function PaneContainer({ block, notesCache }: PaneContainerProps) {
 
   return (
     <div className="PaneContainer">
-      <div className="Actions">
-        <nav>
-          <ul>
-            <li>
-              <ArrowsOutLineHorizontal />
-            </li>
-            <li>
-              <ArrowsOutLineVertical />
-            </li>
-          </ul>
-        </nav>
-      </div>
+      <Actions>
+        <Action icon={ArrowsOutLineHorizontal} title="Horizontal split" />
+        <Action icon={ArrowsOutLineVertical} title="Vertical split" />
+      </Actions>
       <div className={`${capitalize(block.layout)}Pane`}>
         {block.elements?.map((element) => (
           <PaneContainer

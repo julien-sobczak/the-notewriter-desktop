@@ -5,6 +5,7 @@ import { DeckRef, Flashcard, Review } from '../shared/Model';
 import Loader from './Loader';
 import RenderedFlashcard from './RenderedFlashcard';
 import { intervalFn } from '../shared/srs';
+import { Action, Actions, Indicator } from './Actions';
 
 // Delay to consider a flashcard as due today
 const DayCutoff = 1000 * 60 * 60; // 1 hour, used to determine if a flashcard is due today
@@ -90,34 +91,17 @@ function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
       {!flashcards && <Loader />}
       {flashcards && (
         <div className="RenderedDeck">
-          <div className="Actions">
-            <nav>
-              <ul>
-                <li>
-                  {flashcardIndex + 1} / <strong>{flashcards.length}</strong>
-                </li>
-                <li>
-                  <button
-                    disabled={flashcardIndex === flashcards.length - 1}
-                    type="button"
-                    onClick={onSkip}
-                    title="Skip"
-                  >
-                    <SkipIcon />
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => onQuit(deckRef)}
-                    title="Next"
-                  >
-                    <CloseIcon />
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
+          <Actions>
+            <Indicator>
+              {flashcardIndex + 1} / <strong>{flashcards.length}</strong>
+            </Indicator>
+            <Action icon={<SkipIcon />} title="Skip" onClick={onSkip} />
+            <Action
+              icon={<CloseIcon />}
+              title="Quit"
+              onClick={() => onQuit(deckRef)}
+            />
+          </Actions>
           <RenderedFlashcard
             flashcard={flashcards[flashcardIndex]}
             intervalFn={intervalFn(deckConfig)}

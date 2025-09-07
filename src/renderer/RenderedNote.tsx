@@ -19,6 +19,7 @@ import { capitalize } from './helpers';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
 import RenderedMetadata from './RenderedMetadata';
+import { Action, Actions } from './Actions';
 
 // eslint-disable-next-line import/prefer-default-export
 export function formatContent(note: Note, tags: string[] = []): string {
@@ -375,7 +376,6 @@ export default function RenderedNote({
     >
       {showActions && (
         <div
-          className="Actions"
           // Support basic drag to move notes inside a free container.
           // We listen on actions panel to keep the note content easily selectable.
           // We use standard mouse events to drag freely notes without the ghosting effect
@@ -384,62 +384,64 @@ export default function RenderedNote({
           onMouseUp={handleMouseEnd}
           onMouseOut={handleMouseOut} // FIXME BUG we need to stop drag when the mouse is released outside the viewport. This solution doesn't seem to work...
         >
-          <nav>
-            <ul>
-              <li>
-                {sourceURL && (
-                  <button type="button" title="Follow source">
-                    <a href={sourceURL} target="_blank">
-                      <LinkIcon />
-                    </a>
-                  </button>
-                )}
-                <button type="button" onClick={handleBookmark} title="Bookmark">
-                  <BookmarkIcon weight={bookmarked ? 'fill' : 'thin'} />
-                </button>
-                <button type="button" onClick={handleMove} title="Move inside">
-                  <MoveIcon />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDragClick}
-                  title="Drag outside"
-                >
-                  <DragIcon />
-                </button>
-                {layout === 'free' && (
-                  <button type="button" onClick={handleMoveUp} title="Layer up">
-                    <MoveUpIcon />
-                  </button>
-                )}
-                {layout === 'free' && (
-                  <button
-                    type="button"
-                    onClick={handleMoveDown}
-                    title="Layer down"
-                  >
-                    <MoveDownIcon />
-                  </button>
-                )}
-                {note.attributes.hook && (
-                  <button
-                    type="button"
-                    onClick={handleRunHooks}
-                    title="Run Hooks"
-                  >
-                    <RunHooksIcon />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  title="Edit in external editor"
-                >
-                  <EditIcon />
-                </button>
-              </li>
-            </ul>
-          </nav>
+          <Actions>
+            {sourceURL && (
+              <Action
+                title="Follow source"
+                key="follow-source"
+                icon={<LinkIcon />}
+                onClick={() => window.electron.browseUrl(sourceURL)}
+              />
+            )}
+            <Action
+              title="Bookmark"
+              key="bookmark"
+              onClick={handleBookmark}
+              icon={<BookmarkIcon weight={bookmarked ? 'fill' : 'thin'} />}
+            />
+            <Action
+              title="Move inside"
+              key="move-inside"
+              onClick={handleMove}
+              icon={<MoveIcon />}
+            />
+            <Action
+              title="Drag outside"
+              key="drag-outside"
+              onClick={handleDragClick}
+              icon={<DragIcon />}
+            />
+            {layout === 'free' && (
+              <Action
+                title="Layer up"
+                key="move-up"
+                onClick={handleMoveUp}
+                icon={<MoveUpIcon />}
+              />
+            )}
+            {layout === 'free' && (
+              <Action
+                title="Layer down"
+                key="move-down"
+                onClick={handleMoveDown}
+                icon={<MoveDownIcon />}
+              />
+            )}
+            {note.attributes.hook && (
+              <Action
+                title="Run Hooks"
+                key="run-hooks"
+                onClick={handleRunHooks}
+                icon={<RunHooksIcon />}
+              />
+            )}
+            <Action
+              title="Edit in external editor"
+              key="edit"
+              onClick={handleEdit}
+              icon={<EditIcon />}
+            />
+          </Actions>
         </div>
       )}
       {showTitle && (

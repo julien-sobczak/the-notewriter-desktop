@@ -9,6 +9,7 @@ import { InspirationConfig, Note, Query, QueryResult } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import useKeyDown from './useKeyDown';
 import FullScreenNote from './FullScreenNote';
+import { Action, Actions } from './Actions';
 
 function extractQuery(inspiration: InspirationConfig): Query {
   // Convert all queries configured into valid Query
@@ -90,43 +91,30 @@ function Inspiration() {
       )}
       {selectedCategory && (
         <>
-          <div className="Actions">
-            <nav>
-              <ul>
-                {notes.length > 1 && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => handlePrevious()}
-                      title="Next"
-                    >
-                      <SkipBack />
-                    </button>
-                  </li>
-                )}
-                {notes.length > 1 && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => handleNext()}
-                      title="Previous"
-                    >
-                      <SkipForward />
-                    </button>
-                  </li>
-                )}
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCategory(undefined)}
-                    title="Reset"
-                  >
-                    <Eraser />
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
+          <Actions>
+            {notes.length > 1 && (
+              <Action
+                icon={<SkipBack />}
+                title="Previous"
+                onClick={handlePrevious}
+                key="previous"
+              />
+            )}
+            {notes.length > 1 && (
+              <Action
+                icon={<SkipForward />}
+                title="Next"
+                onClick={handleNext}
+                key="next"
+              />
+            )}
+            <Action
+              icon={<Eraser />}
+              title="Reset"
+              onClick={() => setSelectedCategory(undefined)}
+              key="reset"
+            />
+          </Actions>
           <div className="Content">
             {note && <FullScreenNote note={note} />}
           </div>
