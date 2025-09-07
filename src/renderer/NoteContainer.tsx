@@ -1,9 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Rows as ListIcon,
   SquaresFour as GridIcon,
   Stack as FreeIcon,
   X as CloseIcon,
+  ListNumbers,
+  SortAscending,
+  SortDescending,
+  Shuffle,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Note } from '../shared/Model';
@@ -26,7 +30,53 @@ function NoteContainer({
   onClose = () => {}, // do nothing
 }: NoteContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [sortOrder, setSortOrder] = useState<
+    'ascending' | 'descending' | 'shuffle'
+  >('ascending');
+  const [originalNotes, setOriginalNotes] = useState<Note[]>([]);
+  const [sortedNotes, setSortedNotes] = useState<Note[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize and track notes changes
+  useEffect(() => {
+    if (notes) {
+      setOriginalNotes([...notes]);
+      setSortedNotes([...notes]);
+    }
+  }, [notes]);
+
+  // Fisher-Yates shuffle algorithm
+  const shuffleArray = (array: Note[]): Note[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const handleSortAscending = () => {
+    setSortedNotes([...originalNotes]);
+    setSortOrder('ascending');
+    setShowSortMenu(false);
+  };
+
+  const handleSortDescending = () => {
+    setSortedNotes([...originalNotes].reverse());
+    setSortOrder('descending');
+    setShowSortMenu(false);
+  };
+
+  const handleShuffle = () => {
+    setSortedNotes(shuffleArray(originalNotes));
+    setSortOrder('shuffle');
+    setShowSortMenu(false);
+  };
+
+  const toggleSortMenu = () => {
+    setShowSortMenu(!showSortMenu);
+  };
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
     // Add the target element's id to the data transfer object
@@ -109,6 +159,58 @@ function NoteContainer({
           <nav>
             <ul>
               <li>
+                <button
+                  type="button"
+                  className="SortButton"
+                  onClick={toggleSortMenu}
+                  title="Sort notes"
+                >
+                  <ListNumbers />
+                </button>
+                {showSortMenu && (
+                  <div className="SubactionsMenu">
+                    <nav>
+                      <ul>
+                        <li>
+                          <button
+                            type="button"
+                            className={classNames({
+                              selected: sortOrder === 'ascending',
+                            })}
+                            onClick={handleSortAscending}
+                            title="Sort ascending"
+                          >
+                            <SortAscending />
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className={classNames({
+                              selected: sortOrder === 'descending',
+                            })}
+                            onClick={handleSortDescending}
+                            title="Sort descending"
+                          >
+                            <SortDescending />
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            className={classNames({
+                              selected: sortOrder === 'shuffle',
+                            })}
+                            onClick={handleShuffle}
+                            title="Shuffle"
+                          >
+                            <Shuffle />
+                          </button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                )}
                 {layoutSelectable && (
                   <button
                     type="button"
@@ -160,7 +262,7 @@ function NoteContainer({
         ])}
         ref={containerRef}
       >
-        {notes?.map((note: Note) => {
+        {sortedNotes?.map((note: Note) => {
           return (
             <RenderedNote
               key={note.oid}
