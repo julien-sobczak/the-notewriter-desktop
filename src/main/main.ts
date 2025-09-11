@@ -501,6 +501,20 @@ const createWindow = async () => {
     }
   });
 
+  // Send configuration whenever the page finishes loading (including after refresh)
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (!mainWindow) {
+      throw new Error('"mainWindow" is not defined');
+    }
+
+    // Forward configuration state after page refresh
+    mainWindow.webContents.send('configuration-loaded', {
+      static: config.editorStaticConfig,
+      dynamic: config.editorDynamicConfig,
+      repositories: config.repositoryConfigs,
+    });
+  });
+
   mainWindow.on('close', (event: any) => {
     if (!configSaved && mainWindow) {
       event.preventDefault();
