@@ -81,6 +81,7 @@ function Browser({ file }: BrowserProps) {
 
   // Load notes when selecting a file
   useEffect(() => {
+    if (!selectedRepository) return;
     if (!selectedFile) return;
 
     setNotes([]);
@@ -117,8 +118,6 @@ function Browser({ file }: BrowserProps) {
     setSelectedFile(selectedRelativePath);
     setSelectedDir(dirname(selectedRelativePath));
   };
-
-  console.log('<Browser>', selectedRepository, selectedDir, selectedFile); // FIXME remove
 
   return (
     <div className="Browser">

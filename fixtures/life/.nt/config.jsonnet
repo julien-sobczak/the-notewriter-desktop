@@ -11,6 +11,9 @@ local srsAlgorithmSettings = {
             name: "BookReview",
             hooks: ["blog_review"],
         },
+        Feature: nt.DefaultTypes.Task + {
+          name: "Feature",
+        },
     },
 
     searches: {

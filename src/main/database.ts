@@ -481,8 +481,8 @@ export default class DatabaseManager {
       marked: false,
       annotations: [],
       content:
-        '## Quote: On Writing\n\n> Writing is thinking. To write well is to think clearly. That’s why it’s so hard.\n> -- David McCullough, American historian and author',
-      body: '> Writing is thinking. To write well is to think clearly. That’s why it’s so hard.\n> -- David McCullough, American historian and author',
+        '## Quote: On Writing\n\n> Writing is thinking. To write well is to think clearly. That’s why it’s so hard.\n>\n> ― David McCullough, American historian and author',
+      body: '> Writing is thinking. To write well is to think clearly. That’s why it’s so hard.\n>\n> ― David McCullough, American historian and author',
       comment: '',
       medias: [],
     };
@@ -525,6 +525,7 @@ export default class DatabaseManager {
             content,
             body,
             comment,
+            items,
             marked,
             annotations
           FROM note
@@ -571,6 +572,7 @@ export default class DatabaseManager {
           content,
           body,
           comment,
+          items,
           marked,
           annotations
         FROM note
@@ -622,6 +624,7 @@ export default class DatabaseManager {
           content,
           body,
           comment,
+          items,
           marked,
           annotations
         FROM note
@@ -691,6 +694,7 @@ export default class DatabaseManager {
             content,
             body,
             comment,
+            items,
             marked,
             annotations
           FROM note
@@ -1041,6 +1045,7 @@ export default class DatabaseManager {
   }
 
   #rowToNote(row: any, repositorySlug: string): Model.Note {
+    console.log(row); // FIXME remove
     let parsedTags = [];
     if (row.tags !== '') parsedTags = row.tags.split(',');
     return {
@@ -1063,6 +1068,7 @@ export default class DatabaseManager {
       content: row.content,
       body: row.body,
       comment: row.comment,
+      items: row.items ? JSON.parse(row.items) as Model.Items: undefined,
       medias: [],
     };
   }
@@ -1212,7 +1218,7 @@ function queryPart2sql(qParent: string): string {
 export function query2sql(q: string, limit: number, shuffle: boolean): string {
   const whereContent = queryPart2sql(q);
   const fields =
-    'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.body, note.comment, note.marked, note.annotations';
+    'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.body, note.comment, note.items, note.marked, note.annotations';
   let sql = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`;
   if (whereContent) {
     sql += ` WHERE ${whereContent}`;

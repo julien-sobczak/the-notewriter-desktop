@@ -593,7 +593,6 @@ export interface Activity {
 
 function Main() {
   const { config, dispatch } = useContext(ConfigContext);
-  console.log('<Main>', config.static.repositories); // FIXME remove
 
   const staticConfig = config.static;
   const dynamicConfig = config.dynamic;
