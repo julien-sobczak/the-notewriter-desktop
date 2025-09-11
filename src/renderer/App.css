@@ -304,10 +304,10 @@ table.List {
   height: 32px;
 }
 
-.RenderedNoteMetadata {
+.RenderedMetadata {
   background: white;
 }
-.RenderedNoteMetadata ul,
+.RenderedMetadata ul,
 .Actions ul {
   display: flex;
   flex-direction: row;
@@ -317,7 +317,7 @@ table.List {
 .Actions ul {
   justify-content: flex-end;
 }
-.RenderedNoteMetadata ul li,
+.RenderedMetadata ul li,
 .Actions ul li {
   list-style-type: none;
   margin: 0.25em;
@@ -325,7 +325,7 @@ table.List {
   border-radius: var(--desktop-layout-radius);
 }
 
-.RenderedNoteMetadata li {
+.RenderedMetadata li {
   font-family: monospace;
   font-size: 0.8em;
   background: var(--color-background-light);
@@ -336,7 +336,25 @@ table.List {
   padding: 0.25em 0.5em;
   font-family: 'Pacifico', cursive;
   font-size: 90%;
+}
 
+ul.FilterMetadata {
+  list-style-type: none;
+  display: flex;
+  flex-direction: row;
+}
+ul.FilterMetadata li {
+  margin: 0 0.25em;
+  padding: 0.25em 0.5em;
+  font-family: monospace;
+  font-size: 0.8em;
+  cursor: pointer; /* Filters are clickable */
+  border-radius: var(--desktop-layout-radius);
+  background: var(--color-background-light);
+  border: 1px solid var(--color-background-light);
+}
+ul.FilterMetadata li.selected {
+  border-color: var(--color-separator-dark);
 }
 
 
@@ -1072,3 +1090,5 @@ ul.categories li {
   box-shadow: 0px 5px 5px 5px rgba(0, 0, 0, 0.1);
   padding: 0.5em;
 }
+
+

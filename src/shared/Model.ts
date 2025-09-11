@@ -246,11 +246,30 @@ export interface Note {
   // Comment (Markdown)
   comment: string;
 
+  // Optional items (for list notes)
+  items?: Items;
+
   marked: boolean;
   annotations: Annotation[];
 
   // Medias/Blobs referenced by the note
   medias: Media[];
+}
+
+export interface Items {
+  children: ListItem[];
+  attributes: string[];
+  tags: string[];
+  emojis: string[];
+}
+
+export interface ListItem {
+  line: number;
+  text: string;
+  attributes: { [name: string]: any };
+  tags: string[];
+  emojis: string[];
+  children?: ListItem[];
 }
 
 export interface Annotation {

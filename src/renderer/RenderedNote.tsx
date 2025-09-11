@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
 import React, { useRef, useContext, useState } from 'react';
@@ -7,19 +8,35 @@ import {
   Copy as DragIcon,
   ArrowUp as MoveUpIcon,
   ArrowDown as MoveDownIcon,
+  TextAlignLeft as DefaultModeIcon,
+  ListBullets as ListModeIcon,
+  Funnel as FilterIcon,
+  Smiley as EmojiIcon,
+  TagSimple as TagIcon,
+  At as AttributeIcon,
   Star as BookmarkIcon,
   Link as LinkIcon,
   Play as RunHooksIcon,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
-import { Note, Media, Blob, Bookmark, extractSourceURL } from '../shared/Model';
+import {
+  Note,
+  Media,
+  Blob,
+  Bookmark,
+  extractSourceURL,
+  ListItem,
+} from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import NotFound from '../../assets/404.svg';
 import { capitalize } from './helpers';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
-import RenderedMetadata from './RenderedMetadata';
-import { Action, Actions } from './Actions';
+import RenderedMetadata, {
+  RenderedAttributes,
+  RenderedTags,
+} from './RenderedMetadata';
+import { Action, Actions, Subaction } from './Actions';
 import HoveredNote from './HoveredNote';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -199,8 +216,122 @@ export default function RenderedNote({
   onMouseEnd = () => {},
 }: RenderedNoteProps) {
   const { config, dispatch } = useContext(ConfigContext);
+  const repositoryConfig = config.repositories[note.repositorySlug];
 
+  // List view mode management
+  const [viewMode, setViewMode] = useState<'default' | 'list'>('default');
+  const [showFilterTags, setShowFilterTags] = useState<boolean>(false);
+  const [showFilterAttributes, setShowFilterAttributes] =
+    useState<boolean>(false);
+  const [showFilterEmojis, setShowFilterEmojis] = useState<boolean>(false);
+  const [filterText, setFilterText] = useState<string>(''); // Add this state
+  const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [filterAttributes, setFilterAttributes] = useState<string[]>([]);
+  const [filterEmojis, setFilterEmojis] = useState<string[]>([]);
+  const [filteredItems, setFilteredItems] = useState<ListItem[]>([]);
+
+  // Wikilink management
   const [hoveredNote, setHoveredNote] = useState<Note | null>(null);
+
+  const handleListMode = () => {
+    setViewMode('list');
+    setFilteredItems(note.items?.children || []);
+  };
+  const handleDefaultMode = () => {
+    setViewMode('default');
+  };
+
+  // Refresh the list item when filters on metadata change
+  React.useEffect(() => {
+    filterItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterTags, filterAttributes, filterEmojis]);
+
+  // Determine the filter items based on currently selected filters
+  const filterItems = () => {
+    if (!note.items?.children) {
+      setFilteredItems([]);
+      return;
+    }
+
+    // IMPROVEMENT Only immediate children are filtered. Ideally, we would like to filter recursively.
+    const newFilteredItems = note.items.children.filter((item) => {
+      // Implementation: We consider an item to match the filters if it or any of its children match.
+
+      // Filter by text
+      if (filterText.trim().length > 0) {
+        const textMatch =
+          item.text?.toLowerCase().includes(filterText.toLowerCase()) ||
+          (item.children &&
+            item.children.some((child) =>
+              child.text?.toLowerCase().includes(filterText.toLowerCase()),
+            ));
+        if (!textMatch) return false;
+      }
+
+      // Filter by tags
+      if (filterTags.length > 0) {
+        // Collect all tags of the item and its children
+        const allTags = (item.tags || []).concat(
+          item.children?.flatMap((child) => child.tags) || [],
+        );
+        const hasAllTags = filterTags.every((tag) => allTags.includes(tag));
+        if (!hasAllTags) {
+          return false;
+        }
+      }
+      // Filter by attribute names
+      if (filterAttributes.length > 0) {
+        // Collect all attributes of the item and its children
+        const allAttributes = (Object.keys(item.attributes) || []).concat(
+          item.children?.flatMap((child) => Object.keys(child.attributes)) ||
+            [],
+        );
+        const hasAllAttributes = filterAttributes.every((attribute) =>
+          allAttributes.includes(attribute),
+        );
+        if (!hasAllAttributes) {
+          return false;
+        }
+      }
+      // Filter by emojis
+      if (filterEmojis.length > 0) {
+        // Collect all emojis of the item and its children
+        const allEmojis = (item.emojis || []).concat(
+          item.children?.flatMap((child) => child.emojis) || [],
+        );
+        const hasAllEmojis = filterEmojis.every((emoji) =>
+          allEmojis.includes(emoji),
+        );
+        if (!hasAllEmojis) {
+          return false;
+        }
+      }
+      return true;
+    });
+    setFilteredItems(newFilteredItems);
+  };
+  const handleToggleFilterEmoji = (emoji: string) => {
+    if (filterEmojis.includes(emoji)) {
+      setFilterEmojis(filterEmojis.filter((e) => e !== emoji));
+    } else {
+      setFilterEmojis([...filterEmojis, emoji]);
+    }
+  };
+  const handleToggleFilterTag = (tag: string) => {
+    if (filterTags.includes(tag)) {
+      setFilterTags(filterTags.filter((t) => t !== tag));
+    } else {
+      setFilterTags([...filterTags, tag]);
+    }
+  };
+  const handleToggleFilterAttribute = (attribute: string) => {
+    if (filterAttributes.includes(attribute)) {
+      setFilterAttributes(filterAttributes.filter((a) => a !== attribute));
+    } else {
+      setFilterAttributes([...filterAttributes, attribute]);
+    }
+  };
 
   const handleWikilinkClick = async (wikilink: string) => {
     const foundHoveredNote: Note = await window.electron.findByWikilink(
@@ -435,6 +566,56 @@ export default function RenderedNote({
               onClick={handleDragClick}
               icon={<DragIcon />}
             />
+
+            {viewMode !== 'default' && note.items?.children && (
+              <Action
+                title="Default mode"
+                key="default-mode"
+                onClick={handleDefaultMode}
+                icon={<DefaultModeIcon />}
+              />
+            )}
+            {viewMode !== 'list' && note.items?.children && (
+              <Action
+                title="List mode"
+                key="list-mode"
+                onClick={handleListMode}
+                icon={<ListModeIcon />}
+              />
+            )}
+            {viewMode === 'list' && (
+              <Action title="Filter items" icon={<FilterIcon />}>
+                {note.items?.tags && (
+                  <Subaction
+                    title="Tags"
+                    selected={showFilterTags}
+                    onClick={() => {
+                      setShowFilterTags(!showFilterTags);
+                    }}
+                    icon={<TagIcon />}
+                  />
+                )}
+                {note.items?.attributes && (
+                  <Subaction
+                    title="Attributes"
+                    selected={showFilterAttributes}
+                    onClick={() =>
+                      setShowFilterAttributes(!showFilterAttributes)
+                    }
+                    icon={<AttributeIcon />}
+                  />
+                )}
+                {note.items?.emojis && (
+                  <Subaction
+                    title="Emojis"
+                    selected={showFilterEmojis}
+                    onClick={() => setShowFilterEmojis(!showFilterEmojis)}
+                    icon={<EmojiIcon />}
+                  />
+                )}
+              </Action>
+            )}
+
             {layout === 'free' && (
               <Action
                 title="Layer up"
@@ -475,10 +656,91 @@ export default function RenderedNote({
         </div>
       )}
       <div className="RenderedNoteContent">
-        <Markdown
-          md={formatContent(note, ['preview'])}
-          onWikilinkClick={handleWikilinkClick}
-        />
+        {/* Default Mode */}
+        {viewMode === 'default' && (
+          <Markdown
+            md={formatContent(note, ['preview'])}
+            onWikilinkClick={handleWikilinkClick}
+          />
+        )}
+        {/* List Mode */}
+        {viewMode === 'list' && note.items?.children && (
+          <div className="RenderedNoteItemsFilters">
+            <input
+              type="text"
+              placeholder="Filter items"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+            />
+            {(showFilterAttributes || showFilterTags || showFilterEmojis) && (
+              <ul className="FilterMetadata">
+                {showFilterTags &&
+                  note.items.tags?.map((tag, index) => (
+                    <li
+                      key={`tag-${index}`}
+                      className={filterTags.includes(tag) ? 'selected' : ''}
+                      onClick={() => handleToggleFilterTag(tag)}
+                    >
+                      #{tag}
+                    </li>
+                  ))}
+                {showFilterAttributes &&
+                  note.items.attributes?.map((attribute, index) => (
+                    <li
+                      key={`attribute-${index}`}
+                      className={
+                        filterAttributes.includes(attribute) ? 'selected' : ''
+                      }
+                      onClick={() => handleToggleFilterAttribute(attribute)}
+                    >
+                      @{attribute}
+                    </li>
+                  ))}
+                {showFilterEmojis &&
+                  note.items.emojis?.map((emoji, index) => (
+                    <li
+                      key={`emoji-${index}`}
+                      className={filterEmojis.includes(emoji) ? 'selected' : ''}
+                      onClick={() => handleToggleFilterEmoji(emoji)}
+                    >
+                      {emoji}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {viewMode === 'list' && note.items?.children && (
+          <ul className="RenderedNoteItems">
+            {filteredItems.map((item, index) => (
+              <li key={index}>
+                <Markdown
+                  md={item.text}
+                  onWikilinkClick={handleWikilinkClick}
+                  inline
+                />
+                {item.children && item.children.length > 0 && (
+                  <ul>
+                    {item.children.map((child, childIndex) => (
+                      <li key={childIndex}>
+                        <Markdown
+                          md={child.text}
+                          onWikilinkClick={handleWikilinkClick}
+                          inline
+                        />
+                        <RenderedTags tags={child.tags || []} />
+                        <RenderedAttributes
+                          attributes={child.attributes || []}
+                          repositoryConfig={repositoryConfig}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {metadataVisible && (
         <RenderedMetadata

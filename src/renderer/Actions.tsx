@@ -11,6 +11,7 @@ type SubactionProps = {
   icon: ReactNode;
   title?: string;
   children?: ReactNode;
+  selected?: boolean;
   onClick?: (event: MouseEvent) => void;
 };
 
@@ -18,6 +19,7 @@ type ActionProps = {
   icon: ReactNode;
   title?: string;
   children?: ReactNode; // if present, means subactions
+  selected?: boolean;
   onClick?: (event: MouseEvent) => void;
 };
 
@@ -38,14 +40,19 @@ export function Indicator({ children }: IndicatorProps) {
   );
 }
 
-export function Subaction({ icon, title, children, onClick }: SubactionProps) {
+export function Subaction({
+  icon,
+  title,
+  children,
+  selected,
+  onClick,
+}: SubactionProps) {
   const handleClick = (e: MouseEvent) => {
     e.preventDefault();
     onClick?.(e);
   };
-
   return (
-    <li>
+    <li className={selected ? 'selected' : ''}>
       <a
         href="#"
         role="menuitem"
@@ -115,7 +122,7 @@ export function Actions({ children }: ActionsProps) {
             return child;
           }
           return (
-            <li>
+            <li className={child.props.selected ? 'selected' : ''}>
               <a
                 href="#"
                 role="menuitem"

@@ -4,11 +4,11 @@
 
 `#bookmark` `#todo/code`
 
-* [x] Publish the documentation website on GitHub Pages
-* [ ] Speed up medias conversion using goroutines
-* [ ] Add an additional command `nt-reference` to manage references using Zotero [[#Anki Support]]
-* [ ] Add an additional command `nt-anki` to import/export flashcards
-* [ ] Reflect on using GitHub as a remote
+* [x] Publish the documentation website on GitHub Pages 📝 ❗ `#must-have` 😍
+* [ ] Speed up medias conversion using goroutines ❓ 💪 `#could-have`
+* [ ] Add an additional command `nt-reference` to manage references using Zotero [[#Anki Support]] `#should-have`
+* [ ] Add an additional command `nt-anki` to import/export flashcards ⏸️ `#could-have`
+* [ ] Reflect on using GitHub as a remote ❓ ⬇️
 
 
 ## Note: Repository
@@ -22,12 +22,12 @@
 ## Features
 
 
-### Note: Anki Support
+### Feature: Anki Support
 
 Provide a CLI to create a Markdown file from a Anki `.apkg` file. Maybe provide the inverse operation (not indispensable to get started as the main motivation is to migrate from Anki).
 
 
-### Note: GitHub as Remote
+### Feature: GitHub as Remote
 
 The idea would be to use another GitHub repository to store the objects (`.nt/refs/origin/.git`).
 
@@ -39,8 +39,8 @@ The main motivation is to avoid relying on a S3 storage solution (which is rarel
 ## Note: Note-Taking Systems
 
 * File-Based Solutions
-  * [Obsidian](https://obsidian.md/)
-  * [Foam](https://github.com/foambubble/foam)
+  * [Obsidian](https://obsidian.md/) ★★★★ `#oss`
+  * [Foam](https://github.com/foambubble/foam) ★★★ `#oss`
 * Cloud-Based Services
-  * [Notion](https://www.notion.so/)
-  * [Roam](https://roamresearch.com/)
+  * [Notion](https://www.notion.so/) ★★
+  * [Roam](https://roamresearch.com/) ★★
