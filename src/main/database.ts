@@ -547,7 +547,10 @@ export default class DatabaseManager {
     });
   }
 
-  async findByWikilink(repositorySlug: string, wikilink: string): Promise<Model.Note> {
+  async findByWikilink(
+    repositorySlug: string,
+    wikilink: string,
+  ): Promise<Model.Note> {
     const datasourceName = repositorySlug;
     const db = this.datasources.get(datasourceName);
     if (!db) {
@@ -1068,7 +1071,7 @@ export default class DatabaseManager {
       content: row.content,
       body: row.body,
       comment: row.comment,
-      items: row.items ? JSON.parse(row.items) as Model.Items: undefined,
+      items: row.items ? (JSON.parse(row.items) as Model.Items) : undefined,
       medias: [],
     };
   }
