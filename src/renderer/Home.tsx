@@ -3,7 +3,9 @@ import DailyQuote from './DailyQuote';
 import Main from './Main';
 
 export default function Home() {
-  const [showDailyQuote, setShowDailyQuote] = useState(true);
+  const [showDailyQuote, setShowDailyQuote] = useState(
+    process.env.NT_SKIP_DAILY_QUOTE !== 'true',
+  );
   return (
     <>
       {showDailyQuote && (

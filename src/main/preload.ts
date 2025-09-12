@@ -30,7 +30,8 @@ const electronHandler = {
   // Viewer
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
-  findByWikilink: (repositorySlug: string, wikilink: string) => ipcRenderer.invoke('find-by-wikilink', repositorySlug, wikilink),
+  findByWikilink: (repositorySlug: string, wikilink: string) =>
+    ipcRenderer.invoke('find-by-wikilink', repositorySlug, wikilink),
   search: (query: Query) => ipcRenderer.invoke('search', query),
   msearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
   listNotesInFile: (repositorySlug: string, filePath: string) =>
