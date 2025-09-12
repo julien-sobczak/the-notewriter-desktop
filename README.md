@@ -23,7 +23,7 @@ Start the app in the `dev` environment:
 
 ```bash
 npm run fixtures # Failed randomly. Rerun. Root cause still not found.
-env NT_HOME=$PWD/fixtures npm run start
+env NT_SKIP_DAILY_QUOTE=true NT_HOME=$PWD/fixtures npm run start
 ```
 
 ## Packaging for Production
