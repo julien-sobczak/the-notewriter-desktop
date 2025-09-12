@@ -167,19 +167,12 @@ ipcMain.handle('list-gotos', async (_event, repositorySlugs: string[]) => {
   return gotos;
 });
 
-ipcMain.handle(
-  'find-by-wikilink',
-  async (_event, repositorySlug: string, wikilink: string) => {
-    console.debug(
-      `Finding note from wikilink ${wikilink} in repository ${repositorySlug}`,
-    );
-    const result = await db.findByWikilink(repositorySlug, wikilink);
-    console.debug(
-      `Found note for wikilink ${wikilink} in repository ${repositorySlug}`,
-    );
-    return result;
-  },
-);
+ipcMain.handle('find-by-wikilink', async (_event, repositorySlug: string, wikilink: string) => {
+  console.debug(`Finding note from wikilink ${wikilink} in repository ${repositorySlug}`);
+  const result = await db.findByWikilink(repositorySlug, wikilink);
+  console.debug(`Found note for wikilink ${wikilink} in repository ${repositorySlug}`);
+  return result;
+});
 ipcMain.handle('find', async (_event, noteRef: NoteRef) => {
   console.debug(`Finding note from ref ${noteRef.oid}`);
   const result = await db.find(noteRef);
@@ -382,9 +375,7 @@ ipcMain.handle(
     const startTime = Date.now();
 
     return new Promise((resolve) => {
-      console.log(
-        `Executing hooks for ${note.wikilink} from ${note.repositoryPath}...`,
-      );
+      console.log(`Executing hooks for ${note.wikilink} from ${note.repositoryPath}...`);
       const subprocess = spawn('nt', ['run-hook', '--vvv', note.wikilink], {
         cwd: note.repositoryPath,
         env: {
