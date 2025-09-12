@@ -4,7 +4,7 @@ import Main from './Main';
 
 export default function Home() {
   const [showDailyQuote, setShowDailyQuote] = useState(
-    process.env.NT_SKIP_DAILY_QUOTE !== 'true',
+    window.electron.env.NT_SKIP_DAILY_QUOTE !== 'true',
   );
   return (
     <>
