@@ -238,6 +238,18 @@ ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
   return statistics;
 });
 
+ipcMain.handle(
+  'get-reminders-and-memories',
+  async (_event, repositorySlugs: string[]) => {
+    console.debug(`Getting reminders and memories for ${repositorySlugs}`);
+    const result = await db.getRemindersAndMemories(repositorySlugs);
+    console.debug(
+      `Found ${result.reminders.length} reminders and ${result.memories.length} memories`,
+    );
+    return result;
+  },
+);
+
 ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
   console.debug(`Listing decks for repositories ${repositorySlugs}`);
   const decks: Deck[] = [];

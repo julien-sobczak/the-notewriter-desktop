@@ -301,6 +301,44 @@ export interface Flashcard {
   settings: { [name: string]: any };
 }
 
+export interface Reminder {
+  oid: string;
+  fileOid: string;
+  noteOid: string;
+
+  // Enriched information about the repository where the note comes from
+  repositorySlug: string;
+  repositoryPath: string;
+
+  // The relative path of the file containing the note (denormalized field)
+  relativePath: string;
+
+  // Description
+  description: string;
+
+  // Tag value containing the formula to determine the next occurrence
+  tag: string;
+
+  // Timestamps to track progress
+  lastPerformedAt?: string;
+  nextPerformedAt: string;
+}
+
+export interface Memory {
+  oid: string;
+  noteOid: string;
+
+  // Enriched information about the repository where the note comes from
+  repositorySlug: string;
+  repositoryPath: string;
+
+  // The relative path of the file containing the note (denormalized field)
+  relativePath: string;
+
+  text: string;
+  occurredAt: string;
+}
+
 export interface Relation {
   sourceOID: string;
   sourceKind: string;

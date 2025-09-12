@@ -48,6 +48,9 @@ const electronHandler = {
   // Statistics
   getStatistics: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-statistics', repositorySlugs),
+  // Reminders and Memories
+  getRemindersAndMemories: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-reminders-and-memories', repositorySlugs),
   // Settings
   getRepositoryConfig: (repositorySlug: string) =>
     ipcRenderer.invoke('get-repository-config', repositorySlug),

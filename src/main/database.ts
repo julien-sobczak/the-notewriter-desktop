@@ -1032,6 +1032,144 @@ export default class DatabaseManager {
     });
   }
 
+  /* Reminders and Memories Management */
+
+  async getRemindersAndMemories(
+    repositorySlugs: string[],
+  ): Promise<{ reminders: Model.Reminder[]; memories: Model.Memory[] }> {
+    const repositoryResults: Promise<{
+      reminders: Model.Reminder[];
+      memories: Model.Memory[];
+    }>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        repositoryResults.push(
+          new Promise<{
+            reminders: Model.Reminder[];
+            memories: Model.Memory[];
+          }>((resolve, reject) => {
+            const now = new Date();
+            const sevenDaysFromNow = new Date(
+              now.getTime() + 7 * 24 * 60 * 60 * 1000,
+            );
+
+            // Get reminders expiring within 7 days
+            const remindersSql = `
+              SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
+              FROM reminder
+              WHERE next_performed_at <= '${sevenDaysFromNow.toISOString()}'
+              ORDER BY next_performed_at ASC
+            `;
+
+            // Get all memories, ordered by most recent first
+            const memoriesSql = `
+              SELECT oid, note_oid, relative_path, text, occurred_at
+              FROM memory
+              ORDER BY occurred_at DESC
+            `;
+
+            // Execute both queries
+            db.all(remindersSql, (err: any, reminderRows: any) => {
+              if (err) {
+                console.log('Error while fetching reminders', err);
+                reject(err);
+                return;
+              }
+
+              db.all(memoriesSql, (err2: any, memoryRows: any) => {
+                if (err2) {
+                  console.log('Error while fetching memories', err2);
+                  reject(err2);
+                  return;
+                }
+
+                const reminders: Model.Reminder[] = [];
+                const memories: Model.Memory[] = [];
+
+                // Convert reminder rows
+                for (let i = 0; i < reminderRows.length; i++) {
+                  const row = reminderRows[i];
+                  reminders.push({
+                    oid: row.oid,
+                    fileOid: row.file_oid,
+                    noteOid: row.note_oid,
+                    repositorySlug: datasourceName,
+                    repositoryPath: this.#getRepositoryPath(datasourceName),
+                    relativePath: row.relative_path,
+                    description: row.description,
+                    tag: row.tag,
+                    lastPerformedAt: row.last_performed_at,
+                    nextPerformedAt: row.next_performed_at,
+                  });
+                }
+
+                // Convert memory rows
+                for (let i = 0; i < memoryRows.length; i++) {
+                  const row = memoryRows[i];
+                  memories.push({
+                    oid: row.oid,
+                    noteOid: row.note_oid,
+                    repositorySlug: datasourceName,
+                    repositoryPath: this.#getRepositoryPath(datasourceName),
+                    relativePath: row.relative_path,
+                    text: row.text,
+                    occurredAt: row.occurred_at,
+                  });
+                }
+
+                resolve({ reminders, memories });
+              });
+            });
+          }),
+        );
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      return new Promise<{
+        reminders: Model.Reminder[];
+        memories: Model.Memory[];
+      }>((resolve) => {
+        const allReminders: Model.Reminder[] = [];
+        const allMemories: Model.Memory[] = [];
+
+        for (const repositoryResult of allRepositoryResults) {
+          allReminders.push(...repositoryResult.reminders);
+          allMemories.push(...repositoryResult.memories);
+        }
+
+        // Sort reminders by next_performed_at (ascending)
+        allReminders.sort((a, b) => {
+          return (
+            new Date(a.nextPerformedAt).getTime() -
+            new Date(b.nextPerformedAt).getTime()
+          );
+        });
+
+        // Sort memories by occurred_at (descending - most recent first)
+        allMemories.sort((a, b) => {
+          return (
+            new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+          );
+        });
+
+        resolve({
+          reminders: allReminders,
+          memories: allMemories,
+        });
+      });
+    });
+  }
+
   /* Converters */
 
   #rowToFile(row: any, repositorySlug: string): Model.File {
