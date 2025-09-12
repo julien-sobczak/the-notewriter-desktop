@@ -12,6 +12,11 @@ import {
 } from '../shared/Model';
 
 const electronHandler = {
+  // Expose some environment variables
+  env: {
+    NT_SKIP_DAILY_QUOTE: process.env.NT_SKIP_DAILY_QUOTE,
+  },
+
   // Main to renderer
   onConfigurationLoaded: (callback: any) =>
     ipcRenderer.on('configuration-loaded', (_event, value) => callback(value)),
