@@ -20,6 +20,8 @@ import {
   Star as BookmarkIcon,
   XCircle as CancelIcon,
   CheckCircle as OpenIcon,
+  Bell,
+  BellRinging,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Command } from 'cmdk';
@@ -49,7 +51,7 @@ import ZenMode from './ZenMode';
 import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
 import Journal from './Journal';
-import Reminders from './Reminders';
+import Events from './EventsPopup';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
 
@@ -541,13 +543,6 @@ function CommandMenu({
             <Command.Separator />
 
             {!page && (
-              <Command.Item
-                onSelect={() => handleActivitySelected('reminders')}
-              >
-                Show reminders
-              </Command.Item>
-            )}
-            {!page && (
               <Command.Item onSelect={() => handleActivitySelected('stats')}>
                 Show statistics
               </Command.Item>
@@ -642,10 +637,6 @@ function Main() {
   // Files
   const [files, setFiles] = useState<File[]>([]);
 
-  // Reminders and Memories
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [memories, setMemories] = useState<Memory[]>([]);
-
   // Selection
   const [selectedFile, setSelectedFile] = useState<File | undefined>();
   const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>();
@@ -664,35 +655,6 @@ function Main() {
       setFiles(results);
     };
     listFiles();
-  }, [staticConfig.repositories]);
-
-  useEffect(() => {
-    // Load reminders and memories for the count display
-    const selectedRepositorySlugs = staticConfig.repositories
-      .filter((repository: RepositoryRefConfig) => repository.selected)
-      .map((repository: RepositoryRefConfig) => repository.slug);
-
-    if (selectedRepositorySlugs.length === 0) {
-      setReminders([]);
-      setMemories([]);
-      return;
-    }
-
-    const loadRemindersAndMemories = async () => {
-      try {
-        const result = await window.electron.getRemindersAndMemories(
-          selectedRepositorySlugs,
-        );
-        setReminders(result.reminders);
-        setMemories(result.memories);
-      } catch (error) {
-        console.error('Error loading reminders and memories:', error);
-        setReminders([]);
-        setMemories([]);
-      }
-    };
-
-    loadRemindersAndMemories();
   }, [staticConfig.repositories]);
 
   const handleSearch = (event: any) => {
@@ -875,6 +837,7 @@ function Main() {
               ),
             )}
           </nav>
+          <Events />
         </form>
       </header>
 
@@ -922,23 +885,6 @@ function Main() {
               </li>
             ))}
           </ul>
-          <div className="RemindersMemoriesCount">
-            <button
-              type="button"
-              className={classNames({
-                'count-button': true,
-                urgent: reminders.some((reminder) => {
-                  const nextDate = new Date(reminder.nextPerformedAt);
-                  const now = new Date();
-                  return nextDate <= now;
-                }),
-              })}
-              onClick={() => switchActivity('reminders')}
-              title={`${reminders.length} reminders, ${memories.length} memories`}
-            >
-              {reminders.length + memories.length}
-            </button>
-          </div>
         </div>
 
         {showSearchResults && (
@@ -1028,9 +974,6 @@ function Main() {
 
         {/* Stats */}
         {activity === 'stats' && <Stats />}
-
-        {/* Reminders */}
-        {activity === 'reminders' && <Reminders />}
       </div>
     </div>
   );

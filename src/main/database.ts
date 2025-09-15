@@ -1034,13 +1034,16 @@ export default class DatabaseManager {
 
   /* Reminders and Memories Management */
 
-  async getRemindersAndMemories(
+  async getPendingReminders(
     repositorySlugs: string[],
-  ): Promise<{ reminders: Model.Reminder[]; memories: Model.Memory[] }> {
-    const repositoryResults: Promise<{
-      reminders: Model.Reminder[];
-      memories: Model.Memory[];
-    }>[] = [];
+    date?: Date,
+  ): Promise<Model.Reminder[]> {
+    const targetDate = date || new Date();
+    const sevenDaysFromTarget = new Date(
+      targetDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+    );
+
+    const repositoryResults: Promise<Model.Reminder[]>[] = [];
 
     for (const datasourceName of this.datasources.keys()) {
       if (
@@ -1053,31 +1056,15 @@ export default class DatabaseManager {
         }
 
         repositoryResults.push(
-          new Promise<{
-            reminders: Model.Reminder[];
-            memories: Model.Memory[];
-          }>((resolve, reject) => {
-            const now = new Date();
-            const sevenDaysFromNow = new Date(
-              now.getTime() + 7 * 24 * 60 * 60 * 1000,
-            );
-
+          new Promise<Model.Reminder[]>((resolve, reject) => {
             // Get reminders expiring within 7 days
             const remindersSql = `
               SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
               FROM reminder
-              WHERE next_performed_at <= '${sevenDaysFromNow.toISOString()}'
+              WHERE next_performed_at <= '${sevenDaysFromTarget.toISOString()}'
               ORDER BY next_performed_at ASC
             `;
 
-            // Get all memories, ordered by most recent first
-            const memoriesSql = `
-              SELECT oid, note_oid, relative_path, text, occurred_at
-              FROM memory
-              ORDER BY occurred_at DESC
-            `;
-
-            // Execute both queries
             db.all(remindersSql, (err: any, reminderRows: any) => {
               if (err) {
                 console.log('Error while fetching reminders', err);
@@ -1085,88 +1072,105 @@ export default class DatabaseManager {
                 return;
               }
 
-              db.all(memoriesSql, (err2: any, memoryRows: any) => {
-                if (err2) {
-                  console.log('Error while fetching memories', err2);
-                  reject(err2);
-                  return;
-                }
+              const reminders = reminderRows.map((row: any) => ({
+                oid: row.oid,
+                fileOid: row.file_oid,
+                noteOid: row.note_oid,
+                relativePath: row.relative_path,
+                description: row.description,
+                tag: row.tag,
+                lastPerformedAt: row.last_performed_at,
+                nextPerformedAt: row.next_performed_at,
+                repositorySlug: datasourceName,
+                repositoryPath: this.#getRepositoryPath(datasourceName),
+              }));
 
-                const reminders: Model.Reminder[] = [];
-                const memories: Model.Memory[] = [];
-
-                // Convert reminder rows
-                for (let i = 0; i < reminderRows.length; i++) {
-                  const row = reminderRows[i];
-                  reminders.push({
-                    oid: row.oid,
-                    fileOid: row.file_oid,
-                    noteOid: row.note_oid,
-                    repositorySlug: datasourceName,
-                    repositoryPath: this.#getRepositoryPath(datasourceName),
-                    relativePath: row.relative_path,
-                    description: row.description,
-                    tag: row.tag,
-                    lastPerformedAt: row.last_performed_at,
-                    nextPerformedAt: row.next_performed_at,
-                  });
-                }
-
-                // Convert memory rows
-                for (let i = 0; i < memoryRows.length; i++) {
-                  const row = memoryRows[i];
-                  memories.push({
-                    oid: row.oid,
-                    noteOid: row.note_oid,
-                    repositorySlug: datasourceName,
-                    repositoryPath: this.#getRepositoryPath(datasourceName),
-                    relativePath: row.relative_path,
-                    text: row.text,
-                    occurredAt: row.occurred_at,
-                  });
-                }
-
-                resolve({ reminders, memories });
-              });
+              resolve(reminders);
             });
           }),
         );
       }
     }
 
-    return Promise.all(repositoryResults).then((allRepositoryResults) => {
-      return new Promise<{
-        reminders: Model.Reminder[];
-        memories: Model.Memory[];
-      }>((resolve) => {
-        const allReminders: Model.Reminder[] = [];
-        const allMemories: Model.Memory[] = [];
+    const results = await Promise.all(repositoryResults);
+    return results.flat().sort((a, b) => {
+      return (
+        new Date(a.nextPerformedAt).getTime() -
+        new Date(b.nextPerformedAt).getTime()
+      );
+    });
+  }
 
-        for (const repositoryResult of allRepositoryResults) {
-          allReminders.push(...repositoryResult.reminders);
-          allMemories.push(...repositoryResult.memories);
+  async getPastMemories(
+    repositorySlugs: string[],
+    date?: Date,
+  ): Promise<Model.Memory[]> {
+    const targetDate = date || new Date();
+    const targetMonth = targetDate.getMonth() + 1; // getMonth() is 0-based
+    const targetDay = targetDate.getDate();
+
+    const repositoryResults: Promise<Model.Memory[]>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
         }
 
-        // Sort reminders by next_performed_at (ascending)
-        allReminders.sort((a, b) => {
-          return (
-            new Date(a.nextPerformedAt).getTime() -
-            new Date(b.nextPerformedAt).getTime()
-          );
-        });
+        repositoryResults.push(
+          new Promise<Model.Memory[]>((resolve, reject) => {
+            // Get memories that occurred almost the same date as today but in previous years (±7 days)
+            const memoriesSql = `
+              SELECT oid, note_oid, relative_path, text, occurred_at
+              FROM memory
+              WHERE 
+                occurred_at <= datetime('now') AND
+                (
+                  (strftime('%m', occurred_at) = '${targetMonth.toString().padStart(2, '0')}' AND 
+                   ABS(strftime('%d', occurred_at) - ${targetDay}) <= 7) OR
+                  (strftime('%m', occurred_at) = '${(targetMonth === 1 ? 12 : targetMonth - 1).toString().padStart(2, '0')}' AND 
+                   strftime('%d', occurred_at) >= ${Math.max(1, targetDay - 7)} AND 
+                   ${targetDay} <= 7) OR
+                  (strftime('%m', occurred_at) = '${(targetMonth === 12 ? 1 : targetMonth + 1).toString().padStart(2, '0')}' AND 
+                   strftime('%d', occurred_at) <= ${Math.min(31, targetDay + 7)} AND 
+                   ${targetDay} >= 24)
+                )
+              ORDER BY occurred_at DESC
+            `;
 
-        // Sort memories by occurred_at (descending - most recent first)
-        allMemories.sort((a, b) => {
-          return (
-            new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
-          );
-        });
+            db.all(memoriesSql, (err: any, memoryRows: any) => {
+              if (err) {
+                console.log('Error while fetching memories', err);
+                reject(err);
+                return;
+              }
 
-        resolve({
-          reminders: allReminders,
-          memories: allMemories,
-        });
-      });
+              const memories = memoryRows.map((row: any) => ({
+                oid: row.oid,
+                noteOid: row.note_oid,
+                relativePath: row.relative_path,
+                text: row.text,
+                occurredAt: row.occurred_at,
+                repositorySlug: datasourceName,
+                repositoryPath: this.#getRepositoryPath(datasourceName),
+              }));
+
+              resolve(memories);
+            });
+          }),
+        );
+      }
+    }
+
+    const results = await Promise.all(repositoryResults);
+    return results.flat().sort((a, b) => {
+      return (
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+      );
     });
   }
 

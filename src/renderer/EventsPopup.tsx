@@ -1,53 +1,40 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { Clock, Calendar, X } from '@phosphor-icons/react';
+import { Clock, Calendar, X, BellSlash, CheckCircle, Bell, BellRinging } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
 import HoveredNote from './HoveredNote';
+import { Actions, Action, Subaction } from './Actions';
 import { Reminder, Memory, Note, NoteRef } from '../shared/Model';
+import { formatDate, formatMemoryDate } from './dateUtils';
 
-interface RemindersAndMemoriesPopupProps {
+interface EventsPopupProps {
   reminders: Reminder[];
   memories: Memory[];
   onClose: () => void;
-  onItemClick: (noteRef: NoteRef) => void;
+  onNoteClick: (noteRef: NoteRef) => void;
+  onSilenceAllReminders: () => void;
+  onCompleteReminder: (reminderOid: string) => void;
 }
 
-function RemindersAndMemoriesPopup({
+function EventsPopup({
   reminders,
   memories,
   onClose,
-  onItemClick,
-}: RemindersAndMemoriesPopupProps) {
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Now';
-    if (diffDays === 1) return 'Tomorrow';
-    if (diffDays === -1) return 'Yesterday';
-    if (diffDays > 0) return `In ${diffDays} days`;
-    if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const formatMemoryDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffYears = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffYears > 0)
-      return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
-    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return 'Today';
-  };
+  onNoteClick,
+  onSilenceAllReminders,
+  onCompleteReminder,
+}: EventsPopupProps) {
 
   return (
     <div className="RemindersMemoriesPopup">
       <div className="PopupHeader">
         <h2>Reminders & Memories</h2>
+        <Actions>
+          <Action
+            icon={<BellSlash size={16} />}
+            title="Silence all reminders"
+            onClick={onSilenceAllReminders}
+          />
+        </Actions>
         <button type="button" onClick={onClose} className="CloseButton">
           <X size={16} />
         </button>
@@ -61,35 +48,41 @@ function RemindersAndMemoriesPopup({
             </h3>
             <div className="ItemsList">
               {reminders.map((reminder) => (
-                <div
-                  key={reminder.oid}
-                  className="ReminderItem"
-                  onClick={() =>
-                    onItemClick({
-                      oid: reminder.noteOid,
-                      repositorySlug: reminder.repositorySlug,
-                    })
-                  }
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      onItemClick({
-                        oid: reminder.noteOid,
-                        repositorySlug: reminder.repositorySlug,
-                      });
-                    }
-                  }}
-                >
+                <div key={reminder.oid} className="ReminderItem">
                   <div className="ItemTime">
                     {formatDate(reminder.nextPerformedAt)}
                   </div>
                   <div className="ItemContent">
-                    <div className="ItemDescription">
+                    <div
+                      className="ItemDescription"
+                      onClick={() =>
+                        onNoteClick({
+                          oid: reminder.noteOid,
+                          repositorySlug: reminder.repositorySlug,
+                        })
+                      }
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          onNoteClick({
+                            oid: reminder.noteOid,
+                            repositorySlug: reminder.repositorySlug,
+                          });
+                        }
+                      }}
+                    >
                       {reminder.description}
                     </div>
-                    <div className="ItemPath">{reminder.relativePath}</div>
                   </div>
+                  <button
+                    type="button"
+                    className="CompleteButton"
+                    onClick={() => onCompleteReminder(reminder.oid)}
+                    title="Complete reminder"
+                  >
+                    <CheckCircle size={16} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -107,7 +100,7 @@ function RemindersAndMemoriesPopup({
                   key={memory.oid}
                   className="MemoryItem"
                   onClick={() =>
-                    onItemClick({
+                    onNoteClick({
                       oid: memory.noteOid,
                       repositorySlug: memory.repositorySlug,
                     })
@@ -116,7 +109,7 @@ function RemindersAndMemoriesPopup({
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      onItemClick({
+                      onNoteClick({
                         oid: memory.noteOid,
                         repositorySlug: memory.repositorySlug,
                       });
@@ -128,7 +121,6 @@ function RemindersAndMemoriesPopup({
                   </div>
                   <div className="ItemContent">
                     <div className="ItemText">{memory.text}</div>
-                    <div className="ItemPath">{memory.relativePath}</div>
                   </div>
                 </div>
               ))}
@@ -146,7 +138,7 @@ function RemindersAndMemoriesPopup({
   );
 }
 
-function Reminders() {
+function Events() {
   const { config } = useContext(ConfigContext);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -168,11 +160,12 @@ function Reminders() {
 
     setLoading(true);
     try {
-      const result = await window.electron.getRemindersAndMemories(
-        selectedRepositorySlugs,
-      );
-      setReminders(result.reminders);
-      setMemories(result.memories);
+      const [remindersResult, memoriesResult] = await Promise.all([
+        window.electron.getPendingReminders(selectedRepositorySlugs),
+        window.electron.getPastMemories(selectedRepositorySlugs),
+      ]);
+      setReminders(remindersResult);
+      setMemories(memoriesResult);
     } catch (error) {
       console.error('Error loading reminders and memories:', error);
       setReminders([]);
@@ -190,7 +183,7 @@ function Reminders() {
     setShowPopup(true);
   };
 
-  const handleItemClick = async (noteRef: NoteRef) => {
+  const handleNoteClick = async (noteRef: NoteRef) => {
     try {
       const note = await window.electron.find(noteRef);
       setHoveredNote(note);
@@ -199,18 +192,39 @@ function Reminders() {
     }
   };
 
+  const handleSilenceAllReminders = async () => {
+    try {
+      const reminderOids = reminders.map((r) => r.oid);
+      await window.electron.completeReminders(reminderOids);
+      await loadRemindersAndMemories(); // Reload data
+    } catch (error) {
+      console.error('Error silencing reminders:', error);
+    }
+  };
+
+  const handleCompleteReminder = async (reminderOid: string) => {
+    try {
+      await window.electron.completeReminders([reminderOid]);
+      await loadRemindersAndMemories(); // Reload data
+    } catch (error) {
+      console.error('Error completing reminder:', error);
+    }
+  };
+
   const totalCount = reminders.length + memories.length;
-  const hasPendingReminders = reminders.some((reminder) => {
+  const hasPastReminders = reminders.some((reminder) => {
     const nextDate = new Date(reminder.nextPerformedAt);
     const now = new Date();
-    return nextDate <= now;
+    return nextDate < now;
   });
 
+  const BellIcon = hasPastReminders ? BellRinging : Bell;
+
   return (
-    <div className="Reminders">
-      {/* Count display for the left menu */}
+    <div className="Events">
+      {/* Count display for the top bar */}
       <div
-        className={`RemindersCount ${hasPendingReminders ? 'urgent' : ''}`}
+        className={`EventsCount ${hasPastReminders ? 'urgent' : ''}`}
         onClick={handleCountClick}
         role="button"
         tabIndex={0}
@@ -221,16 +235,19 @@ function Reminders() {
         }}
         title={`${reminders.length} reminders, ${memories.length} memories`}
       >
+        <BellIcon size={16} />
         {loading ? '...' : totalCount}
       </div>
 
       {/* Popup */}
       {showPopup && (
-        <RemindersAndMemoriesPopup
+        <EventsPopup
           reminders={reminders}
           memories={memories}
           onClose={() => setShowPopup(false)}
-          onItemClick={handleItemClick}
+          onNoteClick={handleNoteClick}
+          onSilenceAllReminders={handleSilenceAllReminders}
+          onCompleteReminder={handleCompleteReminder}
         />
       )}
 
@@ -242,4 +259,4 @@ function Reminders() {
   );
 }
 
-export default Reminders;
+export default Events;

@@ -49,8 +49,12 @@ const electronHandler = {
   getStatistics: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-statistics', repositorySlugs),
   // Reminders and Memories
-  getRemindersAndMemories: (repositorySlugs: string[]) =>
-    ipcRenderer.invoke('get-reminders-and-memories', repositorySlugs),
+  getPendingReminders: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-pending-reminders', repositorySlugs),
+  getPastMemories: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-past-memories', repositorySlugs),
+  completeReminders: (reminderOids: string[]) =>
+    ipcRenderer.invoke('complete-reminders', reminderOids),
   // Settings
   getRepositoryConfig: (repositorySlug: string) =>
     ipcRenderer.invoke('get-repository-config', repositorySlug),

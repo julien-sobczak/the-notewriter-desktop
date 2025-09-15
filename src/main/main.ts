@@ -239,14 +239,45 @@ ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
 });
 
 ipcMain.handle(
-  'get-reminders-and-memories',
+  'get-pending-reminders',
   async (_event, repositorySlugs: string[]) => {
-    console.debug(`Getting reminders and memories for ${repositorySlugs}`);
-    const result = await db.getRemindersAndMemories(repositorySlugs);
-    console.debug(
-      `Found ${result.reminders.length} reminders and ${result.memories.length} memories`,
-    );
+    console.debug(`Getting pending reminders for ${repositorySlugs}`);
+    const result = await db.getPendingReminders(repositorySlugs);
+    console.debug(`Found ${result.length} pending reminders`);
     return result;
+  },
+);
+
+ipcMain.handle(
+  'get-past-memories',
+  async (_event, repositorySlugs: string[]) => {
+    console.debug(`Getting past memories for ${repositorySlugs}`);
+    const result = await db.getPastMemories(repositorySlugs);
+    console.debug(`Found ${result.length} past memories`);
+    return result;
+  },
+);
+
+ipcMain.handle(
+  'complete-reminders',
+  async (_event, reminderOids: string[]) => {
+    console.debug(`Completing reminders: ${reminderOids}`);
+    
+    // First, get all reminder details to get their repository slugs
+    const allReminders = await db.getPendingReminders([]);
+    const remindersToComplete = allReminders.filter(r => reminderOids.includes(r.oid));
+    
+    // Complete each reminder by appending the operation to WAL
+    for (const reminder of remindersToComplete) {
+      op.appendOperationToWal(reminder.repositorySlug, {
+        oid: generateOid(),
+        object_oid: reminder.oid,
+        name: 'complete-reminder',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    console.debug(`Completed ${remindersToComplete.length} reminders`);
   },
 );
 
