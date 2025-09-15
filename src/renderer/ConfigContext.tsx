@@ -5,6 +5,7 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   RepositoryConfig,
+  RepositoryRefConfig,
 } from '../shared/Model';
 import configReducer from './configReducer';
 
@@ -28,6 +29,15 @@ const initialState: ConfigContextType = {
   },
   repositories: {},
 };
+
+// Utility function to get selected repository slugs
+export function getSelectedRepositorySlugs(
+  staticConfig: EditorStaticConfig,
+): string[] {
+  return staticConfig.repositories
+    .filter((repository: RepositoryRefConfig) => repository.selected)
+    .map((repository: RepositoryRefConfig) => repository.slug);
+}
 
 export const ConfigContext = createContext<{
   config: ConfigContextType;

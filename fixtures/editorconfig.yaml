@@ -19,6 +19,16 @@ inspirations:
   query: "path:references/art @type:Artwork"
   repositories: [life]
 
+planner:
+  projects:
+  - name: "Side Projects"
+    query: "path:projects @type:Synopsis"
+    repositories: [life]
+  tasks:
+  - name: "Personal Backlog"
+    query: "path:projects/ @type:Todo"
+    repositories: [life]
+
 zenMode:
   queries:
   - query: "path:references @type:Quote"
