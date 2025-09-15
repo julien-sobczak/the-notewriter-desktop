@@ -1,4 +1,4 @@
-import { formatDate, formatMemoryDate } from '../renderer/dateUtils';
+import { toHumanReadableDate } from '../renderer/dateUtils';
 
 // Mock the current date to have consistent tests
 const mockCurrentDate = new Date('2023-12-15T10:00:00.000Z');
@@ -24,56 +24,59 @@ afterEach(() => {
 
 const originalDate = Date;
 
-describe('formatDate', () => {
-  it('should return "Now" for today', () => {
+describe('toHumanReadableDate', () => {
+  it('should return "Today" for today', () => {
     const today = '2023-12-15T10:00:00.000Z';
-    expect(formatDate(today)).toBe('Now');
+    expect(toHumanReadableDate(today)).toBe('Today');
   });
 
   it('should return "Tomorrow" for tomorrow', () => {
     const tomorrow = '2023-12-16T10:00:00.000Z';
-    expect(formatDate(tomorrow)).toBe('Tomorrow');
+    expect(toHumanReadableDate(tomorrow)).toBe('Tomorrow');
   });
 
   it('should return "Yesterday" for yesterday', () => {
     const yesterday = '2023-12-14T10:00:00.000Z';
-    expect(formatDate(yesterday)).toBe('Yesterday');
+    expect(toHumanReadableDate(yesterday)).toBe('Yesterday');
   });
 
-  it('should return "In X days" for future dates', () => {
+  it('should return "in X days" for future dates within a week', () => {
     const future = '2023-12-18T10:00:00.000Z';
-    expect(formatDate(future)).toBe('In 3 days');
+    expect(toHumanReadableDate(future)).toBe('in 3 days');
   });
 
-  it('should return "X days ago" for past dates', () => {
+  it('should return "in a week" for future dates 7 days away', () => {
+    const future = '2023-12-22T10:00:00.000Z';
+    expect(toHumanReadableDate(future)).toBe('in a week');
+  });
+
+  it('should return "in a month" for future dates about a month away', () => {
+    const future = '2024-01-15T10:00:00.000Z';
+    expect(toHumanReadableDate(future)).toBe('in a month');
+  });
+
+  it('should return "X days ago" for past dates within a week', () => {
     const past = '2023-12-12T10:00:00.000Z';
-    expect(formatDate(past)).toBe('3 days ago');
-  });
-});
-
-describe('formatMemoryDate', () => {
-  it('should return "Today" for today', () => {
-    const today = '2023-12-15T10:00:00.000Z';
-    expect(formatMemoryDate(today)).toBe('Today');
+    expect(toHumanReadableDate(past)).toBe('3 days ago');
   });
 
-  it('should return "X days ago" for recent past dates', () => {
-    const threeDaysAgo = '2023-12-12T10:00:00.000Z';
-    expect(formatMemoryDate(threeDaysAgo)).toBe('3 days ago');
+  it('should return "1 week ago" for past dates one week ago', () => {
+    const past = '2023-12-08T10:00:00.000Z';
+    expect(toHumanReadableDate(past)).toBe('1 week ago');
   });
 
-  it('should return "1 day ago" for yesterday (singular)', () => {
-    const yesterday = '2023-12-14T10:00:00.000Z';
-    expect(formatMemoryDate(yesterday)).toBe('1 day ago');
+  it('should return "1 month ago" for past dates about a month ago', () => {
+    const past = '2023-11-15T10:00:00.000Z';
+    expect(toHumanReadableDate(past)).toBe('1 month ago');
   });
 
-  it('should return "1 year ago" for one year ago (singular)', () => {
-    const oneYearAgo = '2022-12-15T10:00:00.000Z';
-    expect(formatMemoryDate(oneYearAgo)).toBe('1 year ago');
+  it('should return "1 year ago" for past dates about a year ago', () => {
+    const past = '2022-12-15T10:00:00.000Z';
+    expect(toHumanReadableDate(past)).toBe('1 year ago');
   });
 
-  it('should return "X years ago" for multiple years ago (plural)', () => {
-    const twoYearsAgo = '2021-12-15T10:00:00.000Z';
-    expect(formatMemoryDate(twoYearsAgo)).toBe('2 years ago');
+  it('should return "2 years ago" for past dates multiple years ago', () => {
+    const past = '2021-12-15T10:00:00.000Z';
+    expect(toHumanReadableDate(past)).toBe('2 years ago');
   });
 });

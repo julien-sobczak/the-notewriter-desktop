@@ -41,6 +41,8 @@ import {
   EditorDynamicConfig,
   Note,
   CommandExecution,
+  Reminder,
+  determineNextReminder,
 } from '../shared/Model';
 import OperationsManager from './operations';
 import { generateOid } from './oid';
@@ -267,14 +269,32 @@ ipcMain.handle(
     const allReminders = await db.getPendingReminders([]);
     const remindersToComplete = allReminders.filter(r => reminderOids.includes(r.oid));
     
-    // Complete each reminder by appending the operation to WAL
+    const lastPerformedAt = new Date();
+    
+    // Complete each reminder by appending the operation to WAL and updating database
     for (const reminder of remindersToComplete) {
+      // Append operation to WAL
       op.appendOperationToWal(reminder.repositorySlug, {
         oid: generateOid(),
         object_oid: reminder.oid,
         name: 'complete-reminder',
-        timestamp: new Date().toISOString()
+        timestamp: lastPerformedAt.toISOString()
       });
+
+      // Update the SQLite database immediately.
+      // Avoid having to load the pack files when the WAL will be flushed
+      // (and useful as the reminders may be rescheduled before the next flush).
+      try {
+        const nextPerformedAt = determineNextReminder(reminder, lastPerformedAt);
+        const updatedReminder = await db.updateReminder(reminder.repositorySlug, reminder.oid, nextPerformedAt);
+        console.debug(
+          `Reminder ${updatedReminder.oid} updated with new date:`,
+          updatedReminder.nextPerformedAt,
+        );
+      } catch (error) {
+        console.error(`Error updating reminder ${reminder.oid}:`, error);
+        // Continue processing other reminders even if one fails
+      }
     }
     
     console.debug(`Completed ${remindersToComplete.length} reminders`);

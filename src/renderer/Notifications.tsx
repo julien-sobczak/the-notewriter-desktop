@@ -4,9 +4,9 @@ import { ConfigContext } from './ConfigContext';
 import HoveredNote from './HoveredNote';
 import { Actions, Action, Subaction } from './Actions';
 import { Reminder, Memory, Note, NoteRef } from '../shared/Model';
-import { formatDate, formatMemoryDate } from './dateUtils';
+import { toHumanReadableDate } from './dateUtils';
 
-interface EventsPopupProps {
+interface NotificationPopupProps {
   reminders: Reminder[];
   memories: Memory[];
   onClose: () => void;
@@ -15,42 +15,41 @@ interface EventsPopupProps {
   onCompleteReminder: (reminderOid: string) => void;
 }
 
-function EventsPopup({
+function NotificationsPopup({
   reminders,
   memories,
   onClose,
   onNoteClick,
   onSilenceAllReminders,
   onCompleteReminder,
-}: EventsPopupProps) {
+}: NotificationPopupProps) {
 
   return (
-    <div className="RemindersMemoriesPopup">
-      <div className="PopupHeader">
-        <h2>Reminders & Memories</h2>
+    <div className="NotificationsPopup">
+      <header>
         <Actions>
           <Action
-            icon={<BellSlash size={16} />}
+            icon={<BellSlash />}
             title="Silence all reminders"
             onClick={onSilenceAllReminders}
           />
         </Actions>
         <button type="button" onClick={onClose} className="CloseButton">
-          <X size={16} />
+          <X />
         </button>
-      </div>
+      </header>
 
-      <div className="PopupContent">
+      <section>
         {reminders.length > 0 && (
           <div className="RemindersSection">
             <h3>
-              <Clock size={16} /> Reminders
+              <Clock /> Reminders
             </h3>
             <div className="ItemsList">
               {reminders.map((reminder) => (
                 <div key={reminder.oid} className="ReminderItem">
                   <div className="ItemTime">
-                    {formatDate(reminder.nextPerformedAt)}
+                    {toHumanReadableDate(reminder.nextPerformedAt)}
                   </div>
                   <div className="ItemContent">
                     <div
@@ -75,14 +74,11 @@ function EventsPopup({
                       {reminder.description}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="CompleteButton"
-                    onClick={() => onCompleteReminder(reminder.oid)}
+                  <Action
+                    icon={<CheckCircle />}
                     title="Complete reminder"
-                  >
-                    <CheckCircle size={16} />
-                  </button>
+                    onClick={() => onCompleteReminder(reminder.oid)}
+                  />
                 </div>
               ))}
             </div>
@@ -92,7 +88,7 @@ function EventsPopup({
         {memories.length > 0 && (
           <div className="MemoriesSection">
             <h3>
-              <Calendar size={16} /> Memories
+              <Calendar /> Memories
             </h3>
             <div className="ItemsList">
               {memories.map((memory) => (
@@ -117,7 +113,7 @@ function EventsPopup({
                   }}
                 >
                   <div className="ItemTime">
-                    {formatMemoryDate(memory.occurredAt)}
+                    {toHumanReadableDate(memory.occurredAt)}
                   </div>
                   <div className="ItemContent">
                     <div className="ItemText">{memory.text}</div>
@@ -133,12 +129,12 @@ function EventsPopup({
             <p>No reminders or memories found.</p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
 
-function Events() {
+function Notifications() {
   const { config } = useContext(ConfigContext);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -221,10 +217,10 @@ function Events() {
   const BellIcon = hasPastReminders ? BellRinging : Bell;
 
   return (
-    <div className="Events">
+    <div className="NotificationsStatus">
       {/* Count display for the top bar */}
       <div
-        className={`EventsCount ${hasPastReminders ? 'urgent' : ''}`}
+        className={`NotificationsCount ${hasPastReminders ? 'urgent' : ''}`}
         onClick={handleCountClick}
         role="button"
         tabIndex={0}
@@ -235,13 +231,13 @@ function Events() {
         }}
         title={`${reminders.length} reminders, ${memories.length} memories`}
       >
-        <BellIcon size={16} />
+        <BellIcon />
         {loading ? '...' : totalCount}
       </div>
 
       {/* Popup */}
       {showPopup && (
-        <EventsPopup
+        <NotificationsPopup
           reminders={reminders}
           memories={memories}
           onClose={() => setShowPopup(false)}
@@ -259,4 +255,4 @@ function Events() {
   );
 }
 
-export default Events;
+export default Notifications;

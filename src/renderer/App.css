@@ -1091,10 +1091,10 @@ ul.categories li {
   padding: 0.5em;
 }
 
-/* Events (Reminders and Memories) */
+/* Notifications (Reminders and Memories) */
 
-.Events {
-  .EventsCount {
+.NotificationsStatus {
+  .NotificationsCount {
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -1115,7 +1115,7 @@ ul.categories li {
   }
 }
 
-.RemindersMemoriesPopup {
+.NotificationsPopup {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -1130,7 +1130,7 @@ ul.categories li {
   display: flex;
   flex-direction: column;
 
-  .PopupHeader {
+  header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1155,7 +1155,7 @@ ul.categories li {
     }
   }
 
-  .PopupContent {
+  section {
     flex: 1;
     overflow-y: auto;
     padding: 1rem;

@@ -51,7 +51,7 @@ import ZenMode from './ZenMode';
 import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
 import Journal from './Journal';
-import Events from './EventsPopup';
+import Notifications from './Notifications';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
 
@@ -837,7 +837,7 @@ function Main() {
               ),
             )}
           </nav>
-          <Events />
+          <Notifications />
         </form>
       </header>
 

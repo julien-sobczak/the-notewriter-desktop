@@ -1,26 +1,39 @@
-export function formatDate(dateStr: string): string {
+export function toHumanReadableDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.round(diffDays / 7);
+  const diffMonths = Math.round(diffDays / 30);
+  const diffYears = Math.round(diffDays / 365);
 
-  if (diffDays === 0) return 'Now';
-  if (diffDays === 1) return 'Tomorrow';
+  // Handle today, yesterday, tomorrow
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';  
   if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 0) return `In ${diffDays} days`;
-  if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
-  return date.toLocaleDateString();
-}
-
-export function formatMemoryDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffYears = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffYears > 0)
-    return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
-  if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  return 'Today';
+  
+  // Handle future dates
+  if (diffDays > 0) {
+    if (diffDays <= 7) return `in ${diffDays} days`;
+    if (diffWeeks === 1) return 'in a week';
+    if (diffWeeks < 4) return `in ${diffWeeks} weeks`;
+    if (diffMonths === 1) return 'in a month';
+    if (diffMonths < 12) return `in ${diffMonths} months`;
+    if (diffYears === 1) return 'in a year';
+    return `in ${diffYears} years`;
+  }
+  
+  // Handle past dates
+  const absDays = Math.abs(diffDays);
+  const absWeeks = Math.round(absDays / 7);
+  const absMonths = Math.round(absDays / 30);
+  const absYears = Math.round(absDays / 365);
+  
+  if (absDays <= 7) return `${absDays} days ago`;
+  if (absWeeks === 1) return '1 week ago';
+  if (absWeeks < 4) return `${absWeeks} weeks ago`;
+  if (absMonths === 1) return '1 month ago';
+  if (absMonths < 12) return `${absMonths} months ago`;
+  if (absYears === 1) return '1 year ago';
+  return `${absYears} years ago`;
 }
