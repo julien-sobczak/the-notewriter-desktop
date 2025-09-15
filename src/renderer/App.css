@@ -1091,4 +1091,204 @@ ul.categories li {
   padding: 0.5em;
 }
 
+/* <Planner> */
+
+.Planner {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+.PlannerOptions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  gap: 2rem;
+}
+
+.PlannerButton {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  background-color: var(--color-background-light);
+  border: 2px solid var(--color-separator-dark);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.PlannerButton:hover {
+  background-color: var(--color-separator);
+  border-color: var(--gray8);
+}
+
+.PlannerHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.PlannerHeader button {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  border: 1px solid var(--color-separator-dark);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.PlannerHeader h1 {
+  margin: 0;
+}
+
+/* <KanbanBoard> */
+
+.KanbanBoard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.StatusFilter {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: var(--color-background-light);
+  border-radius: 0.5rem;
+}
+
+.StatusFilter h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--color-text-dimmed);
+}
+
+.StatusButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.StatusButton {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  background-color: white;
+  border: 1px solid var(--color-separator-dark);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.StatusButton.selected {
+  background-color: var(--gray9);
+  color: white;
+  border-color: var(--gray9);
+}
+
+.StatusButton:hover {
+  background-color: var(--gray3);
+}
+
+.StatusButton.selected:hover {
+  background-color: var(--gray11);
+  border-color: var(--gray11);
+}
+
+.KanbanColumns {
+  display: flex;
+  gap: 1rem;
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.KanbanColumn {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background-light);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.ColumnTitle {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-separator-dark);
+}
+
+.ColumnItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.KanbanItem {
+  border: 1px solid var(--color-separator);
+  border-radius: 0.25rem;
+  background-color: white;
+  transition: box-shadow 0.2s ease;
+}
+
+.KanbanItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* <RenderedListItem> */
+
+.RenderedListItem {
+  padding: 0.75rem;
+  position: relative;
+  background-color: white;
+}
+
+.RenderedListItem .ItemText {
+  margin-bottom: 0.5rem;
+}
+
+.RenderedListItem .ItemText p {
+  margin: 0;
+}
+
+.RenderedListItem .ItemAttributes,
+.RenderedListItem .ItemTags {
+  margin-top: 0.5rem;
+}
+
+.RenderedListItem .EditButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.RenderedListItem:hover .EditButton {
+  opacity: 1;
+  border-color: var(--color-separator-dark);
+}
+
+.RenderedListItem .EditButton:hover {
+  background-color: var(--color-background-light);
+}
+
+.RenderedListItem .EditButton svg {
+  width: 16px;
+  height: 16px;
+}
+
 
