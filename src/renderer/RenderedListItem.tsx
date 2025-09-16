@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { PencilSimple as Pencil } from '@phosphor-icons/react';
 import { Note, ListItem } from '../shared/Model';
 import Markdown from './Markdown';
 import { RenderedAttributes, RenderedTags } from './RenderedMetadata';
+import { ConfigContext } from './ConfigContext';
 
 type RenderedListItemProps = {
   note: Note;
@@ -10,6 +11,9 @@ type RenderedListItemProps = {
 };
 
 function RenderedListItem({ note, item }: RenderedListItemProps) {
+  const { config } = useContext(ConfigContext);
+  const repositoryConfig = config.repositories[note.repositorySlug];
+  
   const handleEdit = () => {
     if (window.electron && window.electron.edit) {
       window.electron.edit(note.repositorySlug, note.relativePath, item.line);
@@ -28,7 +32,7 @@ function RenderedListItem({ note, item }: RenderedListItemProps) {
         <div className="ItemAttributes">
           <RenderedAttributes
             attributes={item.attributes}
-            repositoryConfig={{} as any} // TODO: Get proper repository config if needed
+            repositoryConfig={repositoryConfig}
           />
         </div>
       )}

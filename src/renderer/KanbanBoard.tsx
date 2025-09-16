@@ -87,12 +87,8 @@ function KanbanBoard<T extends { status?: string; oid?: string }>({
               <h2 className="ColumnTitle">{column.title}</h2>
               <div className="ColumnItems">
                 {columnItems.map((item, index) => {
-                  // Try to use oid if available, otherwise fall back to index
-                  const key = item.oid
-                    ? `${column.title}-${item.oid}`
-                    : `${column.title}-item-${index}`;
                   return (
-                    <div key={key} className="KanbanItem">
+                    <div key={`${column.title}-item-${index}`} className="KanbanItem">
                       {renderItem(item)}
                     </div>
                   );
