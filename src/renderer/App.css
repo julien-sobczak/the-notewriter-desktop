@@ -153,10 +153,16 @@ table.List {
   text-align: center;
   font-size: 0.70em;
   border-bottom: 1px solid var(--color-separator);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 
   /* Make the frameless windows draggable using the top bar (similar to other applications such as Slack Desktop)
   /* https://stackoverflow.com/questions/44818508/how-do-i-move-a-frameless-window-in-electron-without-using-webkit-app-region */
   -webkit-app-region: drag; /* NB: The property must be reset on child element to make them focusable. */
+}
+.TopBar form {
+  flex: 1; /* Take all available space */
 }
 .TopBar input {
   border-radius: 0.25rem;
@@ -165,13 +171,14 @@ table.List {
   background-color: var(--color-background-light);
   width: 300px;
   -webkit-app-region: none;
+
+  ::placeholder {
+    color: var(--color-text-dimmed);
+    text-align: center;
+  }
 }
-.TopBar input::placeholder {
-  color: var(--color-text-dimmed);
-  text-align: center;
-}
-.TopBar .RepositoryButtonGroup {
-  float: right;
+.TopBar .RepositoryButtonGroup, .TopBar .NotificationsStatus {
+  margin-left: auto;
   -webkit-app-region: none;
 }
 .TopBar .RepositoryButtonGroup button {
@@ -181,11 +188,12 @@ table.List {
   border: none;
   color: var(--color-text-dimmed);
   border: 1px solid white;
-}
-.TopBar .RepositoryButtonGroup button.selected {
-  border: 1px solid black;
-  color: black;
-  border-radius: 0.25rem;
+
+  &.selected {
+    border: 1px solid black;
+    color: black;
+    border-radius: 0.25rem;
+  }
 }
 
 .ActivityBar {
@@ -1089,6 +1097,8 @@ ul.categories li {
   background-color: white;
   box-shadow: 0px 5px 5px 5px rgba(0, 0, 0, 0.1);
   padding: 0.5em;
+  z-index: 1000; /* Ensure it's on top of other elements */
+  border: 1px solid var(--color-separator-dark);
 }
 
 /* Notifications (Reminders and Memories) */
@@ -1099,47 +1109,37 @@ ul.categories li {
     align-items: center;
     gap: 0.25rem;
     padding: 0.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
     color: var(--color-text);
-    transition: all 0.2s ease;
-    
+
     &:hover {
       background-color: var(--color-background-light);
     }
-    
+
     &.urgent {
       color: #ff4444;
+      font-weight: bold;
     }
   }
 }
 
 .NotificationsPopup {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: var(--top-bar-height);
+  right: 0;
   width: 600px;
   max-height: 80vh;
+  overflow-y: scroll;
   background: white;
   border: 1px solid var(--color-separator-dark);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  padding: 1rem;
 
   header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    border-bottom: 1px solid var(--color-separator);
-
-    h2 {
-      margin: 0;
-      font-size: 1.2rem;
+    .Actions {
+      float: right;
     }
   }
 
@@ -1151,93 +1151,68 @@ ul.categories li {
     border-radius: 4px;
 
     &:hover {
-      background: var(--color-background-light);
+      background-color: var(--color-background-light);
     }
   }
 
-  section {
+  .NotificationsList {
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
   }
 
-  .RemindersSection,
-  .MemoriesSection {
-    margin-bottom: 2rem;
-
+  .NotificationsCategory {
     h3 {
+      text-align: right;
+      margin: 1rem;
+      font-weight: 800;
+    }
+
+    & > ul {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      color: var(--gray11);
-    }
-  }
+      padding: 0;
 
-  .ItemsList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
+      & > li {
+        display: flex;
+        gap: 1rem;
+        padding: 0.75rem;
+        border: 1px solid var(--color-separator);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
 
-  .ReminderItem,
-  .MemoryItem {
-    display: flex;
-    gap: 1rem;
-    padding: 0.75rem;
-    border: 1px solid var(--color-separator);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+        &:hover {
+          background-color: var(--color-background-light);
+          border-color: var(--color-separator-dark);
+        }
 
-    &:hover {
-      background-color: var(--color-background-light);
-      border-color: var(--color-separator-dark);
-    }
-  }
+        .NotificationTimestamp {
+          flex-shrink: 0;
+          width: 100px;
+          font-size: 0.8rem;
+          color: var(--color-text-dimmed);
+          font-weight: 500;
+        }
 
-  .ReminderItem {
-    .CompleteButton {
-      flex-shrink: 0;
-      padding: 0.25rem;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      border-radius: 4px;
-      color: var(--color-text-dimmed);
+        .NotificationDescription {
+          flex-grow: 1;
+          cursor: pointer;
 
-      &:hover {
-        background: var(--color-background-light);
-        color: var(--color-text);
+          &:hover {
+            color: var(--color-text-dimmed);
+          }
+        }
+
+        .Actions {
+          flex-shrink: 0;
+        }
       }
     }
   }
 
-  .ItemTime {
-    flex-shrink: 0;
-    width: 100px;
-    font-size: 0.8rem;
-    color: var(--color-text-dimmed);
-    font-weight: 500;
-  }
-
-  .ItemContent {
-    flex: 1;
-
-    .ItemDescription,
-    .ItemText {
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-      cursor: pointer;
-
-      &:hover {
-        color: var(--color-text-dimmed);
-      }
-    }
-  }
-
-  .EmptyState {
+  .NoNotifications {
     text-align: center;
     padding: 2rem;
     color: var(--color-text-dimmed);

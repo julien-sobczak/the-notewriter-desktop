@@ -20,8 +20,6 @@ import {
   Star as BookmarkIcon,
   XCircle as CancelIcon,
   CheckCircle as OpenIcon,
-  Bell,
-  BellRinging,
 } from '@phosphor-icons/react';
 import classNames from 'classnames';
 import { Command } from 'cmdk';
@@ -34,8 +32,6 @@ import {
   Bookmark,
   File,
   Goto,
-  Reminder,
-  Memory,
 } from '../shared/Model';
 import { ConfigContext } from './ConfigContext';
 import './Reset.css';
@@ -51,9 +47,9 @@ import ZenMode from './ZenMode';
 import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
 import Journal from './Journal';
-import Notifications from './Notifications';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
+import NotificationsStatus from './Notifications';
 
 const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g;
 
@@ -823,22 +819,20 @@ function Main() {
             value={inputQuery}
             onChange={(event: any) => setInputQuery(event.target.value)}
           />
-          <nav className="RepositoryButtonGroup">
-            {staticConfig.repositories.map(
-              (repository: RepositoryRefConfig) => (
-                <button
-                  type="button"
-                  key={repository.name}
-                  className={classNames({ selected: repository.selected })}
-                  onClick={() => handleRepositoryToggle(repository.slug)}
-                >
-                  {repository.name}
-                </button>
-              ),
-            )}
-          </nav>
-          <Notifications />
         </form>
+        <nav className="RepositoryButtonGroup">
+          {staticConfig.repositories.map((repository: RepositoryRefConfig) => (
+            <button
+              type="button"
+              key={repository.name}
+              className={classNames({ selected: repository.selected })}
+              onClick={() => handleRepositoryToggle(repository.slug)}
+            >
+              {repository.name}
+            </button>
+          ))}
+        </nav>
+        <NotificationsStatus />
       </header>
 
       <CommandMenu

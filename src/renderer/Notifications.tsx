@@ -1,151 +1,171 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { Clock, Calendar, X, BellSlash, CheckCircle, Bell, BellRinging } from '@phosphor-icons/react';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+  useMemo,
+} from 'react';
+import {
+  Clock as ClockIcon,
+  Calendar as CalendarIcon,
+  X as CloseIcon,
+  BellSlash as SilenceIcon,
+  CheckCircle as CompleteIcon,
+  Bell as NotificationIcon,
+  BellRinging as NotificationUrgentIcon,
+} from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
 import HoveredNote from './HoveredNote';
-import { Actions, Action, Subaction } from './Actions';
+import { Actions, Action } from './Actions';
 import { Reminder, Memory, Note, NoteRef } from '../shared/Model';
 import { toHumanReadableDate } from './dateUtils';
+import Markdown from './Markdown';
 
 interface NotificationPopupProps {
   reminders: Reminder[];
   memories: Memory[];
   onClose: () => void;
-  onNoteClick: (noteRef: NoteRef) => void;
-  onSilenceAllReminders: () => void;
-  onCompleteReminder: (reminderOid: string) => void;
 }
 
 function NotificationsPopup({
   reminders,
   memories,
   onClose,
-  onNoteClick,
-  onSilenceAllReminders,
-  onCompleteReminder,
 }: NotificationPopupProps) {
+  const [hoveredNote, setHoveredNote] = useState<Note | null>(null);
+
+  const handleNoteClick = async (noteRef: NoteRef) => {
+    try {
+      const note = await window.electron.find(noteRef);
+      setHoveredNote(note);
+    } catch (error) {
+      console.error('Error loading note:', error);
+    }
+  };
+
+  const handleSilenceAllReminders = async () => {
+    try {
+      const reminderOids = reminders.map((r) => r.oid);
+      await window.electron.completeReminders(reminderOids);
+    } catch (error) {
+      console.error('Error silencing reminders:', error);
+    }
+  };
+
+  const handleCompleteReminder = async (reminderOid: string) => {
+    try {
+      await window.electron.completeReminders([reminderOid]);
+    } catch (error) {
+      console.error('Error completing reminder:', error);
+    }
+  };
 
   return (
     <div className="NotificationsPopup">
       <header>
         <Actions>
           <Action
-            icon={<BellSlash />}
+            icon={<SilenceIcon />}
             title="Silence all reminders"
-            onClick={onSilenceAllReminders}
+            onClick={handleSilenceAllReminders}
           />
+          <Action icon={<CloseIcon />} title="Close" onClick={onClose} />
         </Actions>
-        <button type="button" onClick={onClose} className="CloseButton">
-          <X />
-        </button>
       </header>
-
-      <section>
+      <section className="NotificationsList">
         {reminders.length > 0 && (
-          <div className="RemindersSection">
+          <div className="NotificationsCategory">
             <h3>
-              <Clock /> Reminders
+              <ClockIcon />
             </h3>
-            <div className="ItemsList">
+            <ul>
               {reminders.map((reminder) => (
-                <div key={reminder.oid} className="ReminderItem">
-                  <div className="ItemTime">
+                <li key={reminder.oid}>
+                  <div className="NotificationTimestamp">
                     {toHumanReadableDate(reminder.nextPerformedAt)}
                   </div>
-                  <div className="ItemContent">
-                    <div
-                      className="ItemDescription"
-                      onClick={() =>
-                        onNoteClick({
-                          oid: reminder.noteOid,
-                          repositorySlug: reminder.repositorySlug,
-                        })
-                      }
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          onNoteClick({
-                            oid: reminder.noteOid,
-                            repositorySlug: reminder.repositorySlug,
-                          });
-                        }
-                      }}
-                    >
-                      {reminder.description}
-                    </div>
+                  <div
+                    className="NotificationDescription"
+                    onClick={() =>
+                      handleNoteClick({
+                        repositorySlug: reminder.repositorySlug,
+                        oid: reminder.noteOid,
+                      })
+                    }
+                  >
+                    <Markdown md={reminder.description} inline />
                   </div>
-                  <Action
-                    icon={<CheckCircle />}
-                    title="Complete reminder"
-                    onClick={() => onCompleteReminder(reminder.oid)}
-                  />
-                </div>
+                  <Actions>
+                    <Action
+                      icon={<CompleteIcon />}
+                      title="Complete reminder"
+                      onClick={() => handleCompleteReminder(reminder.oid)}
+                    />
+                  </Actions>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
-
         {memories.length > 0 && (
-          <div className="MemoriesSection">
+          <div className="NotificationsCategory">
             <h3>
-              <Calendar /> Memories
+              <CalendarIcon />
             </h3>
-            <div className="ItemsList">
+            <ul>
               {memories.map((memory) => (
-                <div
-                  key={memory.oid}
-                  className="MemoryItem"
-                  onClick={() =>
-                    onNoteClick({
-                      oid: memory.noteOid,
-                      repositorySlug: memory.repositorySlug,
-                    })
-                  }
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      onNoteClick({
-                        oid: memory.noteOid,
-                        repositorySlug: memory.repositorySlug,
-                      });
-                    }
-                  }}
-                >
-                  <div className="ItemTime">
+                <li key={memory.oid}>
+                  <div className="NotificationTimestamp">
                     {toHumanReadableDate(memory.occurredAt)}
                   </div>
-                  <div className="ItemContent">
-                    <div className="ItemText">{memory.text}</div>
+                  <div
+                    className="NotificationDescription"
+                    onClick={() =>
+                      handleNoteClick({
+                        repositorySlug: memory.repositorySlug,
+                        oid: memory.noteOid,
+                      })
+                    }
+                  >
+                    <Markdown md={memory.text} inline />
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
 
         {reminders.length === 0 && memories.length === 0 && (
-          <div className="EmptyState">
+          <div className="NoNotifications">
             <p>No reminders or memories found.</p>
           </div>
         )}
       </section>
+
+      {/* Hovered note */}
+      {hoveredNote && (
+        <HoveredNote note={hoveredNote} onClose={() => setHoveredNote(null)} />
+      )}
     </div>
   );
 }
 
-function Notifications() {
+function NotificationsStatus() {
   const { config } = useContext(ConfigContext);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [hoveredNote, setHoveredNote] = useState<Note | null>(null);
 
   const staticConfig = config.static;
-  const selectedRepositorySlugs = staticConfig.repositories
-    .filter((repository) => repository.selected)
-    .map((repository) => repository.slug);
+  const selectedRepositorySlugs = useMemo(
+    () =>
+      staticConfig.repositories
+        .filter((repository) => repository.selected)
+        .map((repository) => repository.slug),
+    [staticConfig.repositories], // Only recreate when repositories change
+  );
 
   const loadRemindersAndMemories = useCallback(async () => {
     if (selectedRepositorySlugs.length === 0) {
@@ -160,6 +180,9 @@ function Notifications() {
         window.electron.getPendingReminders(selectedRepositorySlugs),
         window.electron.getPastMemories(selectedRepositorySlugs),
       ]);
+      console.log(
+        `Loaded ${remindersResult.length} reminders and ${memoriesResult.length} memories`,
+      );
       setReminders(remindersResult);
       setMemories(memoriesResult);
     } catch (error) {
@@ -176,35 +199,8 @@ function Notifications() {
   }, [loadRemindersAndMemories]);
 
   const handleCountClick = () => {
+    console.log('NotificationsStatus: Count clicked, toggling popup'); // FIXME remove
     setShowPopup(true);
-  };
-
-  const handleNoteClick = async (noteRef: NoteRef) => {
-    try {
-      const note = await window.electron.find(noteRef);
-      setHoveredNote(note);
-    } catch (error) {
-      console.error('Error loading note:', error);
-    }
-  };
-
-  const handleSilenceAllReminders = async () => {
-    try {
-      const reminderOids = reminders.map((r) => r.oid);
-      await window.electron.completeReminders(reminderOids);
-      await loadRemindersAndMemories(); // Reload data
-    } catch (error) {
-      console.error('Error silencing reminders:', error);
-    }
-  };
-
-  const handleCompleteReminder = async (reminderOid: string) => {
-    try {
-      await window.electron.completeReminders([reminderOid]);
-      await loadRemindersAndMemories(); // Reload data
-    } catch (error) {
-      console.error('Error completing reminder:', error);
-    }
   };
 
   const totalCount = reminders.length + memories.length;
@@ -214,26 +210,23 @@ function Notifications() {
     return nextDate < now;
   });
 
-  const BellIcon = hasPastReminders ? BellRinging : Bell;
+  const Icon = hasPastReminders ? NotificationUrgentIcon : NotificationIcon;
 
   return (
     <div className="NotificationsStatus">
       {/* Count display for the top bar */}
-      <div
+      <button
+        type="button"
         className={`NotificationsCount ${hasPastReminders ? 'urgent' : ''}`}
-        onClick={handleCountClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleCountClick();
-          }
+        onClick={() => {
+          console.log('NotificationsStatus: Button clicked'); // FIXME remove
+          handleCountClick();
         }}
         title={`${reminders.length} reminders, ${memories.length} memories`}
       >
-        <BellIcon />
-        {loading ? '...' : totalCount}
-      </div>
+        <Icon />
+        {loading ? '...' : <small>{totalCount}</small>}
+      </button>
 
       {/* Popup */}
       {showPopup && (
@@ -241,18 +234,10 @@ function Notifications() {
           reminders={reminders}
           memories={memories}
           onClose={() => setShowPopup(false)}
-          onNoteClick={handleNoteClick}
-          onSilenceAllReminders={handleSilenceAllReminders}
-          onCompleteReminder={handleCompleteReminder}
         />
-      )}
-
-      {/* Hovered note */}
-      {hoveredNote && (
-        <HoveredNote note={hoveredNote} onClose={() => setHoveredNote(null)} />
       )}
     </div>
   );
 }
 
-export default Notifications;
+export default NotificationsStatus;
