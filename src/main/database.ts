@@ -1032,6 +1032,210 @@ export default class DatabaseManager {
     });
   }
 
+  /* Reminders and Memories Management */
+
+  async getPendingReminders(
+    repositorySlugs: string[],
+    date?: Date,
+  ): Promise<Model.Reminder[]> {
+    const targetDate = date || new Date();
+    const sevenDaysFromTarget = new Date(
+      targetDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+    );
+
+    const repositoryResults: Promise<Model.Reminder[]>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        repositoryResults.push(
+          new Promise<Model.Reminder[]>((resolve, reject) => {
+            // Get reminders expiring within 7 days
+            const remindersSql = `
+              SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
+              FROM reminder
+              WHERE next_performed_at <= '${sevenDaysFromTarget.toISOString()}'
+              ORDER BY next_performed_at ASC
+            `;
+
+            db.all(remindersSql, (err: any, reminderRows: any) => {
+              if (err) {
+                console.log('Error while fetching reminders', err);
+                reject(err);
+                return;
+              }
+
+              const reminders = reminderRows.map((row: any) => ({
+                oid: row.oid,
+                fileOid: row.file_oid,
+                noteOid: row.note_oid,
+                relativePath: row.relative_path,
+                description: row.description,
+                tag: row.tag,
+                lastPerformedAt: row.last_performed_at,
+                nextPerformedAt: row.next_performed_at,
+                repositorySlug: datasourceName,
+                repositoryPath: this.#getRepositoryPath(datasourceName),
+              }));
+
+              resolve(reminders);
+            });
+          }),
+        );
+      }
+    }
+
+    const results = await Promise.all(repositoryResults);
+    return results.flat().sort((a, b) => {
+      return (
+        new Date(a.nextPerformedAt).getTime() -
+        new Date(b.nextPerformedAt).getTime()
+      );
+    });
+  }
+
+  async getPastMemories(
+    repositorySlugs: string[],
+    date?: Date,
+  ): Promise<Model.Memory[]> {
+    const targetDate = date || new Date();
+    const targetMonth = targetDate.getMonth() + 1; // getMonth() is 0-based
+    const targetDay = targetDate.getDate();
+
+    const repositoryResults: Promise<Model.Memory[]>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        repositoryResults.push(
+          new Promise<Model.Memory[]>((resolve, reject) => {
+            // Get memories that occurred almost the same date as today but in previous years (±7 days)
+            const memoriesSql = `
+              SELECT oid, note_oid, relative_path, text, occurred_at
+              FROM memory
+              WHERE 
+                occurred_at <= datetime('now') AND
+                (
+                  (strftime('%m', occurred_at) = '${targetMonth.toString().padStart(2, '0')}' AND 
+                   ABS(strftime('%d', occurred_at) - ${targetDay}) <= 7) OR
+                  (strftime('%m', occurred_at) = '${(targetMonth === 1 ? 12 : targetMonth - 1).toString().padStart(2, '0')}' AND 
+                   strftime('%d', occurred_at) >= ${Math.max(1, targetDay - 7)} AND 
+                   ${targetDay} <= 7) OR
+                  (strftime('%m', occurred_at) = '${(targetMonth === 12 ? 1 : targetMonth + 1).toString().padStart(2, '0')}' AND 
+                   strftime('%d', occurred_at) <= ${Math.min(31, targetDay + 7)} AND 
+                   ${targetDay} >= 24)
+                )
+              ORDER BY occurred_at DESC
+            `;
+
+            db.all(memoriesSql, (err: any, memoryRows: any) => {
+              if (err) {
+                console.log('Error while fetching memories', err);
+                reject(err);
+                return;
+              }
+
+              const memories = memoryRows.map((row: any) => ({
+                oid: row.oid,
+                noteOid: row.note_oid,
+                relativePath: row.relative_path,
+                text: row.text,
+                occurredAt: row.occurred_at,
+                repositorySlug: datasourceName,
+                repositoryPath: this.#getRepositoryPath(datasourceName),
+              }));
+
+              resolve(memories);
+            });
+          }),
+        );
+      }
+    }
+
+    const results = await Promise.all(repositoryResults);
+    return results.flat().sort((a, b) => {
+      return (
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+      );
+    });
+  }
+
+  async updateReminder(
+    repositorySlug: string,
+    reminderOid: string,
+    nextPerformedAt: Date
+  ): Promise<Model.Reminder> {
+    const db = this.datasources.get(repositorySlug);
+    if (!db) {
+      throw new Error(`No datasource ${repositorySlug} found`);
+    }
+
+    return new Promise<Model.Reminder>((resolve, reject) => {
+      const updateSql = `
+        UPDATE reminder 
+        SET next_performed_at = ?, last_performed_at = datetime('now') 
+        WHERE oid = ?
+      `;
+      
+      db.run(updateSql, [nextPerformedAt.toISOString(), reminderOid], function(err: any) {
+        if (err) {
+          console.error('Error updating reminder:', err);
+          reject(err);
+          return;
+        }
+
+        // Fetch the updated reminder
+        const selectSql = `
+          SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
+          FROM reminder 
+          WHERE oid = ?
+        `;
+        
+        db.get(selectSql, [reminderOid], (err: any, row: any) => {
+          if (err) {
+            console.error('Error fetching updated reminder:', err);
+            reject(err);
+            return;
+          }
+
+          if (!row) {
+            reject(new Error(`Reminder ${reminderOid} not found`));
+            return;
+          }
+
+          const updatedReminder: Model.Reminder = {
+            oid: row.oid,
+            fileOid: row.file_oid,
+            noteOid: row.note_oid,
+            relativePath: row.relative_path,
+            description: row.description,
+            tag: row.tag,
+            lastPerformedAt: row.last_performed_at,
+            nextPerformedAt: row.next_performed_at,
+            repositorySlug: repositorySlug,
+            repositoryPath: this.#getRepositoryPath(repositorySlug),
+          };
+
+          resolve(updatedReminder);
+        });
+      });
+    });
+  }
+
   /* Converters */
 
   #rowToFile(row: any, repositorySlug: string): Model.File {

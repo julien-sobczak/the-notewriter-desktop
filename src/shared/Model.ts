@@ -313,6 +313,148 @@ export interface Flashcard {
   settings: { [name: string]: any };
 }
 
+export interface Reminder {
+  oid: string;
+  fileOid: string;
+  noteOid: string;
+
+  // Enriched information about the repository where the note comes from
+  repositorySlug: string;
+  repositoryPath: string;
+
+  // The relative path of the file containing the note (denormalized field)
+  relativePath: string;
+
+  // Description
+  description: string;
+
+  // Tag value containing the formula to determine the next occurrence
+  tag: string;
+
+  // Timestamps to track progress
+  lastPerformedAt?: string;
+  nextPerformedAt: string;
+}
+
+export interface Memory {
+  oid: string;
+  noteOid: string;
+
+  // Enriched information about the repository where the note comes from
+  repositorySlug: string;
+  repositoryPath: string;
+
+  // The relative path of the file containing the note (denormalized field)
+  relativePath: string;
+
+  text: string;
+  occurredAt: string;
+}
+
+/**
+ * Determines the next reminder date based on the reminder tag and last performed date.
+ * Supports various tag patterns for different recurrence types.
+ */
+export function determineNextReminder(reminder: Reminder, lastPerformedAt: Date): Date {
+  const tag = reminder.tag;
+  const referenceDate = lastPerformedAt;
+
+  // Parse static date: #reminder-2023-02-01
+  const staticDateMatch = tag.match(/^#reminder-(\d{4})-(\d{2})-(\d{2})$/);
+  if (staticDateMatch) {
+    const [, year, month, day] = staticDateMatch;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  }
+
+  // Parse yearly recurrence: #reminder-every-${year}-02-01
+  const yearlyMatch = tag.match(/^#reminder-every-\$\{year\}-(\d{2})-(\d{2})$/);
+  if (yearlyMatch) {
+    const [, month, day] = yearlyMatch;
+    const nextYear = referenceDate.getFullYear() + 1;
+    return new Date(nextYear, parseInt(month) - 1, parseInt(day));
+  }
+
+  // Parse even year: #reminder-${even-year}-02-01
+  const evenYearMatch = tag.match(/^#reminder-\$\{even-year\}-(\d{2})-(\d{2})$/);
+  if (evenYearMatch) {
+    const [, month, day] = evenYearMatch;
+    let nextYear = referenceDate.getFullYear();
+    if (nextYear % 2 !== 0) nextYear++; // Make it even
+    else nextYear += 2; // Next even year
+    return new Date(nextYear, parseInt(month) - 1, parseInt(day));
+  }
+
+  // Parse odd year: #reminder-${odd-year}-02-01
+  const oddYearMatch = tag.match(/^#reminder-\$\{odd-year\}-(\d{2})-(\d{2})$/);
+  if (oddYearMatch) {
+    const [, month, day] = oddYearMatch;
+    let nextYear = referenceDate.getFullYear();
+    if (nextYear % 2 === 0) nextYear++; // Make it odd
+    else nextYear += 2; // Next odd year
+    return new Date(nextYear, parseInt(month) - 1, parseInt(day));
+  }
+
+  // Parse monthly recurrence in specific year: #reminder-every-2025-${month}-02
+  const monthlyInYearMatch = tag.match(/^#reminder-every-(\d{4})-\$\{month\}-(\d{2})$/);
+  if (monthlyInYearMatch) {
+    const [, year, day] = monthlyInYearMatch;
+    const nextMonth = referenceDate.getMonth() + 1;
+    if (nextMonth > 11) {
+      // Move to next year if we've gone through all months
+      return new Date(parseInt(year) + 1, 0, parseInt(day));
+    }
+    return new Date(parseInt(year), nextMonth, parseInt(day));
+  }
+
+  // Parse odd months in specific year: #reminder-every-2025-${odd-month}
+  const oddMonthMatch = tag.match(/^#reminder-every-(\d{4})-\$\{odd-month\}$/);
+  if (oddMonthMatch) {
+    const [, year] = oddMonthMatch;
+    const currentMonth = referenceDate.getMonth();
+    let nextOddMonth = currentMonth + 1;
+    
+    // Find next odd month (0-indexed, so odd months are 1, 3, 5, 7, 9, 11)
+    while (nextOddMonth <= 11 && nextOddMonth % 2 === 0) {
+      nextOddMonth++;
+    }
+    
+    if (nextOddMonth > 11) {
+      // Move to next year, first odd month
+      return new Date(parseInt(year) + 1, 1, 2); // February 2nd
+    }
+    return new Date(parseInt(year), nextOddMonth, 2);
+  }
+
+  // Parse daily recurrence: #reminder-every-${day}
+  const dailyMatch = tag.match(/^#reminder-every-\$\{day\}$/);
+  if (dailyMatch) {
+    const nextDay = new Date(referenceDate.getTime());
+    nextDay.setDate(nextDay.getDate() + 1);
+    return nextDay;
+  }
+
+  // Parse weekday recurrence: #reminder-every-${tuesday}
+  const weekdayMatch = tag.match(/^#reminder-every-\$\{(\w+)\}$/);
+  if (weekdayMatch) {
+    const [, weekdayName] = weekdayMatch;
+    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const targetDay = weekdays.indexOf(weekdayName.toLowerCase());
+    
+    if (targetDay === -1) {
+      throw new Error(`Invalid weekday: ${weekdayName}`);
+    }
+
+    const nextDate = new Date(referenceDate.getTime());
+    const currentDay = nextDate.getDay();
+    const daysToAdd = (targetDay - currentDay + 7) % 7 || 7; // Always add at least 1 week
+    nextDate.setDate(nextDate.getDate() + daysToAdd);
+    return nextDate;
+  }
+
+  // Default: return the original nextPerformedAt if we can't parse the tag
+  return new Date(reminder.nextPerformedAt);
+}
+
 export interface Relation {
   sourceOID: string;
   sourceKind: string;
