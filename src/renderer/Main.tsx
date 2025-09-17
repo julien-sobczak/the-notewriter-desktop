@@ -47,9 +47,9 @@ import ZenMode from './ZenMode';
 import RenderedDesk from './RenderedDesk';
 import NoteContainer from './NoteContainer';
 import Journal from './Journal';
-import Reminders from './Reminders';
 import NoteType from './NoteType';
 import Markdown from './Markdown';
+import NotificationsStatus from './Notifications';
 
 const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g;
 
@@ -539,13 +539,6 @@ function CommandMenu({
             <Command.Separator />
 
             {!page && (
-              <Command.Item
-                onSelect={() => handleActivitySelected('reminders')}
-              >
-                Show reminders
-              </Command.Item>
-            )}
-            {!page && (
               <Command.Item onSelect={() => handleActivitySelected('stats')}>
                 Show statistics
               </Command.Item>
@@ -826,21 +819,20 @@ function Main() {
             value={inputQuery}
             onChange={(event: any) => setInputQuery(event.target.value)}
           />
-          <nav className="RepositoryButtonGroup">
-            {staticConfig.repositories.map(
-              (repository: RepositoryRefConfig) => (
-                <button
-                  type="button"
-                  key={repository.name}
-                  className={classNames({ selected: repository.selected })}
-                  onClick={() => handleRepositoryToggle(repository.slug)}
-                >
-                  {repository.name}
-                </button>
-              ),
-            )}
-          </nav>
         </form>
+        <nav className="RepositoryButtonGroup">
+          {staticConfig.repositories.map((repository: RepositoryRefConfig) => (
+            <button
+              type="button"
+              key={repository.name}
+              className={classNames({ selected: repository.selected })}
+              onClick={() => handleRepositoryToggle(repository.slug)}
+            >
+              {repository.name}
+            </button>
+          ))}
+        </nav>
+        <NotificationsStatus />
       </header>
 
       <CommandMenu
@@ -976,9 +968,6 @@ function Main() {
 
         {/* Stats */}
         {activity === 'stats' && <Stats />}
-
-        {/* Reminders */}
-        {activity === 'reminders' && <Reminders />}
       </div>
     </div>
   );
