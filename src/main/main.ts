@@ -41,6 +41,8 @@ import {
   EditorDynamicConfig,
   Note,
   CommandExecution,
+  Reminder,
+  determineNextReminder,
 } from '../shared/Model';
 import OperationsManager from './operations';
 import { generateOid } from './oid';
@@ -167,12 +169,19 @@ ipcMain.handle('list-gotos', async (_event, repositorySlugs: string[]) => {
   return gotos;
 });
 
-ipcMain.handle('find-by-wikilink', async (_event, repositorySlug: string, wikilink: string) => {
-  console.debug(`Finding note from wikilink ${wikilink} in repository ${repositorySlug}`);
-  const result = await db.findByWikilink(repositorySlug, wikilink);
-  console.debug(`Found note for wikilink ${wikilink} in repository ${repositorySlug}`);
-  return result;
-});
+ipcMain.handle(
+  'find-by-wikilink',
+  async (_event, repositorySlug: string, wikilink: string) => {
+    console.debug(
+      `Finding note from wikilink ${wikilink} in repository ${repositorySlug}`,
+    );
+    const result = await db.findByWikilink(repositorySlug, wikilink);
+    console.debug(
+      `Found note for wikilink ${wikilink} in repository ${repositorySlug}`,
+    );
+    return result;
+  },
+);
 ipcMain.handle('find', async (_event, noteRef: NoteRef) => {
   console.debug(`Finding note from ref ${noteRef.oid}`);
   const result = await db.find(noteRef);
@@ -230,6 +239,67 @@ ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
   statistics.countNotesPerType = await db.countNotesPerType(repositorySlugs);
   return statistics;
 });
+
+ipcMain.handle(
+  'get-pending-reminders',
+  async (_event, repositorySlugs: string[]) => {
+    console.debug(`Getting pending reminders for ${repositorySlugs}`);
+    const result = await db.getPendingReminders(repositorySlugs);
+    console.debug(`Found ${result.length} pending reminders`);
+    return result;
+  },
+);
+
+ipcMain.handle(
+  'get-past-memories',
+  async (_event, repositorySlugs: string[]) => {
+    console.debug(`Getting past memories for ${repositorySlugs}`);
+    const result = await db.getPastMemories(repositorySlugs);
+    console.debug(`Found ${result.length} past memories`);
+    return result;
+  },
+);
+
+ipcMain.handle(
+  'complete-reminders',
+  async (_event, reminderOids: string[]) => {
+    console.debug(`Completing reminders: ${reminderOids}`);
+    
+    // First, get all reminder details to get their repository slugs
+    const allReminders = await db.getPendingReminders([]);
+    const remindersToComplete = allReminders.filter(r => reminderOids.includes(r.oid));
+    
+    const lastPerformedAt = new Date();
+    
+    // Complete each reminder by appending the operation to WAL and updating database
+    for (const reminder of remindersToComplete) {
+      // Append operation to WAL
+      op.appendOperationToWal(reminder.repositorySlug, {
+        oid: generateOid(),
+        object_oid: reminder.oid,
+        name: 'complete-reminder',
+        timestamp: lastPerformedAt.toISOString()
+      });
+
+      // Update the SQLite database immediately.
+      // Avoid having to load the pack files when the WAL will be flushed
+      // (and useful as the reminders may be rescheduled before the next flush).
+      try {
+        const nextPerformedAt = determineNextReminder(reminder, lastPerformedAt);
+        const updatedReminder = await db.updateReminder(reminder.repositorySlug, reminder.oid, nextPerformedAt);
+        console.debug(
+          `Reminder ${updatedReminder.oid} updated with new date:`,
+          updatedReminder.nextPerformedAt,
+        );
+      } catch (error) {
+        console.error(`Error updating reminder ${reminder.oid}:`, error);
+        // Continue processing other reminders even if one fails
+      }
+    }
+    
+    console.debug(`Completed ${remindersToComplete.length} reminders`);
+  },
+);
 
 ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
   console.debug(`Listing decks for repositories ${repositorySlugs}`);
@@ -375,7 +445,9 @@ ipcMain.handle(
     const startTime = Date.now();
 
     return new Promise((resolve) => {
-      console.log(`Executing hooks for ${note.wikilink} from ${note.repositoryPath}...`);
+      console.log(
+        `Executing hooks for ${note.wikilink} from ${note.repositoryPath}...`,
+      );
       const subprocess = spawn('nt', ['run-hook', '--vvv', note.wikilink], {
         cwd: note.repositoryPath,
         env: {

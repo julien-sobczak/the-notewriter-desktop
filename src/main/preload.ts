@@ -35,7 +35,8 @@ const electronHandler = {
   // Viewer
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
-  findByWikilink: (repositorySlug: string, wikilink: string) => ipcRenderer.invoke('find-by-wikilink', repositorySlug, wikilink),
+  findByWikilink: (repositorySlug: string, wikilink: string) =>
+    ipcRenderer.invoke('find-by-wikilink', repositorySlug, wikilink),
   search: (query: Query) => ipcRenderer.invoke('search', query),
   msearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
   listNotesInFile: (repositorySlug: string, filePath: string) =>
@@ -47,6 +48,13 @@ const electronHandler = {
   // Statistics
   getStatistics: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-statistics', repositorySlugs),
+  // Reminders and Memories
+  getPendingReminders: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-pending-reminders', repositorySlugs),
+  getPastMemories: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-past-memories', repositorySlugs),
+  completeReminders: (reminderOids: string[]) =>
+    ipcRenderer.invoke('complete-reminders', reminderOids),
   // Settings
   getRepositoryConfig: (repositorySlug: string) =>
     ipcRenderer.invoke('get-repository-config', repositorySlug),

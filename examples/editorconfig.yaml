@@ -15,10 +15,12 @@ repositories:
   slug: my-company
   path: ~/Workspace/notes
 
+dailyQuote:
+  query: "path:references @type:quote"
+  repositories: [main]
 
 # "Get inspired by" action
 inspirations:
-  dailyQuote: "path:references @type:quote"
   categories:
   # Default can be
   # - name: Quotes
@@ -28,13 +30,12 @@ inspirations:
   #   repository: all
   #   query: "@type:artwork"
   - name: Life
-    repository: main
+    repositories: [main]
     query: "path:references/persons (#life or #purpose) @type:quote"
   - name: Art
-    repository: main
+    repositories: [main]
     query: "path:references @type:artwork"
   # Complete with more inspirations
-
 
 # List of desks
 # (probably in a `~/.nt/editorconfig.json` file to be saved easily from the code without losing comments, formating)
