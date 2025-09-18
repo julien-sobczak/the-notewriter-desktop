@@ -346,12 +346,13 @@ table.List {
   font-size: 90%;
 }
 
-ul.FilterMetadata {
+ul.Filter {
   list-style-type: none;
   display: flex;
   flex-direction: row;
+  justify-content: center; /* Centers items horizontally */
 }
-ul.FilterMetadata li {
+ul.Filter li {
   margin: 0 0.25em;
   padding: 0.25em 0.5em;
   font-family: monospace;
@@ -361,7 +362,7 @@ ul.FilterMetadata li {
   background: var(--color-background-light);
   border: 1px solid var(--color-background-light);
 }
-ul.FilterMetadata li.selected {
+ul.Filter li.selected {
   border-color: var(--color-separator-dark);
 }
 
@@ -841,23 +842,34 @@ ul.FilterMetadata li.selected {
   font-size: 0.7rem;
 }
 
-.instruction {
-  font-weight: 100;
-}
 
-ul.categories {
-  list-style-type: none;
+/* <Question> */
+
+.Question {
   display: flex;
-  flex: row;
-  margin: 0;
-  padding: 0;
-}
-ul.categories li {
-  border: 1px solid black;
-  border-radius: 50vh;
-  padding: 0.5rem 1rem;
-  margin: 0.5rem;
-  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  h2 {
+    font-weight: 100;
+  }
+  ul {
+    list-style-type: none;
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+
+    li {
+      border: 1px solid black;
+      border-radius: 50vh;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      cursor: pointer;
+    }
+  }
 }
 
 /* Timer */
@@ -1224,52 +1236,11 @@ ul.categories li {
 .Planner {
   width: 100%;
   height: 100vh;
+  overflow-y: scroll;
   display: flex;
   flex-direction: column;
   padding: 2rem;
-}
-
-.PlannerOptions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-  gap: 2rem;
-}
-
-.PlannerButton {
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
   background-color: var(--color-background-light);
-  border: 2px solid var(--color-separator-dark);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.PlannerButton:hover {
-  background-color: var(--color-separator);
-  border-color: var(--gray8);
-}
-
-.PlannerHeader {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.PlannerHeader button {
-  padding: 0.5rem 1rem;
-  background-color: transparent;
-  border: 1px solid var(--color-separator-dark);
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-
-.PlannerHeader h1 {
-  margin: 0;
 }
 
 /* <KanbanBoard> */
@@ -1282,48 +1253,9 @@ ul.categories li {
   overflow: hidden;
 }
 
-.StatusFilter {
+.KanbanFilter {
   margin-bottom: 1rem;
-  padding: 1rem;
-  background-color: var(--color-background-light);
-  border-radius: 0.5rem;
-}
-
-.StatusFilter h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-  color: var(--color-text-dimmed);
-}
-
-.StatusButtons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.StatusButton {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.8rem;
-  background-color: white;
-  border: 1px solid var(--color-separator-dark);
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.StatusButton.selected {
-  background-color: var(--gray9);
-  color: white;
-  border-color: var(--gray9);
-}
-
-.StatusButton:hover {
-  background-color: var(--gray3);
-}
-
-.StatusButton.selected:hover {
-  background-color: var(--gray11);
-  border-color: var(--gray11);
+  padding: 1rem 0;
 }
 
 .KanbanColumns {
@@ -1338,8 +1270,8 @@ ul.categories li {
   min-width: 300px;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-background-light);
-  border-radius: 0.5rem;
+  background-color: white;
+  border: 1px solid var(--color-separator);
   padding: 1rem;
 }
 
@@ -1349,7 +1281,7 @@ ul.categories li {
   font-weight: 600;
   text-align: center;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--color-separator-dark);
+  border-bottom: 1px solid var(--color-separator-dark);
 }
 
 .ColumnItems {
@@ -1362,61 +1294,24 @@ ul.categories li {
 
 .KanbanItem {
   border: 1px solid var(--color-separator);
-  border-radius: 0.25rem;
   background-color: white;
-  transition: box-shadow 0.2s ease;
+
+  > header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between; /* push children to edges */
+    align-items: start; /* force align to the top */
+  }
+
+  > div {
+    padding: 1rem;
+  }
 }
-
-.KanbanItem:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.KanbanItemStatus {
+  padding: 0.25rem 0.5rem;
 }
-
-/* <RenderedListItem> */
-
-.RenderedListItem {
-  padding: 0.75rem;
-  position: relative;
-  background-color: white;
-}
-
-.RenderedListItem .ItemText {
-  margin-bottom: 0.5rem;
-}
-
-.RenderedListItem .ItemText p {
-  margin: 0;
-}
-
-.RenderedListItem .ItemAttributes,
-.RenderedListItem .ItemTags {
-  margin-top: 0.5rem;
-}
-
-.RenderedListItem .EditButton {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  padding: 0.25rem;
-  background-color: transparent;
-  border: 1px solid transparent;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  opacity: 0;
-  transition: all 0.2s ease;
-}
-
-.RenderedListItem:hover .EditButton {
-  opacity: 1;
-  border-color: var(--color-separator-dark);
-}
-
-.RenderedListItem .EditButton:hover {
+.KanbanItemGroup {
   background-color: var(--color-background-light);
+  font-size: 0.6rem;
+  padding: 0.25rem 0.5rem;
 }
-
-.RenderedListItem .EditButton svg {
-  width: 16px;
-  height: 16px;
-}
-
-

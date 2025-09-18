@@ -1,10 +1,21 @@
+---
+project: The NoteWriter Desktop
+status: in-progress
+---
+
 # The NoteWriter Desktop
+
+
+## Note: Synopsis
+
+_The NoteWriter Desktop_ is a desktop application to manipulate notes extracted from repositories and create something new with them.
+
 
 ## TODO: Backlog
 
-* [x] Add fixtures to work in isolation when developing
-* [ ] Add cmd+K using this [library](https://github.com/pacocoursey/cmdk)
-* [ ] List all possible commandes: show daily quote, open file, open zen mode, ...
+* Add fixtures to work in isolation when developing 🚧
+* Add cmd+K using this [library](https://github.com/pacocoursey/cmdk) ❓
+* List all possible commande: show daily quote, open file, open zen mode, ...
 
 
 ## Features

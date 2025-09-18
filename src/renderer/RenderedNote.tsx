@@ -673,7 +673,7 @@ export default function RenderedNote({
               onChange={(e) => setFilterText(e.target.value)}
             />
             {(showFilterAttributes || showFilterTags || showFilterEmojis) && (
-              <ul className="FilterMetadata">
+              <ul className="Filter">
                 {showFilterTags &&
                   note.items.tags?.map((tag, index) => (
                     <li
