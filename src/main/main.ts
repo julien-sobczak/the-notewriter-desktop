@@ -10,6 +10,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
+import fs from 'fs';
 import {
   app,
   BrowserWindow,
@@ -495,6 +496,47 @@ ipcMain.handle(
         resolve(result);
       });
     });
+  },
+);
+
+// Journal operations
+ipcMain.handle(
+  'append-to-file',
+  async (_event, repositorySlug: string, filePath: string, content: string) => {
+    console.debug(
+      `Appending to file ${filePath} in repository ${repositorySlug}`,
+    );
+
+    try {
+      // Get repository configuration
+      const repository = config
+        .repositories()
+        .find((repo) => repo.slug === repositorySlug);
+      if (!repository) {
+        throw new Error(`Repository ${repositorySlug} not found`);
+      }
+
+      // Normalize the repository path
+      const repositoryPath = normalizePath(repository.path);
+
+      // Resolve the full file path
+      const fullFilePath = path.join(repositoryPath, filePath);
+
+      // Ensure directory exists
+      const dir = path.dirname(fullFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      // Append content to file
+      fs.appendFileSync(fullFilePath, content, 'utf8');
+
+      console.debug(`Successfully appended content to ${fullFilePath}`);
+      return true;
+    } catch (error) {
+      console.error(`Error appending to file ${filePath}:`, error);
+      throw error;
+    }
   },
 );
 

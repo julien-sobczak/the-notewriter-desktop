@@ -11,6 +11,7 @@ export interface EditorStaticConfig {
   inspirations?: InspirationConfig[];
   zenMode?: ZenConfig;
   planner?: PlannerConfig;
+  journal?: JournalConfig[];
 }
 
 export interface RepositoryRefConfig {
@@ -49,6 +50,18 @@ export interface PlannerQueryConfig {
   name: string;
   query: string;
   repositories: string[];
+}
+
+export interface JournalConfig {
+  name: string;
+  repository: string;
+  path: string;
+  routines: RoutineConfig[];
+}
+
+export interface RoutineConfig {
+  name: string;
+  template: string;
 }
 
 /* Dynamic Config */
