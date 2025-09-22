@@ -14,16 +14,16 @@ export default function RenderedRoutine({
   const markdownRef = useRef<HTMLDivElement>(null);
   const [processedTemplate, setProcessedTemplate] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const inputIdCounterRef = useRef<number>(1);
 
   // Generate unique IDs for input elements
-  let inputIdCounter = 1;
-  const generateInputId = () => `input${inputIdCounter++}`;
+  const generateInputId = () => `input${inputIdCounterRef.current++}`;
 
   // Process template when component mounts
   React.useEffect(() => {
     const processTemplate = async () => {
       let template = routine.template;
-      inputIdCounter = 1; // Reset counter
+      inputIdCounterRef.current = 1; // Reset counter
 
       try {
         // Process <Affirmation /> tags

@@ -34,3 +34,42 @@ zenMode:
   - query: "path:references @type:Quote"
     repositories: [life]
   - query: "path:thoughts"
+
+journal:
+  - name: My Diary
+    repository: life
+    path: 'journal/${year}/${year}-${month}-${day}.md'
+    routines:
+      - name: Morning Routine
+        template: |
+          # 💪 Affirmation
+
+          <Affirmation wikilink="journaling.md#List: Affirmations" />
+
+          # 😘 Gratitude Journal
+
+          3 things I appreciate:
+
+          * <Input />
+          * <Input />
+          * <Input />
+
+          # 🤔 Prompt
+
+          <Prompt wikilink="journaling.md#List: Prompts" />
+
+          # 🎯 My BIG thing for today
+
+          <Input />
+      - name: Shutdown Routine
+        template: |
+          # ❓ How was my day? Why?
+
+          <Input />
+
+          # 📋 3+1 tasks to complete tomorrow:
+
+          * [ ] <Input /> (work)
+          * [ ] <Input />
+          * [ ] <Input />
+          * [ ] <Input />
