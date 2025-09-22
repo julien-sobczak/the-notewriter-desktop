@@ -11,6 +11,7 @@ export interface EditorStaticConfig {
   inspirations?: InspirationConfig[];
   zenMode?: ZenConfig;
   planner?: PlannerConfig;
+  journal?: JournalConfig[];
 }
 
 export interface RepositoryRefConfig {
@@ -49,6 +50,19 @@ export interface PlannerQueryConfig {
   name: string;
   query: string;
   repositories: string[];
+}
+
+export interface JournalConfig {
+  name: string;
+  repository: string;
+  path: string;
+  defaultContent?: string;
+  routines: RoutineConfig[];
+}
+
+export interface RoutineConfig {
+  name: string;
+  template: string;
 }
 
 /* Dynamic Config */
@@ -355,7 +369,10 @@ export interface Memory {
  * Determines the next reminder date based on the reminder tag and last performed date.
  * Supports various tag patterns for different recurrence types.
  */
-export function determineNextReminder(reminder: Reminder, lastPerformedAt: Date): Date {
+export function determineNextReminder(
+  reminder: Reminder,
+  lastPerformedAt: Date,
+): Date {
   const tag = reminder.tag;
   const referenceDate = lastPerformedAt;
 
@@ -375,11 +392,14 @@ export function determineNextReminder(reminder: Reminder, lastPerformedAt: Date)
   }
 
   // Parse even year: #reminder-${even-year}-02-01
-  const evenYearMatch = tag.match(/^#reminder-\$\{even-year\}-(\d{2})-(\d{2})$/);
+  const evenYearMatch = tag.match(
+    /^#reminder-\$\{even-year\}-(\d{2})-(\d{2})$/,
+  );
   if (evenYearMatch) {
     const [, month, day] = evenYearMatch;
     let nextYear = referenceDate.getFullYear();
-    if (nextYear % 2 !== 0) nextYear++; // Make it even
+    if (nextYear % 2 !== 0)
+      nextYear++; // Make it even
     else nextYear += 2; // Next even year
     return new Date(nextYear, parseInt(month) - 1, parseInt(day));
   }
@@ -389,13 +409,16 @@ export function determineNextReminder(reminder: Reminder, lastPerformedAt: Date)
   if (oddYearMatch) {
     const [, month, day] = oddYearMatch;
     let nextYear = referenceDate.getFullYear();
-    if (nextYear % 2 === 0) nextYear++; // Make it odd
+    if (nextYear % 2 === 0)
+      nextYear++; // Make it odd
     else nextYear += 2; // Next odd year
     return new Date(nextYear, parseInt(month) - 1, parseInt(day));
   }
 
   // Parse monthly recurrence in specific year: #reminder-every-2025-${month}-02
-  const monthlyInYearMatch = tag.match(/^#reminder-every-(\d{4})-\$\{month\}-(\d{2})$/);
+  const monthlyInYearMatch = tag.match(
+    /^#reminder-every-(\d{4})-\$\{month\}-(\d{2})$/,
+  );
   if (monthlyInYearMatch) {
     const [, year, day] = monthlyInYearMatch;
     const nextMonth = referenceDate.getMonth() + 1;
@@ -412,12 +435,12 @@ export function determineNextReminder(reminder: Reminder, lastPerformedAt: Date)
     const [, year] = oddMonthMatch;
     const currentMonth = referenceDate.getMonth();
     let nextOddMonth = currentMonth + 1;
-    
+
     // Find next odd month (0-indexed, so odd months are 1, 3, 5, 7, 9, 11)
     while (nextOddMonth <= 11 && nextOddMonth % 2 === 0) {
       nextOddMonth++;
     }
-    
+
     if (nextOddMonth > 11) {
       // Move to next year, first odd month
       return new Date(parseInt(year) + 1, 1, 2); // February 2nd
@@ -437,9 +460,17 @@ export function determineNextReminder(reminder: Reminder, lastPerformedAt: Date)
   const weekdayMatch = tag.match(/^#reminder-every-\$\{(\w+)\}$/);
   if (weekdayMatch) {
     const [, weekdayName] = weekdayMatch;
-    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const weekdays = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
     const targetDay = weekdays.indexOf(weekdayName.toLowerCase());
-    
+
     if (targetDay === -1) {
       throw new Error(`Invalid weekday: ${weekdayName}`);
     }

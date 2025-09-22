@@ -74,6 +74,12 @@ const electronHandler = {
 
   // Hooks
   runHooks: (note: Note) => ipcRenderer.invoke('run-hooks', note),
+
+  // Journal operations
+  readNoteFile: (repositorySlug: string, filePath: string) =>
+    ipcRenderer.invoke('read-note-file', repositorySlug, filePath),
+  appendToFile: (repositorySlug: string, filePath: string, content: string) =>
+    ipcRenderer.invoke('append-to-file', repositorySlug, filePath, content),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

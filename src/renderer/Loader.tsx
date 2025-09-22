@@ -1,6 +1,6 @@
 import { SpinnerGap } from '@phosphor-icons/react';
 
-export default function RenderedDesk() {
+export default function Loader() {
   return (
     <div>
       <SpinnerGap />
