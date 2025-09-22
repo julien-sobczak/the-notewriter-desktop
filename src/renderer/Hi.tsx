@@ -1,8 +1,10 @@
 import { useEffect, useState, useContext } from 'react';
+import { ArrowLeft as BackIcon } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
 import { JournalConfig, RoutineConfig } from '../shared/Model';
 import Question from './Question';
 import RenderedRoutine from './RenderedRoutine';
+import { Actions, Action } from './Actions';
 
 type ViewState =
   | 'loading'
@@ -103,13 +105,13 @@ function Hi() {
     return (
       <div className="Hi">
         {journals.length > 1 && (
-          <button
-            type="button"
-            onClick={handleBackToJournals}
-            style={{ marginBottom: '20px' }}
-          >
-            ← Back to Journals
-          </button>
+          <Actions>
+            <Action
+              icon={<BackIcon />}
+              title="Back to Journals"
+              onClick={handleBackToJournals}
+            />
+          </Actions>
         )}
         <Question<RoutineConfig>
           question={`Which routine would you like to complete for ${selectedJournal.name}?`}
@@ -124,13 +126,13 @@ function Hi() {
   if (viewState === 'routine-execution' && selectedJournal && selectedRoutine) {
     return (
       <div className="Hi">
-        <button
-          type="button"
-          onClick={handleBackToRoutines}
-          style={{ marginBottom: '20px' }}
-        >
-          ← Back to Routines
-        </button>
+        <Actions>
+          <Action
+            icon={<BackIcon />}
+            title="Back to Routines"
+            onClick={handleBackToRoutines}
+          />
+        </Actions>
         <RenderedRoutine journal={selectedJournal} routine={selectedRoutine} />
       </div>
     );

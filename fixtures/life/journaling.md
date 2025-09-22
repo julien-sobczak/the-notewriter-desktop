@@ -2,11 +2,11 @@
 
 ## List: Affirmations
 
-* I am capable of achieving my goals
-* I choose to focus on what I can control  
-* Every day I am growing and learning
-* I am worthy of success and happiness
-* Today is full of possibilities
+* I am capable of achieving my goals `#confidence` `#success`
+* I choose to focus on what I can control `#mindfulness` `#control`
+* Every day I am growing and learning `#growth` `#learning`
+* I am worthy of success and happiness `#self-worth` `#happiness`
+* Today is full of possibilities `#optimism` `#potential`
 
 ## List: Prompts
 

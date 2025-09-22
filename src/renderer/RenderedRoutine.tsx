@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { JournalConfig, RoutineConfig, Note } from '../shared/Model';
 import Markdown from './Markdown';
 
@@ -20,7 +20,7 @@ export default function RenderedRoutine({
   const generateInputId = () => `input${inputIdCounterRef.current++}`;
 
   // Process template when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     const processTemplate = async () => {
       let template = routine.template;
       inputIdCounterRef.current = 1; // Reset counter
@@ -131,8 +131,8 @@ export default function RenderedRoutine({
         evaluatedTemplate = evaluatedTemplate.replace(inputRegex, value);
       });
 
-      // Shift markdown headings (add one level)
-      evaluatedTemplate = evaluatedTemplate.replace(/^(#+)/gm, '#$1');
+      // Shift markdown headings (add two levels)
+      evaluatedTemplate = evaluatedTemplate.replace(/^(#+)/gm, '##$1');
 
       // Get current date for path variables
       const now = new Date();
@@ -142,9 +142,12 @@ export default function RenderedRoutine({
 
       // Replace path variables
       let journalPath = journal.path;
-      journalPath = journalPath.replace(/\$\{year\}/g, year);
-      journalPath = journalPath.replace(/\$\{month\}/g, month);
-      journalPath = journalPath.replace(/\$\{day\}/g, day);
+      // eslint-disable-next-line no-template-curly-in-string
+      journalPath = journalPath.replaceAll('${year}', year);
+      // eslint-disable-next-line no-template-curly-in-string
+      journalPath = journalPath.replaceAll('${month}', month);
+      // eslint-disable-next-line no-template-curly-in-string
+      journalPath = journalPath.replaceAll('${day}', day);
 
       // Prepare final content
       const finalContent = `\n\n## ${routine.name}\n\n${evaluatedTemplate}`;
@@ -176,12 +179,7 @@ export default function RenderedRoutine({
     <div className="RenderedRoutine">
       <h2>{routine.name}</h2>
       <Markdown ref={markdownRef} md={processedTemplate} />
-      <button
-        type="button"
-        onClick={appendToJournal}
-        disabled={isProcessing}
-        style={{ marginTop: '20px', padding: '10px 20px' }}
-      >
+      <button type="button" onClick={appendToJournal} disabled={isProcessing}>
         {isProcessing ? 'Appending...' : 'Append to journal'}
       </button>
     </div>

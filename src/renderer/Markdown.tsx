@@ -176,6 +176,24 @@ const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
       components.p = ({ children }) => <>{children}</>; // No wrapper tag at all
     }
 
+    if (inline) {
+      return (
+        <span ref={ref}>
+          <ReactMarkdown
+            skipHtml={false}
+            children={mdProcessed}
+            // Enable GitHub Flavored Markdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[
+              // Enable raw HTML support but allow dangerous content
+              [rehypeRaw],
+            ]}
+            components={components}
+          />
+        </span>
+      );
+    }
+
     return (
       <div ref={ref}>
         <ReactMarkdown
