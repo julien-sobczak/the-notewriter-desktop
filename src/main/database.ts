@@ -1177,7 +1177,7 @@ export default class DatabaseManager {
   async updateReminder(
     repositorySlug: string,
     reminderOid: string,
-    nextPerformedAt: Date
+    nextPerformedAt: Date,
   ): Promise<Model.Reminder> {
     const db = this.datasources.get(repositorySlug);
     if (!db) {
@@ -1190,49 +1190,53 @@ export default class DatabaseManager {
         SET next_performed_at = ?, last_performed_at = datetime('now') 
         WHERE oid = ?
       `;
-      
-      db.run(updateSql, [nextPerformedAt.toISOString(), reminderOid], function(err: any) {
-        if (err) {
-          console.error('Error updating reminder:', err);
-          reject(err);
-          return;
-        }
 
-        // Fetch the updated reminder
-        const selectSql = `
-          SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
-          FROM reminder 
-          WHERE oid = ?
-        `;
-        
-        db.get(selectSql, [reminderOid], (err: any, row: any) => {
+      db.run(
+        updateSql,
+        [nextPerformedAt.toISOString(), reminderOid],
+        function (err: any) {
           if (err) {
-            console.error('Error fetching updated reminder:', err);
+            console.error('Error updating reminder:', err);
             reject(err);
             return;
           }
 
-          if (!row) {
-            reject(new Error(`Reminder ${reminderOid} not found`));
-            return;
-          }
+          // Fetch the updated reminder
+          const selectSql = `
+          SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
+          FROM reminder 
+          WHERE oid = ?
+        `;
 
-          const updatedReminder: Model.Reminder = {
-            oid: row.oid,
-            fileOid: row.file_oid,
-            noteOid: row.note_oid,
-            relativePath: row.relative_path,
-            description: row.description,
-            tag: row.tag,
-            lastPerformedAt: row.last_performed_at,
-            nextPerformedAt: row.next_performed_at,
-            repositorySlug: repositorySlug,
-            repositoryPath: this.#getRepositoryPath(repositorySlug),
-          };
+          db.get(selectSql, [reminderOid], (err: any, row: any) => {
+            if (err) {
+              console.error('Error fetching updated reminder:', err);
+              reject(err);
+              return;
+            }
 
-          resolve(updatedReminder);
-        });
-      });
+            if (!row) {
+              reject(new Error(`Reminder ${reminderOid} not found`));
+              return;
+            }
+
+            const updatedReminder: Model.Reminder = {
+              oid: row.oid,
+              fileOid: row.file_oid,
+              noteOid: row.note_oid,
+              relativePath: row.relative_path,
+              description: row.description,
+              tag: row.tag,
+              lastPerformedAt: row.last_performed_at,
+              nextPerformedAt: row.next_performed_at,
+              repositorySlug,
+              repositoryPath: this.#getRepositoryPath(repositorySlug),
+            };
+
+            resolve(updatedReminder);
+          });
+        },
+      );
     });
   }
 

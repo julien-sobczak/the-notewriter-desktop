@@ -260,46 +260,49 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle(
-  'complete-reminders',
-  async (_event, reminderOids: string[]) => {
-    console.debug(`Completing reminders: ${reminderOids}`);
-    
-    // First, get all reminder details to get their repository slugs
-    const allReminders = await db.getPendingReminders([]);
-    const remindersToComplete = allReminders.filter(r => reminderOids.includes(r.oid));
-    
-    const lastPerformedAt = new Date();
-    
-    // Complete each reminder by appending the operation to WAL and updating database
-    for (const reminder of remindersToComplete) {
-      // Append operation to WAL
-      op.appendOperationToWal(reminder.repositorySlug, {
-        oid: generateOid(),
-        object_oid: reminder.oid,
-        name: 'complete-reminder',
-        timestamp: lastPerformedAt.toISOString()
-      });
+ipcMain.handle('complete-reminders', async (_event, reminderOids: string[]) => {
+  console.debug(`Completing reminders: ${reminderOids}`);
 
-      // Update the SQLite database immediately.
-      // Avoid having to load the pack files when the WAL will be flushed
-      // (and useful as the reminders may be rescheduled before the next flush).
-      try {
-        const nextPerformedAt = determineNextReminder(reminder, lastPerformedAt);
-        const updatedReminder = await db.updateReminder(reminder.repositorySlug, reminder.oid, nextPerformedAt);
-        console.debug(
-          `Reminder ${updatedReminder.oid} updated with new date:`,
-          updatedReminder.nextPerformedAt,
-        );
-      } catch (error) {
-        console.error(`Error updating reminder ${reminder.oid}:`, error);
-        // Continue processing other reminders even if one fails
-      }
+  // First, get all reminder details to get their repository slugs
+  const allReminders = await db.getPendingReminders([]);
+  const remindersToComplete = allReminders.filter((r) =>
+    reminderOids.includes(r.oid),
+  );
+
+  const lastPerformedAt = new Date();
+
+  // Complete each reminder by appending the operation to WAL and updating database
+  for (const reminder of remindersToComplete) {
+    // Append operation to WAL
+    op.appendOperationToWal(reminder.repositorySlug, {
+      oid: generateOid(),
+      object_oid: reminder.oid,
+      name: 'complete-reminder',
+      timestamp: lastPerformedAt.toISOString(),
+    });
+
+    // Update the SQLite database immediately.
+    // Avoid having to load the pack files when the WAL will be flushed
+    // (and useful as the reminders may be rescheduled before the next flush).
+    try {
+      const nextPerformedAt = determineNextReminder(reminder, lastPerformedAt);
+      const updatedReminder = await db.updateReminder(
+        reminder.repositorySlug,
+        reminder.oid,
+        nextPerformedAt,
+      );
+      console.debug(
+        `Reminder ${updatedReminder.oid} updated with new date:`,
+        updatedReminder.nextPerformedAt,
+      );
+    } catch (error) {
+      console.error(`Error updating reminder ${reminder.oid}:`, error);
+      // Continue processing other reminders even if one fails
     }
-    
-    console.debug(`Completed ${remindersToComplete.length} reminders`);
-  },
-);
+  }
+
+  console.debug(`Completed ${remindersToComplete.length} reminders`);
+});
 
 ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
   console.debug(`Listing decks for repositories ${repositorySlugs}`);
