@@ -346,12 +346,13 @@ table.List {
   font-size: 90%;
 }
 
-ul.FilterMetadata {
+ul.Filter {
   list-style-type: none;
   display: flex;
   flex-direction: row;
+  justify-content: center; /* Centers items horizontally */
 }
-ul.FilterMetadata li {
+ul.Filter li {
   margin: 0 0.25em;
   padding: 0.25em 0.5em;
   font-family: monospace;
@@ -361,7 +362,7 @@ ul.FilterMetadata li {
   background: var(--color-background-light);
   border: 1px solid var(--color-background-light);
 }
-ul.FilterMetadata li.selected {
+ul.Filter li.selected {
   border-color: var(--color-separator-dark);
 }
 
@@ -841,23 +842,34 @@ ul.FilterMetadata li.selected {
   font-size: 0.7rem;
 }
 
-.instruction {
-  font-weight: 100;
-}
 
-ul.categories {
-  list-style-type: none;
+/* <Question> */
+
+.Question {
   display: flex;
-  flex: row;
-  margin: 0;
-  padding: 0;
-}
-ul.categories li {
-  border: 1px solid black;
-  border-radius: 50vh;
-  padding: 0.5rem 1rem;
-  margin: 0.5rem;
-  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  h2 {
+    font-weight: 100;
+  }
+  ul {
+    list-style-type: none;
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+
+    li {
+      border: 1px solid black;
+      border-radius: 50vh;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      cursor: pointer;
+    }
+  }
 }
 
 /* Timer */
@@ -1219,4 +1231,87 @@ ul.categories li {
   }
 }
 
+/* <Planner> */
 
+.Planner {
+  width: 100%;
+  height: 100vh;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  background-color: var(--color-background-light);
+}
+
+/* <KanbanBoard> */
+
+.KanbanBoard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.KanbanFilter {
+  margin-bottom: 1rem;
+  padding: 1rem 0;
+}
+
+.KanbanColumns {
+  display: flex;
+  gap: 1rem;
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.KanbanColumn {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border: 1px solid var(--color-separator);
+  padding: 1rem;
+}
+
+.ColumnTitle {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-separator-dark);
+}
+
+.ColumnItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.KanbanItem {
+  border: 1px solid var(--color-separator);
+  background-color: white;
+
+  > header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between; /* push children to edges */
+    align-items: start; /* force align to the top */
+  }
+
+  > div {
+    padding: 1rem;
+  }
+}
+.KanbanItemStatus {
+  padding: 0.25rem 0.5rem;
+}
+.KanbanItemGroup {
+  background-color: var(--color-background-light);
+  font-size: 0.6rem;
+  padding: 0.25rem 0.5rem;
+}

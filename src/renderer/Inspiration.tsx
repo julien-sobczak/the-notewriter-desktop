@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Eraser,
   SkipBack,
@@ -10,6 +10,7 @@ import { ConfigContext } from './ConfigContext';
 import useKeyDown from './useKeyDown';
 import FullScreenNote from './FullScreenNote';
 import { Action, Actions } from './Actions';
+import Question from './Question';
 
 function extractQuery(inspiration: InspirationConfig): Query {
   // Convert all queries configured into valid Query
@@ -76,17 +77,12 @@ function Inspiration() {
     <div className="Screen Inspiration">
       {!selectedCategory && (
         <div className="Content">
-          <h2 className="instruction">Choose a category</h2>
-          <ul className="categories">
-            {inspirations?.map((inspiration: InspirationConfig) => (
-              <li
-                key={inspiration.name}
-                onClick={() => handleCategorySelected(inspiration)}
-              >
-                {inspiration.name}
-              </li>
-            ))}
-          </ul>
+          <Question
+            question="Choose a category"
+            choices={inspirations}
+            renderChoice={(inspiration: InspirationConfig) => inspiration.name}
+            onChoiceSelected={handleCategorySelected}
+          />
         </div>
       )}
       {selectedCategory && (

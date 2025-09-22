@@ -1,4 +1,15 @@
+---
+project: The NoteWriter
+status: done
+---
+
 # The NoteWriter
+
+
+## Note: Synopsis
+
+_The NoteWriter_ is a CLI to extract notes and various objects like reminders, flashcards.
+
 
 ## TODO: Backlog
 

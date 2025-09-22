@@ -1,14 +1,8 @@
 /* eslint-disable react/no-danger */
 import { useEffect, useState, useContext } from 'react';
 import classNames from 'classnames';
-import {
-  Bookmark,
-  Note,
-  NoteRef,
-  QueryResult,
-  RepositoryRefConfig,
-} from '../shared/Model';
-import { ConfigContext } from './ConfigContext';
+import { Bookmark, Note, NoteRef, QueryResult } from '../shared/Model';
+import { ConfigContext, getSelectedRepositorySlugs } from './ConfigContext';
 import NoteType from './NoteType';
 import RenderedNote from './RenderedNote';
 import Markdown from './Markdown';
@@ -34,9 +28,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
 
   // Retrieve static bookmarks from the database
   useEffect(() => {
-    const selectedRepositorySlugs = staticConfig.repositories
-      .filter((repository: RepositoryRefConfig) => repository.selected)
-      .map((repository: RepositoryRefConfig) => repository.slug);
+    const selectedRepositorySlugs = getSelectedRepositorySlugs(staticConfig);
 
     const search = async () => {
       console.log(`Searching for bookmarks in database...`);
@@ -52,7 +44,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
       setNotes(results.notes);
     };
     search();
-  }, [staticConfig.repositories]);
+  }, [staticConfig]);
 
   // Download the note corresponding to the selected bookmark
   useEffect(() => {

@@ -5,6 +5,7 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   RepositoryConfig,
+  RepositoryRefConfig,
 } from '../shared/Model';
 import configReducer from './configReducer';
 
@@ -64,4 +65,80 @@ export function ConfigContextProvider({ children }: any) {
   return (
     <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
   );
+}
+
+/* Helpers */
+
+// Utility function to get selected repository slugs
+export function getSelectedRepositorySlugs(
+  staticConfig: EditorStaticConfig,
+): string[] {
+  return staticConfig.repositories
+    .filter((repository: RepositoryRefConfig) => repository.selected)
+    .map((repository: RepositoryRefConfig) => repository.slug);
+}
+
+// Utility function to determine a short label from an attribute value.
+// If a shorthand exists in the repository config, it returns that shorthand.
+export function determineShortAttributeLabel(
+  repositoryConfig: RepositoryConfig,
+  attributeName: string,
+  value: string,
+): string {
+  const shorthand = determineAttributeShorthand(
+    repositoryConfig,
+    attributeName,
+    value,
+  );
+
+  if (shorthand) {
+    return shorthand;
+  }
+
+  // If no shorthand found, return the original value
+  return value;
+}
+
+// Utility function to determine a long label from an attribute value.
+export function determineLongAttributeLabel(
+  repositoryConfig: RepositoryConfig,
+  attributeName: string,
+  value: string,
+): string {
+  const shorthand = determineAttributeShorthand(
+    repositoryConfig,
+    attributeName,
+    value,
+  );
+
+  if (shorthand) {
+    return `${shorthand} ${value}`;
+  }
+
+  // If no shorthand found, return the original value
+  return value;
+}
+
+// Utility function to find the shorthand from an attribute value.
+export function determineAttributeShorthand(
+  repositoryConfig: RepositoryConfig,
+  attributeName: string,
+  value: string,
+): string | undefined {
+  const attributeConfig = repositoryConfig?.attributes?.[attributeName];
+
+  if (!attributeConfig || !attributeConfig.shorthands) {
+    return undefined;
+  }
+
+  // Look for the value in shorthands and return the key if found
+  for (const [shorthand, expandedValue] of Object.entries(
+    attributeConfig.shorthands,
+  )) {
+    if (expandedValue === value) {
+      return shorthand;
+    }
+  }
+
+  return undefined;
 }
