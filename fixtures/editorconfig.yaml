@@ -11,16 +11,6 @@ dailyQuote:
   query: "path:references @type:Quote"
   repositories: [life]
 
-planner:
-  projects:
-  - name: "Side Projects"
-    query: "path:projects @type:Synopsis"
-    repositories: [life]
-  kanban:
-  - name: "Personal Backlog"
-    query: "path:projects/ @status:in-progress @type:Todo"
-    repositories: [life]
-
 inspirations:
 - name: Life
   query: "path:references/quotes (#life or #life-changing) @type:Quote"
@@ -28,6 +18,16 @@ inspirations:
 - name: Art
   query: "path:references/art @type:Artwork"
   repositories: [life]
+
+planner:
+  projects:
+  - name: "Side Projects"
+    query: "path:projects @title:Synopsis"
+    repositories: [work, life]
+  tasks:
+  - name: "Personal Backlog"
+    query: "path:projects/ @type:Todo"
+    repositories: [life]
 
 zenMode:
   queries:

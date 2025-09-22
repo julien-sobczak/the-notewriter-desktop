@@ -10,6 +10,7 @@ export interface EditorStaticConfig {
   dailyQuote?: DailyQuoteConfig;
   inspirations?: InspirationConfig[];
   zenMode?: ZenConfig;
+  planner?: PlannerConfig;
 }
 
 export interface RepositoryRefConfig {
@@ -37,6 +38,17 @@ export interface ZenConfig {
 export interface ZenQuery {
   query: string;
   repositories?: string[];
+}
+
+export interface PlannerConfig {
+  projects?: PlannerQueryConfig[];
+  tasks?: PlannerQueryConfig[];
+}
+
+export interface PlannerQueryConfig {
+  name: string;
+  query: string;
+  repositories: string[];
 }
 
 /* Dynamic Config */

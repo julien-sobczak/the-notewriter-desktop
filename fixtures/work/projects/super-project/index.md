@@ -1,4 +1,9 @@
-# My Super Project
+# My Super Project 📅 `@project: Super Project`
+
+## Note: Synopsis
+
+My Super Project will do something great.
+
 
 ## TODO: Next Steps
 
