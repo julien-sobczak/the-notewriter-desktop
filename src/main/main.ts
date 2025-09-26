@@ -10,6 +10,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
+import fs from 'fs';
 import {
   app,
   BrowserWindow,
@@ -260,46 +261,50 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle(
-  'complete-reminders',
-  async (_event, reminderOids: string[]) => {
-    console.debug(`Completing reminders: ${reminderOids}`);
-    
-    // First, get all reminder details to get their repository slugs
-    const allReminders = await db.getPendingReminders([]);
-    const remindersToComplete = allReminders.filter(r => reminderOids.includes(r.oid));
-    
-    const lastPerformedAt = new Date();
-    
-    // Complete each reminder by appending the operation to WAL and updating database
-    for (const reminder of remindersToComplete) {
-      // Append operation to WAL
-      op.appendOperationToWal(reminder.repositorySlug, {
-        oid: generateOid(),
-        object_oid: reminder.oid,
-        name: 'complete-reminder',
-        timestamp: lastPerformedAt.toISOString()
-      });
+ipcMain.handle('complete-reminders', async (_event, reminderOids: string[]) => {
+  console.debug(`Completing reminders: ${reminderOids}`);
 
-      // Update the SQLite database immediately.
-      // Avoid having to load the pack files when the WAL will be flushed
-      // (and useful as the reminders may be rescheduled before the next flush).
-      try {
-        const nextPerformedAt = determineNextReminder(reminder, lastPerformedAt);
-        const updatedReminder = await db.updateReminder(reminder.repositorySlug, reminder.oid, nextPerformedAt);
-        console.debug(
-          `Reminder ${updatedReminder.oid} updated with new date:`,
-          updatedReminder.nextPerformedAt,
-        );
-      } catch (error) {
-        console.error(`Error updating reminder ${reminder.oid}:`, error);
-        // Continue processing other reminders even if one fails
-      }
+  // First, get all reminder details to get their repository slugs
+  const allReminders = await db.getPendingReminders([]);
+  const remindersToComplete = allReminders.filter((r) =>
+    reminderOids.includes(r.oid),
+  );
+
+  const lastPerformedAt = new Date();
+
+  // Complete each reminder by appending the operation to WAL and updating database
+  for (const reminder of remindersToComplete) {
+    // Append operation to WAL
+    op.appendOperationToWal(reminder.repositorySlug, {
+      oid: generateOid(),
+      object_oid: reminder.oid,
+      name: 'complete-reminder',
+      timestamp: lastPerformedAt.toISOString(),
+      extras: {},
+    });
+
+    // Update the SQLite database immediately.
+    // Avoid having to load the pack files when the WAL will be flushed
+    // (and useful as the reminders may be rescheduled before the next flush).
+    try {
+      const nextPerformedAt = determineNextReminder(reminder, lastPerformedAt);
+      const updatedReminder = await db.updateReminder(
+        reminder.repositorySlug,
+        reminder.oid,
+        nextPerformedAt,
+      );
+      console.debug(
+        `Reminder ${updatedReminder.oid} updated with new date:`,
+        updatedReminder.nextPerformedAt,
+      );
+    } catch (error) {
+      console.error(`Error updating reminder ${reminder.oid}:`, error);
+      // Continue processing other reminders even if one fails
     }
-    
-    console.debug(`Completed ${remindersToComplete.length} reminders`);
-  },
-);
+  }
+
+  console.debug(`Completed ${remindersToComplete.length} reminders`);
+});
 
 ipcMain.handle('list-decks', async (_event, repositorySlugs: string[]) => {
   console.debug(`Listing decks for repositories ${repositorySlugs}`);
@@ -492,6 +497,82 @@ ipcMain.handle(
         resolve(result);
       });
     });
+  },
+);
+
+// Journal operations
+ipcMain.handle(
+  'read-note-file',
+  async (_event, repositorySlug: string, filePath: string) => {
+    console.debug(`Reading note file ${filePath} in repository ${repositorySlug}`);
+
+    try {
+      // Get repository configuration
+      const repository = config
+        .repositories()
+        .find((repo) => repo.slug === repositorySlug);
+      if (!repository) {
+        throw new Error(`Repository ${repositorySlug} not found`);
+      }
+
+      // Normalize the repository path
+      const repositoryPath = normalizePath(repository.path);
+
+      // Resolve the full file path
+      const fullFilePath = path.join(repositoryPath, filePath);
+
+      // Read file content
+      if (!fs.existsSync(fullFilePath)) {
+        console.warn(`File ${fullFilePath} does not exist`);
+        return ''; // Return empty content for non-existing files
+      }
+
+      const content = fs.readFileSync(fullFilePath, 'utf8');
+      console.debug(`Successfully read content from ${fullFilePath}`);
+      return content;
+    } catch (error) {
+      console.error(`Error reading file ${filePath}:`, error);
+      throw error;
+    }
+  }
+);
+ipcMain.handle(
+  'append-to-file',
+  async (_event, repositorySlug: string, filePath: string, content: string) => {
+    console.debug(
+      `Appending to file ${filePath} in repository ${repositorySlug}`,
+    );
+
+    try {
+      // Get repository configuration
+      const repository = config
+        .repositories()
+        .find((repo) => repo.slug === repositorySlug);
+      if (!repository) {
+        throw new Error(`Repository ${repositorySlug} not found`);
+      }
+
+      // Normalize the repository path
+      const repositoryPath = normalizePath(repository.path);
+
+      // Resolve the full file path
+      const fullFilePath = path.join(repositoryPath, filePath);
+
+      // Ensure directory exists
+      const dir = path.dirname(fullFilePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      // Append content to file
+      fs.appendFileSync(fullFilePath, content, 'utf8');
+
+      console.debug(`Successfully appended content to ${fullFilePath}`);
+      return true;
+    } catch (error) {
+      console.error(`Error appending to file ${filePath}:`, error);
+      throw error;
+    }
   },
 );
 

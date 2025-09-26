@@ -90,6 +90,7 @@ svg {
 
 .Screen {
   width: 100%;
+  overflow: scroll;
 }
 
 table.List {
@@ -139,6 +140,7 @@ table.List {
 .Main {
   width: 100%;
   height: 100vh;
+  overflow: hidden;
 }
 
 .MainMenu {
@@ -1315,3 +1317,83 @@ ul.Filter li.selected {
   font-size: 0.6rem;
   padding: 0.25rem 0.5rem;
 }
+
+
+/* <RenderedRoutine> */
+
+.RenderedRoutine {
+  display: flex;
+  justify-content: center; /* horizontal */
+  align-items: center;     /* vertical */
+  flex-direction: column;
+
+  .RenderedRoutineTemplate {
+    min-width: 50%;
+    margin: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--color-separator-dark);
+
+    h1, h2, h3 {
+      /* Create a highlight effect */
+      /* Inspired by https://max.hn/blog/how-to-create-a-highlighter-marker-effect-in-css */
+      margin: 1em -0.4em;
+      padding: 0.1em 0.4em;
+      border-radius: 0.8em 0.3em;
+      background: transparent;
+      background-image: linear-gradient(
+        to right,
+        rgba(255, 225, 0, 0.1),
+        rgba(255, 225, 0, 0.7) 4%,
+        rgba(255, 225, 0, 0.3)
+      );
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+    /* Templates use h1, h2, h3 for different levels but must be rendered like smaller headings */
+    h1 {
+      font-size: 1.20rem;
+    }
+    h2 {
+      font-size: 1.15rem;
+    }
+    h3 {
+      font-size: 1.1rem;
+    }
+
+    /* Make the input fields look like hand-written notes */
+    input, textarea {
+      border: none;                  /* remove all borders */
+      border-bottom: 1px solid #AAA; /* keep only bottom line */
+      outline: none;                 /* remove blue outline on focus */
+      font-size: 1rem;
+      background: transparent;       /* no background fill */
+      color: darkblue;
+      font-family: 'Pacifico', cursive;
+
+      &:focus {
+        border-bottom-color: darkblue; /* darker line when active */
+      }
+    }
+    input {
+      padding: 0.25rem 0.5rem;  /* space around text */
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      line-height: 1.5em; /* controls line spacing */
+      font-size: 1rem;
+      border: none;
+      outline: none;
+      resize: none; /* optional: prevent resizing */
+      background: repeating-linear-gradient(
+        to bottom,
+        white,
+        white calc(1.5em - 1px),  /* text area background */
+        #ccc calc(1.5em - 1px),   /* bottom border */
+        #ccc 1.5em                /* space until next line */
+      );
+    }
+  }
+
+}
+

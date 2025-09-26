@@ -9,9 +9,9 @@ export function toHumanReadableDate(dateStr: string): string {
 
   // Handle today, yesterday, tomorrow
   if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';  
+  if (diffDays === 1) return 'Tomorrow';
   if (diffDays === -1) return 'Yesterday';
-  
+
   // Handle future dates
   if (diffDays > 0) {
     if (diffDays <= 7) return `in ${diffDays} days`;
@@ -22,13 +22,13 @@ export function toHumanReadableDate(dateStr: string): string {
     if (diffYears === 1) return 'in a year';
     return `in ${diffYears} years`;
   }
-  
+
   // Handle past dates
   const absDays = Math.abs(diffDays);
   const absWeeks = Math.round(absDays / 7);
   const absMonths = Math.round(absDays / 30);
   const absYears = Math.round(absDays / 365);
-  
+
   if (absDays <= 7) return `${absDays} days ago`;
   if (absWeeks === 1) return '1 week ago';
   if (absWeeks < 4) return `${absWeeks} weeks ago`;
