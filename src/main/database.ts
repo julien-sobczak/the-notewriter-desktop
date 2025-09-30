@@ -1244,6 +1244,7 @@ export default class DatabaseManager {
 
   async determineJournalActivity(
     repositorySlug: string,
+    pathPrefix: string,
   ): Promise<Model.JournalActivity> {
     const db = this.datasources.get(repositorySlug);
     if (!db) {
@@ -1259,9 +1260,10 @@ export default class DatabaseManager {
         FROM note 
         WHERE note_type = 'Journal'
           AND json_extract(attributes, '$.date') IS NOT NULL
+          AND relative_path LIKE ?
       `;
 
-      db.get(sql, (err: any, row: any) => {
+      db.get(sql, [`${pathPrefix}%`], (err: any, row: any) => {
         if (err) {
           console.log('Error while determining journal activity', err);
           reject(err);
@@ -1278,6 +1280,7 @@ export default class DatabaseManager {
 
   async findJournalEntries(
     repositorySlug: string,
+    pathPrefix: string,
     start: string,
     end: string,
   ): Promise<Model.Note[]> {
@@ -1311,10 +1314,11 @@ export default class DatabaseManager {
         WHERE note_type = 'Journal'
           AND json_extract(attributes, '$.date') >= ?
           AND json_extract(attributes, '$.date') <= ?
+          AND relative_path LIKE ?
         ORDER BY json_extract(attributes, '$.date') DESC
       `;
 
-      db.all(sql, [start, end], async (err: any, rows: any) => {
+      db.all(sql, [start, end, `${pathPrefix}%`], async (err: any, rows: any) => {
         if (err) {
           console.log('Error while finding journal entries', err);
           reject(err);

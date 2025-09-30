@@ -1397,32 +1397,33 @@ ul.Filter li.selected {
 
 }
 
+/* TimelineRangePicker Component */
+.TimelineRangePicker {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-weight: 500;
+
+    input[type="date"] {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+  }
+}
+
 /* Journal Component */
 .Journal {
   padding: 1rem;
-
-  .TimelineRangePicker {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: #f5f5f5;
-    border-radius: 4px;
-
-    label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      font-weight: 500;
-
-      input[type="date"] {
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 1rem;
-      }
-    }
-  }
 
   .JournalEntries {
     margin-top: 2rem;

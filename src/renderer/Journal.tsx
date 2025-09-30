@@ -46,6 +46,10 @@ function Journal() {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [availableAttributes, setAvailableAttributes] = useState<string[]>([]);
   const [availableEmojis, setAvailableEmojis] = useState<string[]>([]);
+  const [showFilterTags, setShowFilterTags] = useState<boolean>(false);
+  const [showFilterAttributes, setShowFilterAttributes] =
+    useState<boolean>(false);
+  const [showFilterEmojis, setShowFilterEmojis] = useState<boolean>(false);
 
   useEffect(() => {
     // Load journal configuration
@@ -77,8 +81,10 @@ function Journal() {
     if (!window.electron) return;
 
     try {
+      const pathPrefix = extractPathPrefix(journal.path);
       const journalActivity = await window.electron.determineJournalActivity(
         journal.repository,
+        pathPrefix,
       );
       setActivity(journalActivity);
 
@@ -123,19 +129,25 @@ function Journal() {
 
     setIsLoading(true);
     try {
+      const pathPrefix = extractPathPrefix(selectedJournal.path);
       const entries = await window.electron.findJournalEntries(
         selectedJournal.repository,
+        pathPrefix,
         dateRange.start,
         dateRange.end,
       );
 
-      // Check if today's note exists
+      // Check if today's note exists - only check the first entry (entries are sorted DESC)
+      // and only show today note if today is within the selected date range
       const today = formatDate(new Date());
-      const todayEntry = entries.find(
-        (entry) => entry.attributes.date === today,
-      );
+      const todayInRange =
+        today >= dateRange.start && today <= dateRange.end;
+      const todayEntry =
+        entries.length > 0 && entries[0].attributes.date === today
+          ? entries[0]
+          : null;
 
-      if (!todayEntry) {
+      if (!todayEntry && todayInRange) {
         // Create a dummy note for today
         const dummyNote: Note = {
           oid: 'today',
@@ -193,6 +205,7 @@ function Journal() {
       }
 
       // Extract emojis from items
+      // The ListItem is a recursive datatype but we filter only top-level items to keep the implementation simple
       if (entry.items?.children) {
         entry.items.children.forEach((item) => {
           const emojiMatches = item.text?.match(/[\p{Emoji}]/gu);
@@ -296,63 +309,65 @@ function Journal() {
             title="Refresh"
             onClick={handleRefresh}
           />
-          <Action icon={<FilterIcon />} title="Filter">
+          <Action icon={<FilterIcon />} title="Filter items">
             <Subaction
               icon={<TagIcon />}
-              title="Filter by Tags"
-              onClick={() => {}}
-            >
-              Tags
-            </Subaction>
-            {availableTags.map((tag) => (
-              <Subaction
-                key={tag}
-                icon={<span />}
-                title={`#${tag}`}
-                selected={filterTags.includes(tag)}
-                onClick={() => handleToggleFilterTag(tag)}
-              >
-                #{tag}
-              </Subaction>
-            ))}
+              title="Tags"
+              selected={showFilterTags}
+              onClick={() => setShowFilterTags(!showFilterTags)}
+            />
             <Subaction
               icon={<AttributeIcon />}
-              title="Filter by Attributes"
-              onClick={() => {}}
-            >
-              Attributes
-            </Subaction>
-            {availableAttributes.map((attr) => (
-              <Subaction
-                key={attr}
-                icon={<span />}
-                title={`@${attr}`}
-                selected={filterAttributes.includes(attr)}
-                onClick={() => handleToggleFilterAttribute(attr)}
-              >
-                @{attr}
-              </Subaction>
-            ))}
+              title="Attributes"
+              selected={showFilterAttributes}
+              onClick={() => setShowFilterAttributes(!showFilterAttributes)}
+            />
             <Subaction
               icon={<EmojiIcon />}
-              title="Filter by Emojis"
-              onClick={() => {}}
-            >
-              Emojis
-            </Subaction>
-            {availableEmojis.map((emoji) => (
-              <Subaction
-                key={emoji}
-                icon={<span />}
-                title={emoji}
-                selected={filterEmojis.includes(emoji)}
-                onClick={() => handleToggleFilterEmoji(emoji)}
-              >
-                {emoji}
-              </Subaction>
-            ))}
+              title="Emojis"
+              selected={showFilterEmojis}
+              onClick={() => setShowFilterEmojis(!showFilterEmojis)}
+            />
           </Action>
         </Actions>
+
+        {/* Filter selections */}
+        {(showFilterTags || showFilterAttributes || showFilterEmojis) && (
+          <div className="FilterSelections">
+            <ul className="Filter">
+              {showFilterTags &&
+                availableTags.map((tag) => (
+                  <li
+                    key={tag}
+                    className={filterTags.includes(tag) ? 'selected' : ''}
+                    onClick={() => handleToggleFilterTag(tag)}
+                  >
+                    #{tag}
+                  </li>
+                ))}
+              {showFilterAttributes &&
+                availableAttributes.map((attr) => (
+                  <li
+                    key={attr}
+                    className={filterAttributes.includes(attr) ? 'selected' : ''}
+                    onClick={() => handleToggleFilterAttribute(attr)}
+                  >
+                    @{attr}
+                  </li>
+                ))}
+              {showFilterEmojis &&
+                availableEmojis.map((emoji) => (
+                  <li
+                    key={emoji}
+                    className={filterEmojis.includes(emoji) ? 'selected' : ''}
+                    onClick={() => handleToggleFilterEmoji(emoji)}
+                  >
+                    {emoji}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
 
         {/* Loading indicator */}
         {isLoading && <Loader />}
@@ -461,6 +476,22 @@ function evaluateTemplateVariables(template: string): string {
     .replaceAll('${year}', year)
     .replaceAll('${month}', month)
     .replaceAll('${day}', day);
+}
+
+/**
+ * Extract the path prefix from a journal path template.
+ * Returns the longest prefix without placeholders (${...}).
+ * For example: 'journal/${year}/${year}-${month}-${day}.md' returns 'journal/'
+ */
+function extractPathPrefix(pathTemplate: string): string {
+  // Find the first occurrence of ${
+  const placeholderIndex = pathTemplate.indexOf('${');
+  if (placeholderIndex === -1) {
+    // No placeholders, return the whole path
+    return pathTemplate;
+  }
+  // Return everything before the first placeholder
+  return pathTemplate.substring(0, placeholderIndex);
 }
 
 export default Journal;

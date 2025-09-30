@@ -580,21 +580,27 @@ ipcMain.handle(
 
 ipcMain.handle(
   'determine-journal-activity',
-  async (_event, repositorySlug: string) => {
+  async (_event, repositorySlug: string, pathPrefix: string) => {
     console.debug(
-      `Determining journal activity for repository ${repositorySlug}`,
+      `Determining journal activity for repository ${repositorySlug} with prefix ${pathPrefix}`,
     );
-    return dbManager.determineJournalActivity(repositorySlug);
+    return dbManager.determineJournalActivity(repositorySlug, pathPrefix);
   },
 );
 
 ipcMain.handle(
   'find-journal-entries',
-  async (_event, repositorySlug: string, start: string, end: string) => {
+  async (
+    _event,
+    repositorySlug: string,
+    pathPrefix: string,
+    start: string,
+    end: string,
+  ) => {
     console.debug(
-      `Finding journal entries for repository ${repositorySlug} from ${start} to ${end}`,
+      `Finding journal entries for repository ${repositorySlug} with prefix ${pathPrefix} from ${start} to ${end}`,
     );
-    return dbManager.findJournalEntries(repositorySlug, start, end);
+    return dbManager.findJournalEntries(repositorySlug, pathPrefix, start, end);
   },
 );
 
