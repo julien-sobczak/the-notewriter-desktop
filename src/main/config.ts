@@ -29,7 +29,7 @@ export function homeDir() {
 }
 
 export default class ConfigManager {
-  // Static (~/.nt/editorconfig.yml), Dynamic (~/.nt/editorconfig.json) or Collection (.nt/config)?
+  // Static (~/.nt/editorconfig.jsonnet), Dynamic (~/.nt/editorconfig.json) or Collection (.nt/config)?
   //
   // * Static configuration refers to configuration specific to The NoteWriter Desktop application
   //   Ex: journaling templates, etc.
@@ -47,86 +47,39 @@ export default class ConfigManager {
   repositoryConfigs: { [key: string]: RepositoryConfig } = {};
 
   constructor() {
-    this.editorStaticConfig = ConfigManager.#readStaticConfigSync();
-    this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
-    for (const repositoryConfig of this.editorStaticConfig.repositories) {
-      this.repositoryConfigs[repositoryConfig.slug] =
-        ConfigManager.#readRepositoryConfig(repositoryConfig);
-    }
+    throw new Error(
+      'ConfigManager constructor is deprecated. Use ConfigManager.create() instead.',
+    );
   }
 
   // Async factory method for creating ConfigManager with Jsonnet support
   static async create(): Promise<ConfigManager> {
-    const homeConfigPathYaml1 = path.join(homeDir(), 'editorconfig.yaml');
-    const homeConfigPathYaml2 = path.join(homeDir(), 'editorconfig.yml');
-    const homeConfigPathJsonnet = path.join(homeDir(), 'editorconfig.jsonnet');
+    const staticConfig = await ConfigManager.#readStaticConfig();
+    const dynamicConfig = ConfigManager.#readDynamicConfig();
 
-    // Check if only Jsonnet config exists
-    if (
-      !fs.existsSync(homeConfigPathYaml1) &&
-      !fs.existsSync(homeConfigPathYaml2) &&
-      fs.existsSync(homeConfigPathJsonnet)
-    ) {
-      // Load Jsonnet config asynchronously
-      const staticConfig = await ConfigManager.#readStaticConfigJsonnet();
-      const dynamicConfig = ConfigManager.#readDynamicConfig();
+    // Create instance manually to avoid calling constructor
+    const instance = Object.create(ConfigManager.prototype);
+    instance.editorStaticConfig = staticConfig;
+    instance.editorDynamicConfig = dynamicConfig;
+    instance.repositoryConfigs = {};
 
-      // Create instance manually to avoid double-loading
-      const instance = Object.create(ConfigManager.prototype);
-      instance.editorStaticConfig = staticConfig;
-      instance.editorDynamicConfig = dynamicConfig;
-      instance.repositoryConfigs = {};
-
-      for (const repositoryConfig of instance.editorStaticConfig.repositories) {
-        instance.repositoryConfigs[repositoryConfig.slug] =
-          ConfigManager.#readRepositoryConfig(repositoryConfig);
-      }
-
-      return instance;
+    for (const repositoryConfig of instance.editorStaticConfig.repositories) {
+      instance.repositoryConfigs[repositoryConfig.slug] =
+        ConfigManager.#readRepositoryConfig(repositoryConfig);
     }
 
-    // Otherwise use synchronous YAML loading
-    return new ConfigManager();
+    return instance;
   }
 
-  static #readStaticConfigSync() {
-    // Ensure the configuration file exists
-    const homeConfigPathYaml1 = path.join(homeDir(), 'editorconfig.yaml');
-    const homeConfigPathYaml2 = path.join(homeDir(), 'editorconfig.yml');
-    const homeConfigPathJsonnet = path.join(homeDir(), 'editorconfig.jsonnet');
-
-    if (
-      !fs.existsSync(homeConfigPathYaml1) &&
-      !fs.existsSync(homeConfigPathYaml2) &&
-      !fs.existsSync(homeConfigPathJsonnet)
-    ) {
-      throw new Error(`No configuration file found in home directory`);
-    }
-
-    // Prioritize YAML for backward compatibility
-    if (
-      fs.existsSync(homeConfigPathYaml1) ||
-      fs.existsSync(homeConfigPathYaml2)
-    ) {
-      let homeConfigValidPath = homeConfigPathYaml1;
-      if (!fs.existsSync(homeConfigPathYaml1)) {
-        homeConfigValidPath = homeConfigPathYaml2;
-      }
-
-      console.log(`Reading configuration from ${homeConfigValidPath}`);
-      const data = fs.readFileSync(homeConfigValidPath, 'utf8');
-      const config = yaml.load(data) as EditorStaticConfig;
-      return ConfigManager.#applyDefaultStaticConfig(config);
-    }
-
-    // If only Jsonnet exists, throw an error suggesting to use async create method
-    throw new Error(
-      `Jsonnet configuration detected. Please use ConfigManager.create() instead of new ConfigManager()`,
-    );
-  }
-
-  static async #readStaticConfigJsonnet(): Promise<EditorStaticConfig> {
+  static async #readStaticConfig(): Promise<EditorStaticConfig> {
     const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet');
+
+    if (!fs.existsSync(homeConfigPath)) {
+      throw new Error(
+        `No configuration file found. Expected: ${homeConfigPath}`,
+      );
+    }
+
     console.log(`Reading configuration from ${homeConfigPath}`);
 
     const jsonnet = new Jsonnet();
