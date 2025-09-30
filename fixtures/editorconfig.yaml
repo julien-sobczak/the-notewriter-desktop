@@ -45,7 +45,7 @@ journal:
         template: |
           # 💪 Affirmation
 
-          <Affirmation wikilink="journaling#List: Affirmations" />
+          <Affirmation wikilink="journaling#List: Affirmations" tags="success,optimism" />
 
           # ✍️ Morning Pages
 
