@@ -139,6 +139,64 @@ repositories:
     expect(Object.keys(configManager.repositoryConfigs).length).toBe(2);
   });
 
+  test('prioritize YAML over Jsonnet when both exist', async () => {
+    // Create both YAML and Jsonnet files
+    fs.writeFileSync(
+      path.join(ntHomeDir, 'editorconfig.yaml'),
+      `
+repositories:
+- name: YAML
+  slug: yaml
+  path: ${ntHomeDir}/yaml
+`,
+    );
+
+    fs.writeFileSync(
+      path.join(ntHomeDir, 'editorconfig.jsonnet'),
+      `
+{
+  repositories: [
+    {
+      name: 'Jsonnet',
+      slug: 'jsonnet',
+      path: '${ntHomeDir}/jsonnet',
+    },
+  ],
+}
+`,
+    );
+
+    fs.mkdirSync(path.join(ntHomeDir, 'yaml/.nt'), { recursive: true });
+    fs.writeFileSync(
+      path.join(ntHomeDir, 'yaml/.nt/.config.json'),
+      `
+{
+  "Core": {
+    "Extensions": [
+      "md"
+    ],
+    "Medias": {
+      "Command": "ffmpeg",
+      "Parallel": 1,
+      "Preset": "ultrafast"
+    }
+  }
+}
+`,
+    );
+
+    // Test with synchronous constructor (should use YAML)
+    const configManager = new ConfigManager();
+    expect(configManager.editorStaticConfig.repositories[0].name).toBe('YAML');
+    expect(configManager.editorStaticConfig.repositories[0].slug).toBe('yaml');
+
+    // Test with async create (should also use YAML)
+    const configManagerAsync = await ConfigManager.create();
+    expect(configManagerAsync.editorStaticConfig.repositories[0].name).toBe(
+      'YAML',
+    );
+  });
+
   // restoring everything back
   afterEach(() => {
     process.env = env;
