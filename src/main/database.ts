@@ -1240,6 +1240,133 @@ export default class DatabaseManager {
     });
   }
 
+  /* Journal Management */
+
+  async determineJournalActivity(
+    repositorySlug: string,
+  ): Promise<Model.JournalActivity> {
+    const db = this.datasources.get(repositorySlug);
+    if (!db) {
+      throw new Error(`No datasource ${repositorySlug} found`);
+    }
+
+    return new Promise<Model.JournalActivity>((resolve, reject) => {
+      const sql = `
+        SELECT 
+          MIN(json_extract(attributes, '$.date')) as minDate,
+          MAX(json_extract(attributes, '$.date')) as maxDate,
+          COUNT(*) as countEntries
+        FROM note 
+        WHERE note_type = 'Journal'
+          AND json_extract(attributes, '$.date') IS NOT NULL
+      `;
+
+      db.get(sql, (err: any, row: any) => {
+        if (err) {
+          console.log('Error while determining journal activity', err);
+          reject(err);
+        } else {
+          resolve({
+            minDate: row.minDate || null,
+            maxDate: row.maxDate || null,
+            countEntries: row.countEntries || 0,
+          });
+        }
+      });
+    });
+  }
+
+  async findJournalEntries(
+    repositorySlug: string,
+    start: string,
+    end: string,
+  ): Promise<Model.Note[]> {
+    const db = this.datasources.get(repositorySlug);
+    if (!db) {
+      throw new Error(`No datasource ${repositorySlug} found`);
+    }
+
+    return new Promise<Model.Note[]>((resolve, reject) => {
+      const sql = `
+        SELECT
+          oid,
+          file_oid,
+          slug,
+          note_type,
+          relative_path,
+          wikilink,
+          attributes,
+          title,
+          long_title,
+          short_title,
+          tags,
+          line,
+          content,
+          body,
+          comment,
+          items,
+          marked,
+          annotations
+        FROM note
+        WHERE note_type = 'Journal'
+          AND json_extract(attributes, '$.date') >= ?
+          AND json_extract(attributes, '$.date') <= ?
+        ORDER BY json_extract(attributes, '$.date') DESC
+      `;
+
+      db.all(sql, [start, end], async (err: any, rows: any) => {
+        if (err) {
+          console.log('Error while finding journal entries', err);
+          reject(err);
+          return;
+        }
+
+        const notes: Model.Note[] = [];
+        const mediaRelativePaths: string[] = [];
+        const notesMediaRelativePaths = new Map<string, string[]>();
+
+        for (let i = 0; i < rows.length; i++) {
+          const note = this.#rowToNote(rows[i], repositorySlug);
+          const noteMediaRelativePaths = extractMediaRelativePaths(note);
+          notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths);
+          mediaRelativePaths.push(...noteMediaRelativePaths);
+          notes.push(note);
+        }
+
+        // Search for medias
+        const foundMedias = await this.searchMediasByRelativePaths(
+          mediaRelativePaths,
+          repositorySlug,
+        );
+
+        const mediasByRelativePaths = new Map<string, Model.Media>();
+        foundMedias.forEach((media: Model.Media) =>
+          mediasByRelativePaths.set(media.relativePath, media),
+        );
+
+        // Append found medias on notes
+        for (let i = 0; i < notes.length; i++) {
+          const note = notes[i];
+          if (!notesMediaRelativePaths.has(note.oid)) {
+            continue;
+          }
+
+          const referencedMediaRelativePaths = notesMediaRelativePaths.get(
+            note.oid,
+          );
+          referencedMediaRelativePaths?.forEach((mediaRelativePath) => {
+            const media = mediasByRelativePaths.get(mediaRelativePath);
+            if (media) {
+              note.medias.push(media);
+            }
+          });
+        }
+
+        resolve(notes);
+      });
+    });
+  }
+
   /* Converters */
 
   #rowToFile(row: any, repositorySlug: string): Model.File {

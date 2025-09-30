@@ -80,6 +80,12 @@ const electronHandler = {
     ipcRenderer.invoke('read-note-file', repositorySlug, filePath),
   appendToFile: (repositorySlug: string, filePath: string, content: string) =>
     ipcRenderer.invoke('append-to-file', repositorySlug, filePath, content),
+  determineJournalActivity: (repositorySlug: string) =>
+    ipcRenderer.invoke('determine-journal-activity', repositorySlug),
+  findJournalEntries: (repositorySlug: string, start: string, end: string) =>
+    ipcRenderer.invoke('find-journal-entries', repositorySlug, start, end),
+  forceAdd: (repositorySlug: string, filePath: string) =>
+    ipcRenderer.invoke('force-add', repositorySlug, filePath),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

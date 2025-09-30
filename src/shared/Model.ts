@@ -365,6 +365,12 @@ export interface Memory {
   occurredAt: string;
 }
 
+export interface JournalActivity {
+  minDate: string | null;
+  maxDate: string | null;
+  countEntries: number;
+}
+
 /**
  * Determines the next reminder date based on the reminder tag and last performed date.
  * Supports various tag patterns for different recurrence types.

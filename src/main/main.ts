@@ -504,7 +504,9 @@ ipcMain.handle(
 ipcMain.handle(
   'read-note-file',
   async (_event, repositorySlug: string, filePath: string) => {
-    console.debug(`Reading note file ${filePath} in repository ${repositorySlug}`);
+    console.debug(
+      `Reading note file ${filePath} in repository ${repositorySlug}`,
+    );
 
     try {
       // Get repository configuration
@@ -534,7 +536,7 @@ ipcMain.handle(
       console.error(`Error reading file ${filePath}:`, error);
       throw error;
     }
-  }
+  },
 );
 ipcMain.handle(
   'append-to-file',
@@ -571,6 +573,80 @@ ipcMain.handle(
       return true;
     } catch (error) {
       console.error(`Error appending to file ${filePath}:`, error);
+      throw error;
+    }
+  },
+);
+
+ipcMain.handle(
+  'determine-journal-activity',
+  async (_event, repositorySlug: string) => {
+    console.debug(
+      `Determining journal activity for repository ${repositorySlug}`,
+    );
+    return dbManager.determineJournalActivity(repositorySlug);
+  },
+);
+
+ipcMain.handle(
+  'find-journal-entries',
+  async (_event, repositorySlug: string, start: string, end: string) => {
+    console.debug(
+      `Finding journal entries for repository ${repositorySlug} from ${start} to ${end}`,
+    );
+    return dbManager.findJournalEntries(repositorySlug, start, end);
+  },
+);
+
+ipcMain.handle(
+  'force-add',
+  async (_event, repositorySlug: string, filePath: string) => {
+    console.debug(
+      `Force adding file ${filePath} in repository ${repositorySlug}`,
+    );
+
+    try {
+      // Get repository configuration
+      const repository = config
+        .repositories()
+        .find((repo) => repo.slug === repositorySlug);
+      if (!repository) {
+        throw new Error(`Repository ${repositorySlug} not found`);
+      }
+
+      // Normalize the repository path
+      const repositoryPath = normalizePath(repository.path);
+
+      // Resolve the full file path
+      const fullFilePath = path.join(repositoryPath, filePath);
+
+      // Check if file exists
+      if (!fs.existsSync(fullFilePath)) {
+        throw new Error(`File ${fullFilePath} does not exist`);
+      }
+
+      // Execute nt add command
+      const { exec } = require('child_process');
+      return new Promise((resolve, reject) => {
+        exec(
+          `nt add "${fullFilePath}"`,
+          { cwd: repositoryPath },
+          (error: any, stdout: string, stderr: string) => {
+            if (error) {
+              console.error(`Error executing nt add: ${error}`);
+              reject(error);
+              return;
+            }
+            if (stderr) {
+              console.warn(`nt add stderr: ${stderr}`);
+            }
+            console.debug(`nt add stdout: ${stdout}`);
+            resolve(true);
+          },
+        );
+      });
+    } catch (error) {
+      console.error(`Error force adding file ${filePath}:`, error);
       throw error;
     }
   },

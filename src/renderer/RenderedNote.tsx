@@ -186,11 +186,16 @@ type RenderedNoteProps = {
   note: Note;
   // Style
   layout?: string;
+  viewMode?: 'default' | 'list';
   showTags?: boolean;
   showAttributes?: boolean;
   showTitle?: boolean;
   showActions?: boolean;
   showComment?: boolean;
+  // Filters (only used when viewMode="list")
+  filterTags?: string[];
+  filterAttributes?: string[];
+  filterEmojis?: string[];
   // Container
   draggable?: boolean;
   onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -203,11 +208,15 @@ type RenderedNoteProps = {
 export default function RenderedNote({
   note,
   layout = 'default',
+  viewMode: initialViewMode = 'default',
   showTags = true,
   showAttributes = true,
   showTitle = true,
   showActions = true,
   showComment = true,
+  filterTags: propFilterTags = [],
+  filterAttributes: propFilterAttributes = [],
+  filterEmojis: propFilterEmojis = [],
   draggable = false,
   onDragStart = () => {},
   onDrag = () => {},
@@ -219,19 +228,31 @@ export default function RenderedNote({
   const repositoryConfig = config.repositories[note.repositorySlug];
 
   // List view mode management
-  const [viewMode, setViewMode] = useState<'default' | 'list'>('default');
+  const [viewMode, setViewMode] = useState<'default' | 'list'>(initialViewMode);
   const [showFilterTags, setShowFilterTags] = useState<boolean>(false);
   const [showFilterAttributes, setShowFilterAttributes] =
     useState<boolean>(false);
   const [showFilterEmojis, setShowFilterEmojis] = useState<boolean>(false);
   const [filterText, setFilterText] = useState<string>(''); // Add this state
-  const [filterTags, setFilterTags] = useState<string[]>([]);
-  const [filterAttributes, setFilterAttributes] = useState<string[]>([]);
-  const [filterEmojis, setFilterEmojis] = useState<string[]>([]);
+  const [filterTags, setFilterTags] = useState<string[]>(propFilterTags);
+  const [filterAttributes, setFilterAttributes] = useState<string[]>(
+    propFilterAttributes,
+  );
+  const [filterEmojis, setFilterEmojis] = useState<string[]>(propFilterEmojis);
   const [filteredItems, setFilteredItems] = useState<ListItem[]>([]);
 
   // Wikilink management
   const [hoveredNote, setHoveredNote] = useState<Note | null>(null);
+
+  // Update filters when props change (for list view mode)
+  React.useEffect(() => {
+    if (initialViewMode === 'list') {
+      setViewMode('list');
+      setFilterTags(propFilterTags);
+      setFilterAttributes(propFilterAttributes);
+      setFilterEmojis(propFilterEmojis);
+    }
+  }, [initialViewMode, propFilterTags, propFilterAttributes, propFilterEmojis]);
 
   const handleListMode = () => {
     setViewMode('list');
