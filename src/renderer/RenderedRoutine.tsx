@@ -1,29 +1,233 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable max-classes-per-file */
 /* eslint-disable no-template-curly-in-string */
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { FloppyDisk as SaveIcon } from '@phosphor-icons/react';
-import { JournalConfig, RoutineConfig, Note } from '../shared/Model';
+import { JournalConfig, RoutineConfig, Note, ListItem } from '../shared/Model';
 import Markdown from './Markdown';
+
+// Generate a unique input ID
+function generateInputId(): string {
+  // Id must have to be unique. We don't really care about the predictability of their values.
+  return `input-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+interface TagAttributes {
+  [key: string]: string;
+}
+
+/**
+ * Base class for custom tag processors.
+ *
+ * When using react-markdown in TypeScript, we cannot define custom components
+ * directly in the markdown string. Instead, we define custom tags (like <Affirmation>)
+ * and process them into HTML strings (like <input> or <textarea>) before passing the
+ * final HTML to react-markdown, otherwise the custom tags will not be recognized.
+ */
+abstract class CustomTag {
+  abstract readonly tagName: string;
+
+  /**
+   * Processes the custom tag and returns the corresponding HTML string.
+   * Processor can render <input> and <textarea> using unique IDs (see function generateInputId()).
+   * These form tags will be replaced automatically by their value in the final template.
+   *
+   * @param journal The journal configuration
+   * @param attributes The attributes for the custom tag
+   * @returns The HTML string to replace the custom tag
+   *
+   * @example
+   * For a tag like <Prompt wikilink="prompts" throwAway />
+   * - tagName would be "Prompt"
+   * - attributes would be { wikilink: "prompts", throwAway: "" }
+   *
+   * The processor could return something like:
+   * "Random prompt text\n\n<input type="text" class="Prompt" id="input-abc123" data-throw-away="true" />"
+   * The input ID must be unique and can be generated using generateInputId().
+   * The data-throw-away attribute indicates that the input value should not be saved.
+   */
+  abstract process(
+    journal: JournalConfig,
+    attributes: TagAttributes,
+  ): Promise<string>;
+}
+
+class AffirmationTag extends CustomTag {
+  readonly tagName = 'Affirmation';
+
+  // eslint-disable-next-line class-methods-use-this
+  async process(
+    journal: JournalConfig,
+    attributes: TagAttributes,
+  ): Promise<string> {
+    const wikilink = attributes.wikilink;
+    if (!wikilink) {
+      return '(Missing wikilink attribute)';
+    }
+
+    const tags = attributes.tags ? attributes.tags.split(',') : undefined;
+
+    try {
+      const randomItem = await findRandomItemByWikilink(
+        journal,
+        wikilink,
+        tags,
+      );
+      if (randomItem && randomItem.text) {
+        return randomItem.text;
+      }
+
+      return '(No affirmations found)';
+    } catch (error) {
+      console.error('Error loading affirmation:', error);
+      return '(Error loading affirmation)';
+    }
+  }
+}
+
+class PromptTag extends CustomTag {
+  readonly tagName = 'Prompt';
+
+  // eslint-disable-next-line class-methods-use-this
+  async process(
+    journal: JournalConfig,
+    attributes: TagAttributes,
+  ): Promise<string> {
+    const wikilink = attributes.wikilink;
+    if (!wikilink) {
+      return '(Missing wikilink attribute)';
+    }
+
+    const hasThrowAway = 'throwAway' in attributes;
+    const tags = attributes.tags ? attributes.tags.split(',') : undefined;
+
+    try {
+      const randomItem = await findRandomItemByWikilink(
+        journal,
+        wikilink,
+        tags,
+      );
+      if (randomItem && randomItem.text) {
+        const inputId = generateInputId();
+        const dataAttr = hasThrowAway ? ' data-throw-away="true"' : '';
+        const inputHtml = `<input type="text" class="Prompt" id="${inputId}"${dataAttr} />`;
+        return `${randomItem.text}\n\n${inputHtml}`;
+      }
+
+      return '(No prompts found)';
+    } catch (error) {
+      console.error('Error loading prompt:', error);
+      return '(Error loading prompt)';
+    }
+  }
+}
+
+class InputTag extends CustomTag {
+  readonly tagName = 'Input';
+
+  // eslint-disable-next-line class-methods-use-this
+  async process(): Promise<string> {
+    const inputId = generateInputId();
+    return `<input type="text" class="Input" id="${inputId}" />`;
+  }
+}
+
+class MorningPagesTag extends CustomTag {
+  readonly tagName = 'MorningPages';
+
+  // eslint-disable-next-line class-methods-use-this
+  async process(
+    _journal: JournalConfig,
+    attributes: TagAttributes,
+  ): Promise<string> {
+    const textareaId = generateInputId();
+    const hasThrowAway = 'throwAway' in attributes;
+    const dataAttr = hasThrowAway ? ' data-throw-away="true"' : '';
+    return `<textarea class="MorningPages" id="${textareaId}" rows="10" placeholder="Write your morning pages here..."${dataAttr}></textarea>`;
+  }
+}
+
+class CustomTagRegistry {
+  private processors = new Map<string, CustomTag>();
+
+  constructor() {
+    this.registerDefaultTags();
+  }
+
+  private registerDefaultTags() {
+    this.register(new AffirmationTag());
+    this.register(new PromptTag());
+    this.register(new InputTag());
+    this.register(new MorningPagesTag());
+  }
+
+  register(processor: CustomTag) {
+    this.processors.set(processor.tagName, processor);
+  }
+
+  async processTemplate(
+    template: string,
+    journal: JournalConfig,
+  ): Promise<string> {
+    let processedTemplate = template;
+
+    // Parse custom tags (tags starting with uppercase letter)
+    const customTagRegex = /<([A-Z][a-zA-Z]*)\s*([^>]*?)\s*\/?>/g;
+    const matches = Array.from(template.matchAll(customTagRegex));
+
+    // Process matches in reverse order to avoid position shifts
+    for (const match of matches.reverse()) {
+      const [fullMatch, tagName, attributesString] = match;
+      const processor = this.processors.get(tagName);
+
+      if (processor) {
+        const attributes = CustomTagRegistry.parseAttributes(attributesString);
+        try {
+          const replacement = await processor.process(journal, attributes);
+          const startIndex = match.index!;
+          const endIndex = startIndex + fullMatch.length;
+          processedTemplate =
+            processedTemplate.slice(0, startIndex) +
+            replacement +
+            processedTemplate.slice(endIndex);
+        } catch (error) {
+          console.error(`Error processing ${tagName} tag:`, error);
+          const errorReplacement = `(Error processing ${tagName})`;
+          const startIndex = match.index!;
+          const endIndex = startIndex + fullMatch.length;
+          processedTemplate =
+            processedTemplate.slice(0, startIndex) +
+            errorReplacement +
+            processedTemplate.slice(endIndex);
+        }
+      }
+    }
+
+    return processedTemplate;
+  }
+
+  private static parseAttributes(attributesString: string): TagAttributes {
+    const attributes: TagAttributes = {};
+
+    // Parse attributes like wikilink="value" or standalone attributes like throwAway
+    const attributeRegex = /(\w+)(?:="([^"]*)")?/g;
+    let match;
+
+    // eslint-disable-next-line no-cond-assign
+    while ((match = attributeRegex.exec(attributesString)) !== null) {
+      const [, name, value] = match;
+      attributes[name] = value || '';
+    }
+
+    return attributes;
+  }
+}
 
 type RenderedRoutineProps = {
   journal: JournalConfig;
   routine: RoutineConfig;
   onComplete?: () => void;
 };
-
-/**
- * Evaluates template variables in a string using current date values
- */
-function evaluateTemplateVariables(template: string): string {
-  const now = new Date();
-  const year = now.getFullYear().toString();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-
-  return template
-    .replaceAll('${year}', year)
-    .replaceAll('${month}', month)
-    .replaceAll('${day}', day);
-}
 
 /**
  * Component for rendering and processing routine templates.
@@ -44,113 +248,18 @@ export default function RenderedRoutine({
   const markdownRef = useRef<HTMLDivElement>(null);
   const [processedTemplate, setProcessedTemplate] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const inputIdCounterRef = useRef<number>(1);
-
-  // Generate unique IDs for input elements
-  const generateInputId = () => `input${inputIdCounterRef.current++}`;
+  const customTagRegistry = useRef(new CustomTagRegistry());
 
   // Process template when component mounts
   useEffect(() => {
-    // The template contains Markdown and special tags like <Affirmation />, <Prompt />, <Input /> and <MorningPages />.
-    // The library react-markdown does not support custom components in TypeScript,
-    // so we need to process the template first.
-    // The function replaces the special tags with appropriate content.
-    // - <Affirmation wikilink="..."/> is replaced by a random item from the specified note.
-    // - <Prompt wikilink="..."/> is replaced by a random item from the specified note, followed by an input field.
-    // - <Input /> is replaced by an input field.
-    // - <MorningPages /> is replaced by a textarea for free-form writing.
-    //   An id is generated for each input field/textarea to retrieve its value later.
     const processTemplate = async () => {
-      let template = routine.template;
-      inputIdCounterRef.current = 1; // Reset counter
-
       try {
-        // Process <Affirmation /> tags
-        const affirmationRegex = /<Affirmation\s+wikilink="([^"]+)"\s*\/>/g;
-        let match;
-        // eslint-disable-next-line no-cond-assign
-        while ((match = affirmationRegex.exec(template)) !== null) {
-          const wikilink = match[1];
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            const note: Note = await window.electron.findByWikilink(
-              journal.repository,
-              wikilink,
-            );
-            if (note && note.items && note.items.children.length > 0) {
-              // Select random item
-              const randomItem =
-                note.items.children[
-                  Math.floor(Math.random() * note.items.children.length)
-                ];
-              template = template.replace(match[0], randomItem.text);
-            } else {
-              template = template.replace(match[0], '(No affirmations found)');
-            }
-          } catch (error) {
-            console.error('Error loading affirmation:', error);
-            template = template.replace(
-              match[0],
-              '(Error loading affirmation)',
-            );
-          }
-        }
+        const processed = await customTagRegistry.current.processTemplate(
+          routine.template,
+          journal,
+        );
 
-        // Process <Prompt /> tags
-        const promptRegex =
-          /<Prompt\s+wikilink="([^"]+)"(\s+throwAway)?\s*\/>/g;
-        let promptMatch;
-        // eslint-disable-next-line no-cond-assign
-        while ((promptMatch = promptRegex.exec(template)) !== null) {
-          const wikilink = promptMatch[1];
-          const hasThrowAway = !!promptMatch[2];
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            const note: Note = await window.electron.findByWikilink(
-              journal.repository,
-              wikilink,
-            );
-            if (note && note.items && note.items.children.length > 0) {
-              // Select random item
-              const randomItem =
-                note.items.children[
-                  Math.floor(Math.random() * note.items.children.length)
-                ];
-              const inputId = generateInputId();
-              const dataAttr = hasThrowAway ? ' data-throw-away="true"' : '';
-              const inputHtml = `<input type="text" class="Prompt" id="${inputId}"${dataAttr} />`;
-              template = template.replace(
-                promptMatch[0],
-                `${randomItem.text}\n\n${inputHtml}`,
-              );
-            } else {
-              template = template.replace(promptMatch[0], '(No prompts found)');
-            }
-          } catch (error) {
-            console.error('Error loading prompt:', error);
-            template = template.replace(
-              promptMatch[0],
-              '(Error loading prompt)',
-            );
-          }
-        }
-
-        // Process <Input /> tags
-        template = template.replace(/<Input\s*\/>/g, () => {
-          const inputId = generateInputId();
-          return `<input type="text" class="Input" id="${inputId}" />`;
-        });
-
-        // Process <MorningPages /> tags
-        const regexMorningPages = /<MorningPages(\s+throwAway)?\s*\/>/g;
-        template = template.replace(regexMorningPages, (_, throwAwayAttr) => {
-          const textareaId = generateInputId();
-          const hasThrowAway = !!throwAwayAttr;
-          const dataAttr = hasThrowAway ? ' data-throw-away="true"' : '';
-          return `<textarea class="MorningPages" id="${textareaId}" rows="10" placeholder="Write your morning pages here..."${dataAttr}></textarea>`;
-        });
-
-        setProcessedTemplate(template);
+        setProcessedTemplate(processed);
       } catch (error) {
         console.error('Error processing template:', error);
         setProcessedTemplate('Error processing template');
@@ -250,4 +359,80 @@ export default function RenderedRoutine({
       </button>
     </div>
   );
+}
+
+/**
+ * Evaluate template variables in a path or template string.
+ *
+ * Recognized variables:
+ * - ${year}  -> 2025
+ * - ${month} -> 09 (zero-padded)
+ * - ${day}   -> 30 (zero-padded)
+ *
+ * @param template - The string that may contain template variables.
+ * @returns The string with variables replaced using the current date.
+ *
+ * @example
+ * evaluateTemplateVariables("notes/${year}-${month}-${day}.md");
+ */
+function evaluateTemplateVariables(template: string): string {
+  const now = new Date();
+  const year = now.getFullYear().toString();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+
+  return template
+    .replaceAll('${year}', year)
+    .replaceAll('${month}', month)
+    .replaceAll('${day}', day);
+}
+
+/**
+ * Find a random item in a note referenced by wikilink.
+ * If tags array is provided, prefer items matching at least one tag.
+ *
+ * Tag matching uses only the ListItem.tags attribute. Neither the tag attribute on
+ * the custom tag nor ListItem.tags include a leading '#' — tags are compared as plain strings.
+ *
+ * @param journal - Journal configuration
+ * @param wikilink - wikilink to resolve the note
+ * @param tags - optional array of tags (will be trimmed and lowercased)
+ * @returns the selected ListItem or null if none found
+ */
+async function findRandomItemByWikilink(
+  journal: JournalConfig,
+  wikilink: string,
+  tags?: string[],
+): Promise<ListItem | null> {
+  if (!wikilink) return null;
+
+  const note: Note = await window.electron.findByWikilink(
+    journal.repository,
+    wikilink,
+  );
+
+  if (
+    !note ||
+    !note.items ||
+    !Array.isArray(note.items.children) ||
+    note.items.children.length === 0
+  ) {
+    return null;
+  }
+
+  const items: ListItem[] = note.items.children;
+
+  if (!tags || tags?.length === 0) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  const filtered = items.filter((item: ListItem) => {
+    const itemTags =
+      Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : [];
+    return tags?.some((wt) => itemTags.includes(wt));
+  });
+
+  if (filtered.length === 0) return null;
+
+  return filtered[Math.floor(Math.random() * filtered.length)];
 }
