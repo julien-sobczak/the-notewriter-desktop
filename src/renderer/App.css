@@ -284,34 +284,43 @@ table.List {
   max-height: 20em;
   overflow: auto; /* show scrollbar only when needed */
 }
-.RenderedNoteContent pre {
-  background-color: #FAFAFA;
-  overflow-x: scroll;
-  /* padding: 0.5rem; FIXME bug the parent container exceed the size of its parent. */
-}
-.RenderedNoteContent blockquote {
-  position: relative;
-  padding-left: 3em;
-  font-style: italic;
-}
-.RenderedNoteContent blockquote::before {
-  font-family: Arial;
-  content: "\201C";
-  color: black;
-  font-size: 4em;
-  position: absolute;
-  left: 10px;
-  top: -20px;
-}
-.RenderedNoteContent figcaption {
-  padding-left: 3em;
-}
-.RenderedNoteContent a {
-  color: black !important; /* Don't put too much emphasis on external links. We want to focus on offline notes. */
-}
-.RenderedNoteContent .missing { /* Used on dangling medias */
-  width: 32px;
-  height: 32px;
+.RenderedNoteContent {
+
+  pre {
+    background-color: #FAFAFA;
+    overflow-x: scroll;
+    /* padding: 0.5rem; FIXME bug the parent container exceed the size of its parent. */
+  }
+  blockquote {
+    position: relative;
+    padding-left: 3em;
+    font-style: italic;
+  }
+  blockquote::before {
+    font-family: Arial;
+    content: "\201C";
+    color: black;
+    font-size: 4em;
+    position: absolute;
+    left: 10px;
+    top: -20px;
+  }
+  figcaption {
+    padding-left: 3em;
+  }
+  a {
+    color: black !important; /* Don't put too much emphasis on external links. We want to focus on offline notes. */
+  }
+  .missing { /* Used on dangling medias */
+    width: 32px;
+    height: 32px;
+  }
+
+  ul {
+    /* Remove left spacing to maximize the space available for notes on screen */
+    margin-left: 0;
+    padding-left: 0;
+  }
 }
 
 .RenderedMetadata {
@@ -1397,117 +1406,88 @@ ul.Filter li.selected {
 
 }
 
-/* TimelineRangePicker Component */
+/*
+ * <TimelineRangePicker>
+ */
+
 .TimelineRangePicker {
-  padding: 1.5rem;
-  background: #f5f5f5;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+
+  .TimelineRangePicker-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .TimelineRangePicker-slider {
+    position: relative;
+    height: 30px;
+    display: flex;
+    align-items: center;
+  }
+
+  .TimelineRangePicker-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #ddd;
+    border-radius: 3px;
+    pointer-events: none;
+  }
+
+  .TimelineRangePicker-range {
+    position: absolute;
+    height: 3px;
+    background: var(--color-separator-dark);
+    border-radius: 3px;
+    pointer-events: none;
+  }
+
+  input[type="range"] {
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    appearance: none;
+    background: transparent;
+    pointer-events: none;
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      pointer-events: auto;
+      border: 1px solid black;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    &::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    }
+    &::-webkit-slider-thumb:active {
+      transform: scale(1.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
+  }
+  /* Ensure end thumb is below the start thumb */
+  input[type="range"]:nth-child(1) {
+    z-index: 3;
+  }
+  input[type="range"]:nth-child(2) {
+    z-index: 4;
+  }
 }
 
-.TimelineRangePicker-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-  color: #555;
-}
+/*
+ * <Journal>
+ */
 
-.TimelineRangePicker-label strong {
-  color: #333;
-  font-weight: 600;
-}
-
-.TimelineRangePicker-slider {
-  position: relative;
-  height: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.TimelineRangePicker-track {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: #ddd;
-  border-radius: 3px;
-  pointer-events: none;
-}
-
-.TimelineRangePicker-range {
-  position: absolute;
-  height: 6px;
-  background: #4CAF50;
-  border-radius: 3px;
-  pointer-events: none;
-}
-
-.TimelineRangePicker-input {
-  position: absolute;
-  width: 100%;
-  height: 6px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  pointer-events: none;
-}
-
-.TimelineRangePicker-input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #4CAF50;
-  cursor: pointer;
-  pointer-events: auto;
-  border: 3px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.TimelineRangePicker-input::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-.TimelineRangePicker-input::-webkit-slider-thumb:active {
-  transform: scale(1.2);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
-
-.TimelineRangePicker-input::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #4CAF50;
-  cursor: pointer;
-  pointer-events: auto;
-  border: 3px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.TimelineRangePicker-input::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-.TimelineRangePicker-input::-moz-range-thumb:active {
-  transform: scale(1.2);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
-
-.TimelineRangePicker-input--start {
-  z-index: 3;
-}
-
-.TimelineRangePicker-input--end {
-  z-index: 4;
-}
-
-/* Journal Component */
 .Journal {
   padding: 1rem;
 
@@ -1518,44 +1498,91 @@ ul.Filter li.selected {
 
   .JournalEntries {
     margin-top: 2rem;
+    margin-left: 1rem; /* Let space for dates to overlap with the border */
+    border-left: 1px solid var(--color-separator-dark);
+    padding-left: 1rem;
   }
 
   .JournalEntry {
-    margin-bottom: 3rem;
+    margin-bottom: 1rem;
 
     .JournalDate {
-      font-size: 1.2rem;
+      display: inline-block; /* Don't use full width */
+      padding: 0.125rem 0.25rem;
+      font-size: 0.8rem;
+      margin-left: -1.75rem; /* align with the border */
+      margin-bottom: 0.75rem;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #e0e0e0;
+      background-color: white;
+      border: 1px solid var(--color-separator-dark);
+      border-radius: 0.25rem;
     }
 
-    .TodayNote {
-      margin-bottom: 1rem;
+    .JournalDailyNotes {
+      display: flex;
+      flex-direction: row;
+      gap: 0.25rem;
 
-      .Routines {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+      button {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid black;
+        border-radius: 2px;
+        cursor: pointer;
+        font-size: 0.75em;
 
-        button {
-          padding: 0.75rem 1rem;
-          background: #4CAF50;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 1rem;
-          transition: background 0.3s;
-
-          &:hover {
-            background: #45a049;
-          }
+        &.New {
+          background-color: var(--color-background-light);
+          font-weight: 700;
         }
       }
     }
+
+    .RenderedNote {
+      border: none !important; /* Remove border around note to keep the UI minimalist when listing a large time period */
+      margin: 0 !important; /* Limit margin to show the maximum number of notes */
+    }
+
+    .JournalSelectedDailyNote .RenderedNote {
+      border: 1px solid var(--color-separator-dark) !important; /* Highlight the selected note */
+      font-size: 80% !important; /* Slightly smaller font to show more content */
+      padding: 0.25rem 0.5rem !important;
+      background-color: white;
+    }
   }
 }
+
+/*
+ * <Aside>
+ */
+
+.Aside {
+  position: fixed;
+  top: var(--top-bar-height);
+  bottom: 0;
+  right: 0;
+  width: 500px;
+  background: white;
+  border-left: 1px solid var(--color-separator-dark);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+
+  /* Make the aside resizable */
+  resize: horizontal;  /* allows user to drag */
+  overflow: auto;      /* required for resize to work */
+  min-width: 500px;
+  max-width: 1000px;
+  direction: rtl; /* Trick to have the resize handle on the left side */
+
+  .Actions {
+    direction: ltr; /* revert to normal direction */
+  }
+
+  .AsideContent {
+    direction: ltr; /* revert to normal direction */
+    padding: 1rem;
+  }
+}
+
 

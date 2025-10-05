@@ -316,7 +316,7 @@ export default function RenderedRoutine({
       const journalPath = evaluateTemplateVariables(journal.path);
 
       // Prepare final content
-      let finalContent = `\n\n## ${routine.name}\n\n${evaluatedTemplate}`;
+      let finalContent = `\n\n## Routine: ${routine.name}\n\n${evaluatedTemplate}`;
 
       // Check if journal file is new
       const content = await window.electron.readNoteFile(
@@ -375,7 +375,7 @@ export default function RenderedRoutine({
  * @example
  * evaluateTemplateVariables("notes/${year}-${month}-${day}.md");
  */
-function evaluateTemplateVariables(template: string): string {
+export function evaluateTemplateVariables(template: string): string {
   const now = new Date();
   const year = now.getFullYear().toString();
   const month = (now.getMonth() + 1).toString().padStart(2, '0');

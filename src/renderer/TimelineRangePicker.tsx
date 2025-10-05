@@ -9,8 +9,13 @@ type TimelineRangePickerProps = {
 };
 
 /**
- * A modern slider component for selecting a date range.
- * Uses a dual-handle range slider with visual feedback.
+ * A custom slider component for selecting a date range.
+ *
+ * @param min - The minimum date (inclusive) of the timeline range, as a string (e.g., "2024-01-01").
+ * @param max - The maximum date (inclusive) of the timeline range, as a string.
+ * @param start - The currently selected start date, as a string.
+ * @param end - The currently selected end date, as a string.
+ * @param onChange - Callback invoked when the user releases either slider handle, providing the new start and end dates as strings.
  */
 function TimelineRangePicker({
   min,
@@ -65,6 +70,11 @@ function TimelineRangePicker({
   const startPercent = ((tempStart - minDate) / (maxDate - minDate)) * 100;
   const endPercent = ((tempEnd - minDate) / (maxDate - minDate)) * 100;
 
+  // The HTML input[type="range"] element only support a single thumb.
+  // We need to have two thumbs to select a range.
+  // The current implementation uses two overlapping range inputs.
+  // These inputs are transparent and positioned on top of each other.
+  // An additiona <div> element is used to visually represent the selected range between the two thumbs.
   return (
     <div className="TimelineRangePicker">
       <div className="TimelineRangePicker-labels">
@@ -110,7 +120,7 @@ function TimelineRangePicker({
   );
 }
 
-function formatDate(date: Date): string {
+export function formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');

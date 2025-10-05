@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
-import React, { useRef, useContext, useState } from 'react';
+import React, { useRef, useContext, useState, useEffect } from 'react';
 import {
   ArrowsOutCardinal as MoveIcon,
   PencilSimple as EditIcon,
@@ -208,15 +208,15 @@ type RenderedNoteProps = {
 export default function RenderedNote({
   note,
   layout = 'default',
-  viewMode: initialViewMode = 'default',
+  viewMode = 'default',
   showTags = true,
   showAttributes = true,
   showTitle = true,
   showActions = true,
   showComment = true,
-  filterTags: propFilterTags = [],
-  filterAttributes: propFilterAttributes = [],
-  filterEmojis: propFilterEmojis = [],
+  filterTags = [],
+  filterAttributes = [],
+  filterEmojis = [],
   draggable = false,
   onDragStart = () => {},
   onDrag = () => {},
@@ -228,45 +228,46 @@ export default function RenderedNote({
   const repositoryConfig = config.repositories[note.repositorySlug];
 
   // List view mode management
-  const [viewMode, setViewMode] = useState<'default' | 'list'>(initialViewMode);
+  const [currentViewMode, setCurrentViewMode] = useState<'default' | 'list'>(
+    viewMode,
+  );
   const [showFilterTags, setShowFilterTags] = useState<boolean>(false);
   const [showFilterAttributes, setShowFilterAttributes] =
     useState<boolean>(false);
   const [showFilterEmojis, setShowFilterEmojis] = useState<boolean>(false);
-  const [filterText, setFilterText] = useState<string>(''); // Add this state
-  const [filterTags, setFilterTags] = useState<string[]>(propFilterTags);
-  const [filterAttributes, setFilterAttributes] = useState<string[]>(
-    propFilterAttributes,
-  );
-  const [filterEmojis, setFilterEmojis] = useState<string[]>(propFilterEmojis);
+  const [currentFilterText, setCurrentFilterText] = useState<string>('');
+  const [currentFilterTags, setCurrentFilterTags] =
+    useState<string[]>(filterTags);
+  const [currentFilterAttributes, setCurrentFilterAttributes] =
+    useState<string[]>(filterAttributes);
+  const [currentFilterEmojis, setCurrentFilterEmojis] =
+    useState<string[]>(filterEmojis);
   const [filteredItems, setFilteredItems] = useState<ListItem[]>([]);
 
   // Wikilink management
   const [hoveredNote, setHoveredNote] = useState<Note | null>(null);
 
   // Update filters when props change (for list view mode)
-  React.useEffect(() => {
-    if (initialViewMode === 'list') {
-      setViewMode('list');
-      setFilterTags(propFilterTags);
-      setFilterAttributes(propFilterAttributes);
-      setFilterEmojis(propFilterEmojis);
-    }
-  }, [initialViewMode, propFilterTags, propFilterAttributes, propFilterEmojis]);
+  useEffect(() => {
+    setCurrentViewMode(viewMode);
+    setCurrentFilterTags(filterTags);
+    setCurrentFilterAttributes(filterAttributes);
+    setCurrentFilterEmojis(filterEmojis);
+  }, [viewMode, filterTags, filterAttributes, filterEmojis]);
 
   const handleListMode = () => {
-    setViewMode('list');
+    setCurrentViewMode('list');
     setFilteredItems(note.items?.children || []);
   };
   const handleDefaultMode = () => {
-    setViewMode('default');
+    setCurrentViewMode('default');
   };
 
   // Refresh the list item when filters on metadata change
-  React.useEffect(() => {
+  useEffect(() => {
     filterItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterTags, filterAttributes, filterEmojis]);
+  }, [currentFilterTags, currentFilterAttributes, currentFilterEmojis]);
 
   // Determine the filter items based on currently selected filters
   const filterItems = () => {
@@ -280,35 +281,39 @@ export default function RenderedNote({
       // Implementation: We consider an item to match the filters if it or any of its children match.
 
       // Filter by text
-      if (filterText.trim().length > 0) {
+      if (currentFilterText.trim().length > 0) {
         const textMatch =
-          item.text?.toLowerCase().includes(filterText.toLowerCase()) ||
+          item.text?.toLowerCase().includes(currentFilterText.toLowerCase()) ||
           (item.children &&
             item.children.some((child) =>
-              child.text?.toLowerCase().includes(filterText.toLowerCase()),
+              child.text
+                ?.toLowerCase()
+                .includes(currentFilterText.toLowerCase()),
             ));
         if (!textMatch) return false;
       }
 
       // Filter by tags
-      if (filterTags.length > 0) {
+      if (currentFilterTags.length > 0) {
         // Collect all tags of the item and its children
         const allTags = (item.tags || []).concat(
           item.children?.flatMap((child) => child.tags) || [],
         );
-        const hasAllTags = filterTags.every((tag) => allTags.includes(tag));
+        const hasAllTags = currentFilterTags.every((tag) =>
+          allTags.includes(tag),
+        );
         if (!hasAllTags) {
           return false;
         }
       }
       // Filter by attribute names
-      if (filterAttributes.length > 0) {
+      if (currentFilterAttributes.length > 0) {
         // Collect all attributes of the item and its children
         const allAttributes = (Object.keys(item.attributes) || []).concat(
           item.children?.flatMap((child) => Object.keys(child.attributes)) ||
             [],
         );
-        const hasAllAttributes = filterAttributes.every((attribute) =>
+        const hasAllAttributes = currentFilterAttributes.every((attribute) =>
           allAttributes.includes(attribute),
         );
         if (!hasAllAttributes) {
@@ -316,12 +321,12 @@ export default function RenderedNote({
         }
       }
       // Filter by emojis
-      if (filterEmojis.length > 0) {
+      if (currentFilterEmojis.length > 0) {
         // Collect all emojis of the item and its children
         const allEmojis = (item.emojis || []).concat(
           item.children?.flatMap((child) => child.emojis) || [],
         );
-        const hasAllEmojis = filterEmojis.every((emoji) =>
+        const hasAllEmojis = currentFilterEmojis.every((emoji) =>
           allEmojis.includes(emoji),
         );
         if (!hasAllEmojis) {
@@ -333,24 +338,26 @@ export default function RenderedNote({
     setFilteredItems(newFilteredItems);
   };
   const handleToggleFilterEmoji = (emoji: string) => {
-    if (filterEmojis.includes(emoji)) {
-      setFilterEmojis(filterEmojis.filter((e) => e !== emoji));
+    if (currentFilterEmojis.includes(emoji)) {
+      setCurrentFilterEmojis(currentFilterEmojis.filter((e) => e !== emoji));
     } else {
-      setFilterEmojis([...filterEmojis, emoji]);
+      setCurrentFilterEmojis([...currentFilterEmojis, emoji]);
     }
   };
   const handleToggleFilterTag = (tag: string) => {
-    if (filterTags.includes(tag)) {
-      setFilterTags(filterTags.filter((t) => t !== tag));
+    if (currentFilterTags.includes(tag)) {
+      setCurrentFilterTags(currentFilterTags.filter((t) => t !== tag));
     } else {
-      setFilterTags([...filterTags, tag]);
+      setCurrentFilterTags([...currentFilterTags, tag]);
     }
   };
   const handleToggleFilterAttribute = (attribute: string) => {
-    if (filterAttributes.includes(attribute)) {
-      setFilterAttributes(filterAttributes.filter((a) => a !== attribute));
+    if (currentFilterAttributes.includes(attribute)) {
+      setCurrentFilterAttributes(
+        currentFilterAttributes.filter((a) => a !== attribute),
+      );
     } else {
-      setFilterAttributes([...filterAttributes, attribute]);
+      setCurrentFilterAttributes([...currentFilterAttributes, attribute]);
     }
   };
 
@@ -588,7 +595,7 @@ export default function RenderedNote({
               icon={<DragIcon />}
             />
 
-            {viewMode !== 'default' && note.items?.children && (
+            {currentViewMode !== 'default' && note.items?.children && (
               <Action
                 title="Default mode"
                 key="default-mode"
@@ -596,7 +603,7 @@ export default function RenderedNote({
                 icon={<DefaultModeIcon />}
               />
             )}
-            {viewMode !== 'list' && note.items?.children && (
+            {currentViewMode !== 'list' && note.items?.children && (
               <Action
                 title="List mode"
                 key="list-mode"
@@ -604,7 +611,7 @@ export default function RenderedNote({
                 icon={<ListModeIcon />}
               />
             )}
-            {viewMode === 'list' && (
+            {currentViewMode === 'list' && (
               <Action title="Filter items" icon={<FilterIcon />}>
                 {note.items?.tags && (
                   <Subaction
@@ -678,20 +685,20 @@ export default function RenderedNote({
       )}
       <div className="RenderedNoteContent">
         {/* Default Mode */}
-        {viewMode === 'default' && (
+        {currentViewMode === 'default' && (
           <Markdown
             md={formatContent(note, ['preview'])}
             onWikilinkClick={handleWikilinkClick}
           />
         )}
         {/* List Mode */}
-        {viewMode === 'list' && note.items?.children && (
+        {showActions && currentViewMode === 'list' && note.items?.children && (
           <div className="RenderedNoteItemsFilters">
             <input
               type="text"
               placeholder="Filter items"
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              value={currentFilterText}
+              onChange={(e) => setCurrentFilterText(e.target.value)}
             />
             {(showFilterAttributes || showFilterTags || showFilterEmojis) && (
               <ul className="Filter">
@@ -699,7 +706,9 @@ export default function RenderedNote({
                   note.items.tags?.map((tag, index) => (
                     <li
                       key={`tag-${index}`}
-                      className={filterTags.includes(tag) ? 'selected' : ''}
+                      className={
+                        currentFilterTags.includes(tag) ? 'selected' : ''
+                      }
                       onClick={() => handleToggleFilterTag(tag)}
                     >
                       #{tag}
@@ -710,7 +719,9 @@ export default function RenderedNote({
                     <li
                       key={`attribute-${index}`}
                       className={
-                        filterAttributes.includes(attribute) ? 'selected' : ''
+                        currentFilterAttributes.includes(attribute)
+                          ? 'selected'
+                          : ''
                       }
                       onClick={() => handleToggleFilterAttribute(attribute)}
                     >
@@ -721,7 +732,9 @@ export default function RenderedNote({
                   note.items.emojis?.map((emoji, index) => (
                     <li
                       key={`emoji-${index}`}
-                      className={filterEmojis.includes(emoji) ? 'selected' : ''}
+                      className={
+                        currentFilterEmojis.includes(emoji) ? 'selected' : ''
+                      }
                       onClick={() => handleToggleFilterEmoji(emoji)}
                     >
                       {emoji}
@@ -731,7 +744,7 @@ export default function RenderedNote({
             )}
           </div>
         )}
-        {viewMode === 'list' && note.items?.children && (
+        {currentViewMode === 'list' && note.items?.children && (
           <ul className="RenderedNoteItems">
             {filteredItems.map((item, index) => (
               <li key={index}>

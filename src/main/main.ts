@@ -42,7 +42,6 @@ import {
   EditorDynamicConfig,
   Note,
   CommandExecution,
-  Reminder,
   determineNextReminder,
 } from '../shared/Model';
 import OperationsManager from './operations';
@@ -584,7 +583,7 @@ ipcMain.handle(
     console.debug(
       `Determining journal activity for repository ${repositorySlug} with prefix ${pathPrefix}`,
     );
-    return dbManager.determineJournalActivity(repositorySlug, pathPrefix);
+    return db.determineJournalActivity(repositorySlug, pathPrefix);
   },
 );
 
@@ -600,7 +599,7 @@ ipcMain.handle(
     console.debug(
       `Finding journal entries for repository ${repositorySlug} with prefix ${pathPrefix} from ${start} to ${end}`,
     );
-    return dbManager.findJournalEntries(repositorySlug, pathPrefix, start, end);
+    return db.findJournalEntries(repositorySlug, pathPrefix, start, end);
   },
 );
 
@@ -631,12 +630,18 @@ ipcMain.handle(
         throw new Error(`File ${fullFilePath} does not exist`);
       }
 
+      // IMPROVEMENT introduce a NtRunner abstraction
       // Execute nt add command
       const { exec } = require('child_process');
       return new Promise((resolve, reject) => {
         exec(
           `nt add "${fullFilePath}"`,
-          { cwd: repositoryPath },
+          { cwd: repositoryPath,
+            env: {
+              ...process.env,
+              NT_HOME: '', // Avoid propagating NT_HOME also used by the-notewriter-desktop
+            }
+          },
           (error: any, stdout: string, stderr: string) => {
             if (error) {
               console.error(`Error executing nt add: ${error}`);
@@ -646,7 +651,7 @@ ipcMain.handle(
             if (stderr) {
               console.warn(`nt add stderr: ${stderr}`);
             }
-            console.debug(`nt add stdout: ${stdout}`);
+            console.info(`nt add stdout: ${stdout}`);
             resolve(true);
           },
         );

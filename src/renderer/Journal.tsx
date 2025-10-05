@@ -1,11 +1,16 @@
+/* eslint-disable no-template-curly-in-string */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, ReactNode } from 'react';
 import {
   ArrowClockwise as RefreshIcon,
   Funnel as FilterIcon,
   TagSimple as TagIcon,
+  X as CloseIcon,
   At as AttributeIcon,
   Smiley as EmojiIcon,
+  ArrowsVertical as ExpandIcon,
+  ArrowElbowLeftDown as UnexpandIcon,
+  PlusCircle as PlusIcon,
 } from '@phosphor-icons/react';
 import { ConfigContext } from './ConfigContext';
 import {
@@ -13,13 +18,31 @@ import {
   Note,
   RoutineConfig,
   JournalActivity,
+  ParentNote,
 } from '../shared/Model';
 import Question from './Question';
-import TimelineRangePicker from './TimelineRangePicker';
+import TimelineRangePicker, { formatDate } from './TimelineRangePicker';
 import RenderedNote from './RenderedNote';
-import RenderedRoutine from './RenderedRoutine';
+import RenderedRoutine, { evaluateTemplateVariables } from './RenderedRoutine';
 import { Actions, Action, Subaction } from './Actions';
 import Loader from './Loader';
+
+function Aside({
+  children,
+  onClose = () => {},
+}: {
+  children: ReactNode;
+  onClose?: () => void;
+}) {
+  return (
+    <div className="Aside">
+      <Actions>
+        <Action icon={<CloseIcon />} title="Close" onClick={onClose} />
+      </Actions>
+      <div className="AsideContent">{children}</div>
+    </div>
+  );
+}
 
 type ViewState = 'loading' | 'journal-selection' | 'viewing';
 
@@ -35,8 +58,7 @@ function Journal() {
     start: '',
     end: '',
   });
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [todayNote, setTodayNote] = useState<Note | null>(null);
+  const [notes, setNotes] = useState<ParentNote[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Filter state
@@ -50,6 +72,11 @@ function Journal() {
   const [showFilterAttributes, setShowFilterAttributes] =
     useState<boolean>(false);
   const [showFilterEmojis, setShowFilterEmojis] = useState<boolean>(false);
+
+  // Routines management
+  const [selectedRoutine, setSelectedRoutine] = useState<RoutineConfig | null>(
+    null,
+  );
 
   useEffect(() => {
     // Load journal configuration
@@ -137,47 +164,10 @@ function Journal() {
         dateRange.end,
       );
 
-      // Check if today's note exists - only check the first entry (entries are sorted DESC)
-      // and only show today note if today is within the selected date range
-      const today = formatDate(new Date());
-      const todayInRange =
-        today >= dateRange.start && today <= dateRange.end;
-      const todayEntry =
-        entries.length > 0 && entries[0].attributes.date === today
-          ? entries[0]
-          : null;
-
-      if (!todayEntry && todayInRange) {
-        // Create a dummy note for today
-        const dummyNote: Note = {
-          oid: 'today',
-          oidFile: 'today',
-          repositorySlug: selectedJournal.repository,
-          repositoryPath: '',
-          slug: 'today',
-          type: 'Journal',
-          relativePath: evaluateTemplateVariables(selectedJournal.path),
-          wikilink: 'today',
-          attributes: { date: today, title: today },
-          tags: [],
-          line: 0,
-          title: 'Today',
-          longTitle: 'Today',
-          shortTitle: 'Today',
-          marked: false,
-          annotations: [],
-          content: '',
-          body: '',
-          comment: '',
-          items: undefined,
-          medias: [],
-        };
-        setTodayNote(dummyNote);
-        setNotes(entries);
-      } else {
-        setTodayNote(null);
-        setNotes(entries);
-      }
+      console.info(
+        `Loaded ${entries.length} journal entries from ${selectedJournal.repository} between ${dateRange.start} and ${dateRange.end}`,
+      );
+      setNotes(entries);
 
       // Extract unique tags, attributes, and emojis
       extractFiltersFromNotes(entries);
@@ -188,32 +178,31 @@ function Journal() {
     }
   };
 
-  const extractFiltersFromNotes = (entries: Note[]) => {
+  const extractFiltersFromNotes = (noteList: Note[]) => {
     const tags = new Set<string>();
     const attributes = new Set<string>();
     const emojis = new Set<string>();
 
-    entries.forEach((entry) => {
+    noteList.forEach((note) => {
       // Extract tags
-      if (entry.tags) {
-        entry.tags.forEach((tag) => tags.add(tag));
+      if (!note.items || !note.items.children) {
+        return;
       }
 
-      // Extract attribute names
-      if (entry.items?.attributes) {
-        entry.items.attributes.forEach((attr) => attributes.add(attr.name));
-      }
-
-      // Extract emojis from items
       // The ListItem is a recursive datatype but we filter only top-level items to keep the implementation simple
-      if (entry.items?.children) {
-        entry.items.children.forEach((item) => {
-          const emojiMatches = item.text?.match(/[\p{Emoji}]/gu);
-          if (emojiMatches) {
-            emojiMatches.forEach((emoji) => emojis.add(emoji));
-          }
-        });
-      }
+      note.items.children.forEach((item) => {
+        if (item.tags) {
+          item.tags.forEach((tag: string) => tags.add(tag));
+        }
+        if (item.attributes) {
+          item.attributes.forEach((attribute: string) =>
+            attributes.add(attribute),
+          );
+        }
+        if (item.emojis) {
+          item.emojis.forEach((emoji: string) => emojis.add(emoji));
+        }
+      });
     });
 
     setAvailableTags(Array.from(tags).sort());
@@ -259,15 +248,73 @@ function Journal() {
     // Force add the today note
     if (selectedJournal && window.electron) {
       try {
+        setSelectedRoutine(null);
+        console.log('Forcing adding today note...');
         const todayPath = evaluateTemplateVariables(selectedJournal.path);
         await window.electron.forceAdd(selectedJournal.repository, todayPath);
         // Refresh the journal entries
         await loadJournalEntries();
       } catch (error) {
         console.error('Error forcing add:', error);
+      } finally {
+        console.log(
+          `Added today note in repository ${selectedJournal.repository}`,
+        );
       }
     }
   };
+
+  // Add helper to determine if a note has any top-level items matching the active filters.
+  const noteHasMatchingItems = (note: Note): boolean => {
+    // If no filters are active, include the note
+    if (
+      filterTags.length === 0 &&
+      filterAttributes.length === 0 &&
+      filterEmojis.length === 0
+    ) {
+      return true;
+    }
+
+    if (
+      !note.items ||
+      !note.items.children ||
+      note.items.children.length === 0
+    ) {
+      // Note has no top-level items -> doesn't match when any filter is active
+      return false;
+    }
+
+    // Helper to test intersection
+    const intersects = (arr: string[] | undefined, filters: string[]) =>
+      !!arr && arr.some((v) => filters.includes(v));
+
+    // For each top-level item, check whether it satisfies all active filter types.
+    return note.items.children.some((item) => {
+      // For each filter type that is active, the item must have at least one of those values.
+      if (filterTags.length > 0 && !intersects(item.tags, filterTags)) {
+        return false;
+      }
+      if (
+        filterAttributes.length > 0 &&
+        !intersects(Object.keys(item.attributes), filterAttributes)
+      ) {
+        return false;
+      }
+      if (filterEmojis.length > 0 && !intersects(item.emojis, filterEmojis)) {
+        return false;
+      }
+      // Passed all active filter checks
+      return true;
+    });
+  };
+
+  // Determine if the filtered notes contain today's date.
+  const today = formatDate(new Date());
+  const hasToday =
+    notes.length > 0 &&
+    notes[0].parent.attributes &&
+    notes[0].parent.attributes.date === today;
+  const todayInRange = dateRange.start <= today && today <= dateRange.end;
 
   if (viewState === 'loading') {
     return (
@@ -349,7 +396,9 @@ function Journal() {
                 availableAttributes.map((attr) => (
                   <li
                     key={attr}
-                    className={filterAttributes.includes(attr) ? 'selected' : ''}
+                    className={
+                      filterAttributes.includes(attr) ? 'selected' : ''
+                    }
                     onClick={() => handleToggleFilterAttribute(attr)}
                   >
                     @{attr}
@@ -374,79 +423,41 @@ function Journal() {
 
         {/* Journal entries */}
         {!isLoading && (
-          <div className="JournalEntries">
-            {/* Today's note */}
-            {todayNote && (
-              <div className="JournalEntry">
-                <h3 className="JournalDate">Today</h3>
-                <div className="TodayNote">
-                  {selectedJournal.routines &&
-                    selectedJournal.routines.length > 0 && (
-                      <div className="Routines">
-                        {selectedJournal.routines.map(
-                          (routine: RoutineConfig) => (
-                            <button
-                              key={routine.name}
-                              type="button"
-                              onClick={() => {
-                                // Show routine inline
-                                const routineDiv = document.getElementById(
-                                  `routine-${routine.name}`,
-                                );
-                                if (routineDiv) {
-                                  routineDiv.style.display =
-                                    routineDiv.style.display === 'none'
-                                      ? 'block'
-                                      : 'none';
-                                }
-                              }}
-                            >
-                              {routine.name}
-                            </button>
-                          ),
-                        )}
-                        {selectedJournal.routines.map(
-                          (routine: RoutineConfig) => (
-                            <div
-                              key={`routine-${routine.name}`}
-                              id={`routine-${routine.name}`}
-                              style={{ display: 'none' }}
-                            >
-                              <RenderedRoutine
-                                journal={selectedJournal}
-                                routine={routine}
-                                onComplete={handleRoutineComplete}
-                              />
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    )}
-                </div>
-              </div>
-            )}
-
-            {/* Rendered notes */}
-            {notes.map((note) => (
-              <div key={note.oid} className="JournalEntry">
-                <h3 className="JournalDate">
-                  {note.attributes.date || 'Unknown Date'}
-                </h3>
-                <RenderedNote
-                  note={note}
-                  viewMode="list"
-                  showTitle={false}
-                  showActions={false}
-                  showTags={false}
-                  showAttributes={false}
-                  showComment={false}
-                  filterTags={filterTags}
-                  filterAttributes={filterAttributes}
-                  filterEmojis={filterEmojis}
+          <>
+            {selectedRoutine && (
+              <Aside onClose={() => setSelectedRoutine(null)}>
+                <RenderedRoutine
+                  journal={selectedJournal}
+                  routine={selectedRoutine}
+                  onComplete={handleRoutineComplete}
                 />
-              </div>
-            ))}
-          </div>
+              </Aside>
+            )}
+            <div className="JournalEntries">
+              {/* Print a fake today entry if missing to let user completes the routines */}
+              {todayInRange && !hasToday && (
+                <JournalEntry
+                  journal={selectedJournal}
+                  onRoutineSelected={setSelectedRoutine}
+                />
+              )}
+              {notes
+                .filter((note) => noteHasMatchingItems(note.parent))
+                .map((note) => {
+                  return (
+                    <JournalEntry
+                      key={note.parent.oid}
+                      journal={selectedJournal}
+                      note={note as ParentNote}
+                      onRoutineSelected={setSelectedRoutine}
+                      filterTags={filterTags}
+                      filterAttributes={filterAttributes}
+                      filterEmojis={filterEmojis}
+                    />
+                  );
+                })}
+            </div>
+          </>
         )}
       </div>
     );
@@ -459,23 +470,125 @@ function Journal() {
   );
 }
 
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+type JournalEntryProps = {
+  journal: JournalConfig;
+  note?: ParentNote;
+  filterTags?: string[];
+  filterAttributes?: string[];
+  filterEmojis?: string[];
+  onRoutineSelected?: (routine: RoutineConfig) => void;
+};
 
-function evaluateTemplateVariables(template: string): string {
-  const now = new Date();
-  const year = now.getFullYear().toString();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
+function JournalEntry({
+  journal,
+  note,
+  filterTags,
+  filterAttributes,
+  filterEmojis,
+  onRoutineSelected,
+}: JournalEntryProps) {
+  const [selectedDailyNote, setSelectedDailyNote] = useState<Note | null>(null);
 
-  return template
-    .replaceAll('${year}', year)
-    .replaceAll('${month}', month)
-    .replaceAll('${day}', day);
+  const emptyTodayNote = !note;
+  const entryNote = note?.parent;
+  const dailyNotes = note?.children || [];
+
+  const today = formatDate(new Date());
+  const isToday = emptyTodayNote || entryNote?.attributes.date === today;
+
+  // Filter already edited routines
+  const filteredRoutines =
+    journal.routines?.filter((routine) => {
+      return !dailyNotes.some(
+        (dailyNote) => dailyNote.shortTitle === routine.name,
+      );
+    }) || [];
+
+  const showRoutines = isToday && filteredRoutines.length > 0;
+  const showDailyNotes = dailyNotes.length > 0;
+
+  if (!isToday && emptyTodayNote) {
+    // Must not happen
+    return null;
+  }
+
+  const handleDailyNoteSelected = (dailyNote: Note) => {
+    if (selectedDailyNote?.oid === dailyNote.oid) {
+      // Deselect if already selected
+      setSelectedDailyNote(null);
+      return;
+    }
+    setSelectedDailyNote(dailyNote);
+  };
+
+  return (
+    // Check if today's note exists
+    <div
+      key={entryNote ? entryNote.oid : 'daily-note'}
+      className="JournalEntry"
+    >
+      <h3 className="JournalDate">
+        {isToday ? 'Today' : entryNote?.attributes.date || 'Unknown Date'}
+      </h3>
+      {entryNote && (
+        <RenderedNote
+          note={entryNote}
+          viewMode="list"
+          showTitle={false}
+          showActions={false}
+          showTags={false}
+          showAttributes={false}
+          showComment={false}
+          filterTags={filterTags}
+          filterAttributes={filterAttributes}
+          filterEmojis={filterEmojis}
+        />
+      )}
+      {(showDailyNotes || showRoutines) && (
+        <div className="JournalDailyNotes">
+          {showDailyNotes &&
+            dailyNotes.map((dailyNote: Note) => (
+              <button
+                key={dailyNote.oid}
+                type="button"
+                onClick={() => handleDailyNoteSelected(dailyNote)}
+              >
+                {selectedDailyNote?.oid === dailyNote.oid && (
+                  <UnexpandIcon size={16} />
+                )}
+                {selectedDailyNote?.oid !== dailyNote.oid && (
+                  <ExpandIcon size={16} />
+                )}
+                &nbsp;{dailyNote.shortTitle}
+              </button>
+            ))}
+          {showRoutines &&
+            filteredRoutines.map((routine: RoutineConfig) => (
+              <button
+                key={routine.name}
+                type="button"
+                className="New"
+                onClick={() => onRoutineSelected?.(routine)}
+              >
+                <PlusIcon size={16} /> {routine.name}
+              </button>
+            ))}
+        </div>
+      )}
+      {selectedDailyNote && (
+        <div className="JournalSelectedDailyNote">
+          <RenderedNote
+            note={selectedDailyNote}
+            showTitle={false}
+            showActions={false}
+            showTags={false}
+            showAttributes={false}
+            showComment={false}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
