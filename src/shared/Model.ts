@@ -144,7 +144,7 @@ export interface AttributeConfig {
 export interface TypeConfig {
   name: string;
   pattern: string;
-  preprocessors: string[];
+  processors: string[];
   attributes: TypeAttributeConfig[];
 }
 export interface TypeAttributeConfig {
@@ -363,6 +363,17 @@ export interface Memory {
 
   text: string;
   occurredAt: string;
+}
+
+export interface JournalActivity {
+  minDate: string | null;
+  maxDate: string | null;
+  countEntries: number;
+}
+
+export interface ParentNote {
+  parent: Note;
+  children: Note[];
 }
 
 /**

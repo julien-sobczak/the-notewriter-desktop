@@ -1127,16 +1127,16 @@ export default class DatabaseManager {
             const memoriesSql = `
               SELECT oid, note_oid, relative_path, text, occurred_at
               FROM memory
-              WHERE 
+              WHERE
                 occurred_at <= datetime('now') AND
                 (
-                  (strftime('%m', occurred_at) = '${targetMonth.toString().padStart(2, '0')}' AND 
+                  (strftime('%m', occurred_at) = '${targetMonth.toString().padStart(2, '0')}' AND
                    ABS(strftime('%d', occurred_at) - ${targetDay}) <= 7) OR
-                  (strftime('%m', occurred_at) = '${(targetMonth === 1 ? 12 : targetMonth - 1).toString().padStart(2, '0')}' AND 
-                   strftime('%d', occurred_at) >= ${Math.max(1, targetDay - 7)} AND 
+                  (strftime('%m', occurred_at) = '${(targetMonth === 1 ? 12 : targetMonth - 1).toString().padStart(2, '0')}' AND
+                   strftime('%d', occurred_at) >= ${Math.max(1, targetDay - 7)} AND
                    ${targetDay} <= 7) OR
-                  (strftime('%m', occurred_at) = '${(targetMonth === 12 ? 1 : targetMonth + 1).toString().padStart(2, '0')}' AND 
-                   strftime('%d', occurred_at) <= ${Math.min(31, targetDay + 7)} AND 
+                  (strftime('%m', occurred_at) = '${(targetMonth === 12 ? 1 : targetMonth + 1).toString().padStart(2, '0')}' AND
+                   strftime('%d', occurred_at) <= ${Math.min(31, targetDay + 7)} AND
                    ${targetDay} >= 24)
                 )
               ORDER BY occurred_at DESC
@@ -1186,15 +1186,15 @@ export default class DatabaseManager {
 
     return new Promise<Model.Reminder>((resolve, reject) => {
       const updateSql = `
-        UPDATE reminder 
-        SET next_performed_at = ?, last_performed_at = datetime('now') 
+        UPDATE reminder
+        SET next_performed_at = ?, last_performed_at = datetime('now')
         WHERE oid = ?
       `;
 
       db.run(
         updateSql,
         [nextPerformedAt.toISOString(), reminderOid],
-        function (err: any) {
+        (err: any) => {
           if (err) {
             console.error('Error updating reminder:', err);
             reject(err);
@@ -1204,7 +1204,7 @@ export default class DatabaseManager {
           // Fetch the updated reminder
           const selectSql = `
           SELECT oid, file_oid, note_oid, relative_path, description, tag, last_performed_at, next_performed_at
-          FROM reminder 
+          FROM reminder
           WHERE oid = ?
         `;
 
@@ -1235,9 +1235,172 @@ export default class DatabaseManager {
 
             resolve(updatedReminder);
           });
-        },
+        }
       );
     });
+  }
+
+  /* Journal Management */
+
+  async determineJournalActivity(
+    repositorySlug: string,
+    pathPrefix: string,
+  ): Promise<Model.JournalActivity> {
+    const db = this.datasources.get(repositorySlug);
+    if (!db) {
+      throw new Error(`No datasource ${repositorySlug} found`);
+    }
+
+    return new Promise<Model.JournalActivity>((resolve, reject) => {
+      const sql = `
+        SELECT
+          MIN(json_extract(attributes, '$.date')) as minDate,
+          MAX(json_extract(attributes, '$.date')) as maxDate,
+          COUNT(*) as countEntries
+        FROM note
+        WHERE note_type = 'Journal'
+          AND json_extract(attributes, '$.date') IS NOT NULL
+          AND relative_path LIKE ?
+      `;
+
+      db.get(sql, [`${pathPrefix}%`], (err: any, row: any) => {
+        if (err) {
+          console.log('Error while determining journal activity', err);
+          reject(err);
+        } else {
+          resolve({
+            minDate: row.minDate || null,
+            maxDate: row.maxDate || null,
+            countEntries: row.countEntries || 0,
+          });
+        }
+      });
+    });
+  }
+
+  async findJournalEntries(
+    repositorySlug: string,
+    pathPrefix: string,
+    start: string,
+    end: string,
+  ): Promise<Model.ParentNote[]> {
+    const db = this.datasources.get(repositorySlug);
+    if (!db) {
+      throw new Error(`No datasource ${repositorySlug} found`);
+    }
+
+    return new Promise<Model.ParentNote[]>((resolve, reject) => {
+
+      const sql = `
+        SELECT
+          oid,
+          file_oid,
+          slug,
+          note_type,
+          relative_path,
+          wikilink,
+          attributes,
+          title,
+          long_title,
+          short_title,
+          tags,
+          line,
+          content,
+          body,
+          comment,
+          items,
+          marked,
+          annotations
+        FROM note
+        WHERE note_type = 'Journal'
+          AND json_extract(attributes, '$.date') >= ?
+          AND json_extract(attributes, '$.date') <= ?
+          AND relative_path LIKE ?
+        ORDER BY json_extract(attributes, '$.date') DESC
+      `;
+
+      db.all(sql, [start, end, `${pathPrefix}%`], async (err: any, rows: any) => {
+        if (err) {
+          console.log('Error while finding journal entries', err);
+          reject(err);
+          return;
+        }
+
+        const notes: Model.Note[] = [];
+        for (let i = 0; i < rows.length; i++) {
+          const note = this.#rowToNote(rows[i], repositorySlug);
+          notes.push(note);
+        }
+
+        const notesWithMedias = await this.enrichNotesWithMedias(repositorySlug, notes);
+        const notesWithMediasAndDailyNotes = await this.enrichNotesWithDailyNotes(repositorySlug, notesWithMedias)
+
+        resolve(notesWithMediasAndDailyNotes);
+      });
+    });
+  }
+
+  /* Enrichers */
+
+  // For each journal note, find daily notes linked to it
+  async enrichNotesWithDailyNotes(repositorySlug: string, notes: Model.Note[]): Promise<Model.ParentNote[]> {
+    const notesWithDailyNotes: Model.ParentNote[] = [];
+
+    for (let i = 0; i < notes.length; i++) {
+      const note = notes[i];
+      if (note.type === 'Journal' && note.attributes && note.attributes.date) {
+        const allDailyNotes = await this.searchNotes(`path:'${note.relativePath}' @date:${note.attributes.date}`, repositorySlug, 10, false);
+        notesWithDailyNotes.push({
+          parent: note,
+          children: allDailyNotes.filter(n => n.type !== 'Journal'), // Remove journal entry present in 'parent'
+        });
+      }
+    }
+
+    return notesWithDailyNotes;
+  }
+
+  // For each note, find medias linked to it
+  async enrichNotesWithMedias(repositorySlug: string, notes: Model.Note[]): Promise<Model.Note[]> {
+    // Collect information about medias in notes
+    const mediaRelativePaths: string[] = [];
+    const notesMediaRelativePaths = new Map<string, string[]>();
+    for (let i = 0; i < notes.length; i++) {
+      const note = notes[i];
+      const noteMediaRelativePaths = extractMediaRelativePaths(note);
+      notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths);
+      mediaRelativePaths.push(...noteMediaRelativePaths);
+    }
+
+    // Search for medias
+    const foundMedias = await this.searchMediasByRelativePaths(
+      mediaRelativePaths,
+      repositorySlug,
+    );
+    const mediasByRelativePaths = new Map<string, Model.Media>();
+    foundMedias.forEach((media: Model.Media) =>
+      mediasByRelativePaths.set(media.relativePath, media),
+    );
+
+    // Append found medias on notes
+    for (let i = 0; i < notes.length; i++) {
+      const note = notes[i];
+      if (!notesMediaRelativePaths.has(note.oid)) {
+        continue;
+      }
+
+      const referencedMediaRelativePaths = notesMediaRelativePaths.get(
+        note.oid,
+      );
+      referencedMediaRelativePaths?.forEach((mediaRelativePath) => {
+        const media = mediasByRelativePaths.get(mediaRelativePath);
+        if (media) {
+          note.medias.push(media);
+        }
+      });
+    }
+
+    return notes;
   }
 
   /* Converters */

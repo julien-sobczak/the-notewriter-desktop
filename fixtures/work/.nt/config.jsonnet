@@ -6,7 +6,8 @@ local srsAlgorithmSettings = {
 
 {
     attributes: nt.DefaultAttributes,
-    types: nt.DefaultTypes,
+    noteTypes: nt.DefaultNoteTypes,
+    fileTypes: nt.DefaultFileTypes,
 
     decks: [
         {

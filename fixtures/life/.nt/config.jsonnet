@@ -6,12 +6,12 @@ local srsAlgorithmSettings = {
 
 {
     attributes: nt.DefaultAttributes,
-    types: nt.DefaultTypes + {
-        BookReview: nt.DefaultTypes.Note + {
+    noteTypes: nt.DefaultNoteTypes + {
+        BookReview: nt.DefaultNoteTypes.Note + {
             name: "BookReview",
             hooks: ["blog_review"],
         },
-        Feature: nt.DefaultTypes.Task + {
+        Feature: nt.DefaultNoteTypes.Task + {
           name: "Feature",
         },
     },
