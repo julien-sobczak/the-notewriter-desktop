@@ -51,7 +51,7 @@ describe('OperationsManager', () => {
     }
   });
 
-  it('appends operations and flushes to a pack file', () => {
+  it('appends operations and flushes to a pack file', async () => {
     // Setup a fake repository config
     const repository: RepositoryRefConfig = {
       slug: 'test-repo',
@@ -60,7 +60,7 @@ describe('OperationsManager', () => {
       selected: true,
     };
 
-    const manager = new OperationsManager();
+    const manager = await OperationsManager.create();
     manager.registerRepository(repository);
 
     // Append a few operations
@@ -126,7 +126,7 @@ describe('OperationsManager', () => {
     expect(walRows).toBe(0);
   });
 
-  it('rotates wal files and create as many pack files', () => {
+  it('rotates wal files and create as many pack files', async () => {
     // Setup a fake repository config
     const repository: RepositoryRefConfig = {
       slug: 'test-repo',
@@ -135,7 +135,7 @@ describe('OperationsManager', () => {
       selected: true,
     };
 
-    const manager = new OperationsManager({ maxWalSize: 1 }); // Force WAL rotation after every append
+    const manager = await OperationsManager.create({ maxWalSize: 1 }); // Force WAL rotation after every append
     manager.registerRepository(repository);
 
     // Append a few operations

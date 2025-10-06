@@ -39,9 +39,14 @@ export default class OperationsManager {
 
   maxWalSize: number;
 
-  constructor(options?: { maxWalSize?: number }) {
+  private constructor(options?: { maxWalSize?: number }) {
     this.repositories = new Map();
     this.maxWalSize = options?.maxWalSize ?? 1024 * 1024 * 10; // 10 MB default
+  }
+
+  // Async factory method for creating OperationsManager
+  static async create(options?: { maxWalSize?: number }): Promise<OperationsManager> {
+    return new OperationsManager(options);
   }
 
   registerRepository(repository: RepositoryRefConfig): this {

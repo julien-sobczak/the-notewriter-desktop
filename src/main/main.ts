@@ -693,11 +693,11 @@ const createWindow = async () => {
 // Initialize configuration asynchronously
 async function initializeConfig() {
   config = await ConfigManager.create();
-  db = new DatabaseManager();
+  db = await DatabaseManager.create();
   config
     .repositories()
     .forEach((repository) => db.registerRepository(repository));
-  op = new OperationsManager();
+  op = await OperationsManager.create();
   config
     .repositories()
     .forEach((repository) => op.registerRepository(repository));

@@ -14,7 +14,7 @@ describe('ConfigManager', () => {
     process.env = { ...process.env, NT_HOME: ntHomeDir };
   });
 
-  test('read configuration files (Jsonnet)', async () => {
+  test('read configuration files', async () => {
     fs.writeFileSync(
       path.join(ntHomeDir, 'editorconfig.jsonnet'),
       `

@@ -40,22 +40,20 @@ export default class ConfigManager {
   //   All configurations that must be shared between applications (CLI, Nomad, Desktop) must be
   //   present in this file as these configurations are saved in remote too.
 
-  editorStaticConfig: EditorStaticConfig;
+  editorStaticConfig!: EditorStaticConfig;
 
-  editorDynamicConfig: EditorDynamicConfig;
+  editorDynamicConfig!: EditorDynamicConfig;
 
   repositoryConfigs: { [key: string]: RepositoryConfig } = {};
 
-  constructor() {
-    throw new Error(
-      'ConfigManager constructor is deprecated. Use ConfigManager.create() instead.',
-    );
+  private constructor() {
+    // Private constructor to enforce use of create() factory method
   }
 
-  // Async factory method for creating ConfigManager with Jsonnet support
+  // Async factory method for creating ConfigManager
   static async create(): Promise<ConfigManager> {
     const staticConfig = await ConfigManager.#readStaticConfig();
-    const dynamicConfig = ConfigManager.#readDynamicConfig();
+    const dynamicConfig = await ConfigManager.#readDynamicConfig();
 
     // Create instance manually to avoid calling constructor
     const instance = Object.create(ConfigManager.prototype);
@@ -65,7 +63,7 @@ export default class ConfigManager {
 
     for (const repositoryConfig of instance.editorStaticConfig.repositories) {
       instance.repositoryConfigs[repositoryConfig.slug] =
-        ConfigManager.#readRepositoryConfig(repositoryConfig);
+        await ConfigManager.#readRepositoryConfig(repositoryConfig);
     }
 
     return instance;
@@ -88,7 +86,7 @@ export default class ConfigManager {
     return ConfigManager.#applyDefaultStaticConfig(config);
   }
 
-  static #readDynamicConfig() {
+  static async #readDynamicConfig(): Promise<EditorDynamicConfig> {
     const homeConfigPath = path.join(homeDir(), 'editorconfig.json');
     if (!fs.existsSync(homeConfigPath)) {
       // Define default configuration
@@ -103,9 +101,9 @@ export default class ConfigManager {
     return JSON.parse(data) as EditorDynamicConfig;
   }
 
-  static #readRepositoryConfig(
+  static async #readRepositoryConfig(
     repositoryRef: RepositoryRefConfig,
-  ): RepositoryConfig {
+  ): Promise<RepositoryConfig> {
     const repositoryPath = normalizePath(repositoryRef.path);
     const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json');
     if (!fs.existsSync(repositoryConfigPath)) {

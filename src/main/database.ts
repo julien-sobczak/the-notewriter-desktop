@@ -38,10 +38,15 @@ export default class DatabaseManager {
 
   datasourcesPaths: Map<string, string>;
 
-  constructor() {
+  private constructor() {
     this.repositories = new Map();
     this.datasources = new Map<string, Database>();
     this.datasourcesPaths = new Map<string, string>();
+  }
+
+  // Async factory method for creating DatabaseManager
+  static async create(): Promise<DatabaseManager> {
+    return new DatabaseManager();
   }
 
   close(): void {
