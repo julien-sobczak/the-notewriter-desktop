@@ -48,6 +48,23 @@ const electronHandler = {
   // Statistics
   getStatistics: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-statistics', repositorySlugs),
+  getNoteStatistics: (
+    repositorySlugs: string[],
+    query: string,
+    groupBy: string[],
+    value?: string,
+  ) =>
+    ipcRenderer.invoke(
+      'get-note-statistics',
+      repositorySlugs,
+      query,
+      groupBy,
+      value,
+    ),
+  countObjects: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('count-objects', repositorySlugs),
+  getMediasDiskUsage: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-medias-disk-usage', repositorySlugs),
   // Reminders and Memories
   getPendingReminders: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-pending-reminders', repositorySlugs),
@@ -81,7 +98,11 @@ const electronHandler = {
   appendToFile: (repositorySlug: string, filePath: string, content: string) =>
     ipcRenderer.invoke('append-to-file', repositorySlug, filePath, content),
   determineJournalActivity: (repositorySlug: string, pathPrefix: string) =>
-    ipcRenderer.invoke('determine-journal-activity', repositorySlug, pathPrefix),
+    ipcRenderer.invoke(
+      'determine-journal-activity',
+      repositorySlug,
+      pathPrefix,
+    ),
   findJournalEntries: (
     repositorySlug: string,
     pathPrefix: string,

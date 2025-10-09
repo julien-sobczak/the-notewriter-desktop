@@ -45,7 +45,9 @@ export default class OperationsManager {
   }
 
   // Async factory method for creating OperationsManager
-  static async create(options?: { maxWalSize?: number }): Promise<OperationsManager> {
+  static async create(options?: {
+    maxWalSize?: number;
+  }): Promise<OperationsManager> {
     return new OperationsManager(options);
   }
 

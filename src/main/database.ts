@@ -466,6 +466,262 @@ export default class DatabaseManager {
     });
   }
 
+  // Generic method to get note statistics with flexible groupBy and value parameters
+  async getNoteStatistics(
+    repositorySlugs: string[],
+    query: string,
+    groupBy: string[],
+    value?: string,
+  ): Promise<Array<string | number>[]> {
+    if (groupBy.length !== 1) {
+      throw new Error('Only single groupBy attribute is currently supported');
+    }
+
+    const groupByAttribute = groupBy[0];
+    const repositoryResults: Promise<Array<string | number>[]>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        repositoryResults.push(
+          new Promise<Array<string | number>[]>((resolve, reject) => {
+            let sql: string;
+
+            if (value && value !== '$count') {
+              // Query for specific value attribute
+              sql = `
+                SELECT 
+                  json_extract(attributes, '$.${groupByAttribute}') as group_key,
+                  json_extract(attributes, '$.${value}') as value
+                FROM note
+                WHERE json_extract(attributes, '$.${groupByAttribute}') IS NOT NULL
+                  AND json_extract(attributes, '$.${value}') IS NOT NULL
+                GROUP BY json_extract(attributes, '$.${groupByAttribute}')
+              `;
+            } else {
+              // Query for count
+              sql = `
+                SELECT 
+                  json_extract(attributes, '$.${groupByAttribute}') as group_key,
+                  count(*) as count
+                FROM note
+                WHERE json_extract(attributes, '$.${groupByAttribute}') IS NOT NULL
+                GROUP BY json_extract(attributes, '$.${groupByAttribute}')
+              `;
+            }
+
+            db.all(sql, (err: any, rows: any) => {
+              if (err) {
+                console.log('Error while getting note statistics', err);
+                reject(err);
+              } else {
+                const result: Array<string | number>[] = [];
+                for (let i = 0; i < rows.length; i++) {
+                  const row = rows[i];
+                  const key = row.group_key;
+                  const val =
+                    value && value !== '$count' ? row.value : row.count;
+                  result.push([key, val]);
+                }
+                resolve(result);
+              }
+            });
+          }),
+        );
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      // Merge results from all repositories
+      const mergedMap: Map<string, number> = new Map();
+      for (const repositoryResult of allRepositoryResults) {
+        for (const [key, val] of repositoryResult) {
+          const keyStr = String(key);
+          const numVal = Number(val);
+          if (!mergedMap.has(keyStr)) {
+            mergedMap.set(keyStr, 0);
+          }
+          const prevValue = mergedMap.get(keyStr) || 0;
+          mergedMap.set(keyStr, prevValue + numVal);
+        }
+      }
+      // Convert back to array of tuples
+      const result: Array<string | number>[] = [];
+      for (const [key, val] of mergedMap) {
+        result.push([key, val]);
+      }
+      return result;
+    });
+  }
+
+  // Count objects by kind (tables: file, note, flashcard, reminder, goto, memory)
+  async countObjects(repositorySlugs: string[]): Promise<Map<string, number>> {
+    const repositoryResults: Promise<Map<string, number>>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        repositoryResults.push(
+          new Promise<Map<string, number>>((resolve) => {
+            const result: Map<string, number> = new Map();
+            const tables = [
+              'file',
+              'note',
+              'flashcard',
+              'reminder',
+              'goto',
+              'memory',
+            ];
+
+            const tablePromises = tables.map(
+              (table) =>
+                new Promise<void>((resolveTable) => {
+                  db.get(
+                    `SELECT COUNT(*) as count FROM ${table}`,
+                    (err: any, row: any) => {
+                      if (err) {
+                        console.log(`Error counting ${table}:`, err);
+                      } else {
+                        result.set(table, row.count);
+                      }
+                      resolveTable();
+                    },
+                  );
+                }),
+            );
+
+            Promise.all(tablePromises).then(() => {
+              resolve(result);
+            });
+          }),
+        );
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      const result: Map<string, number> = new Map();
+      for (const repositoryResult of allRepositoryResults) {
+        for (const [key, value] of repositoryResult) {
+          if (!result.has(key)) {
+            result.set(key, 0);
+          }
+          const prevValue = result.get(key) || 0;
+          result.set(key, prevValue + value);
+        }
+      }
+      return result;
+    });
+  }
+
+  // Get media disk usage by directory
+  async getMediasDiskUsage(
+    repositorySlugs: string[],
+  ): Promise<Model.MediaDirStat[]> {
+    const repositoryResults: Promise<Model.MediaDirStat[]>[] = [];
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (
+        repositorySlugs.length === 0 ||
+        repositorySlugs.includes(datasourceName)
+      ) {
+        const db = this.datasources.get(datasourceName);
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`);
+        }
+
+        repositoryResults.push(
+          new Promise<Model.MediaDirStat[]>((resolve, reject) => {
+            db.all(
+              `
+                SELECT 
+                  m.relative_path,
+                  b.oid,
+                  length(b.data) as size
+                FROM media m
+                JOIN blob b ON b.oid IN (
+                  SELECT j.value 
+                  FROM json_each(m.blobs) j
+                )
+              `,
+              (err: any, rows: any) => {
+                if (err) {
+                  console.log('Error while getting media disk usage', err);
+                  reject(err);
+                } else {
+                  // Group by directory
+                  const dirSizeMap: Map<string, number> = new Map();
+
+                  for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const relativePath = row.relative_path;
+                    const size = row.size || 0;
+
+                    // Extract directory from relative path
+                    const lastSlashIndex = relativePath.lastIndexOf('/');
+                    let dir: string;
+                    if (lastSlashIndex === -1) {
+                      // File at root
+                      dir = '/';
+                    } else {
+                      // File in subdirectory
+                      dir = relativePath.substring(0, lastSlashIndex + 1);
+                    }
+
+                    if (!dirSizeMap.has(dir)) {
+                      dirSizeMap.set(dir, 0);
+                    }
+                    const prevSize = dirSizeMap.get(dir) || 0;
+                    dirSizeMap.set(dir, prevSize + size);
+                  }
+
+                  const result: Model.MediaDirStat[] = [];
+                  for (const [relativePath, size] of dirSizeMap) {
+                    result.push({ relativePath, size });
+                  }
+                  resolve(result);
+                }
+              },
+            );
+          }),
+        );
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      // Merge results from all repositories
+      const mergedMap: Map<string, number> = new Map();
+      for (const repositoryResult of allRepositoryResults) {
+        for (const stat of repositoryResult) {
+          if (!mergedMap.has(stat.relativePath)) {
+            mergedMap.set(stat.relativePath, 0);
+          }
+          const prevSize = mergedMap.get(stat.relativePath) || 0;
+          mergedMap.set(stat.relativePath, prevSize + stat.size);
+        }
+      }
+
+      const result: Model.MediaDirStat[] = [];
+      for (const [relativePath, size] of mergedMap) {
+        result.push({ relativePath, size });
+      }
+      return result;
+    });
+  }
+
   // Quote to display when no quote exists in the database
   defaultQuote(datasourceName: string): Model.Note {
     return {
@@ -1240,7 +1496,7 @@ export default class DatabaseManager {
 
             resolve(updatedReminder);
           });
-        }
+        },
       );
     });
   }
@@ -1295,7 +1551,6 @@ export default class DatabaseManager {
     }
 
     return new Promise<Model.ParentNote[]>((resolve, reject) => {
-
       const sql = `
         SELECT
           oid,
@@ -1324,40 +1579,59 @@ export default class DatabaseManager {
         ORDER BY json_extract(attributes, '$.date') DESC
       `;
 
-      db.all(sql, [start, end, `${pathPrefix}%`], async (err: any, rows: any) => {
-        if (err) {
-          console.log('Error while finding journal entries', err);
-          reject(err);
-          return;
-        }
+      db.all(
+        sql,
+        [start, end, `${pathPrefix}%`],
+        async (err: any, rows: any) => {
+          if (err) {
+            console.log('Error while finding journal entries', err);
+            reject(err);
+            return;
+          }
 
-        const notes: Model.Note[] = [];
-        for (let i = 0; i < rows.length; i++) {
-          const note = this.#rowToNote(rows[i], repositorySlug);
-          notes.push(note);
-        }
+          const notes: Model.Note[] = [];
+          for (let i = 0; i < rows.length; i++) {
+            const note = this.#rowToNote(rows[i], repositorySlug);
+            notes.push(note);
+          }
 
-        const notesWithMedias = await this.enrichNotesWithMedias(repositorySlug, notes);
-        const notesWithMediasAndDailyNotes = await this.enrichNotesWithDailyNotes(repositorySlug, notesWithMedias)
+          const notesWithMedias = await this.enrichNotesWithMedias(
+            repositorySlug,
+            notes,
+          );
+          const notesWithMediasAndDailyNotes =
+            await this.enrichNotesWithDailyNotes(
+              repositorySlug,
+              notesWithMedias,
+            );
 
-        resolve(notesWithMediasAndDailyNotes);
-      });
+          resolve(notesWithMediasAndDailyNotes);
+        },
+      );
     });
   }
 
   /* Enrichers */
 
   // For each journal note, find daily notes linked to it
-  async enrichNotesWithDailyNotes(repositorySlug: string, notes: Model.Note[]): Promise<Model.ParentNote[]> {
+  async enrichNotesWithDailyNotes(
+    repositorySlug: string,
+    notes: Model.Note[],
+  ): Promise<Model.ParentNote[]> {
     const notesWithDailyNotes: Model.ParentNote[] = [];
 
     for (let i = 0; i < notes.length; i++) {
       const note = notes[i];
       if (note.type === 'Journal' && note.attributes && note.attributes.date) {
-        const allDailyNotes = await this.searchNotes(`path:'${note.relativePath}' @date:${note.attributes.date}`, repositorySlug, 10, false);
+        const allDailyNotes = await this.searchNotes(
+          `path:'${note.relativePath}' @date:${note.attributes.date}`,
+          repositorySlug,
+          10,
+          false,
+        );
         notesWithDailyNotes.push({
           parent: note,
-          children: allDailyNotes.filter(n => n.type !== 'Journal'), // Remove journal entry present in 'parent'
+          children: allDailyNotes.filter((n) => n.type !== 'Journal'), // Remove journal entry present in 'parent'
         });
       }
     }
@@ -1366,7 +1640,10 @@ export default class DatabaseManager {
   }
 
   // For each note, find medias linked to it
-  async enrichNotesWithMedias(repositorySlug: string, notes: Model.Note[]): Promise<Model.Note[]> {
+  async enrichNotesWithMedias(
+    repositorySlug: string,
+    notes: Model.Note[],
+  ): Promise<Model.Note[]> {
     // Collect information about medias in notes
     const mediaRelativePaths: string[] = [];
     const notesMediaRelativePaths = new Map<string, string[]>();

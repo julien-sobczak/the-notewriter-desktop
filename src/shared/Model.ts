@@ -12,6 +12,7 @@ export interface EditorStaticConfig {
   zenMode?: ZenConfig;
   planner?: PlannerConfig;
   journal?: JournalConfig[];
+  stats?: StatConfig[];
 }
 
 export interface RepositoryRefConfig {
@@ -63,6 +64,16 @@ export interface JournalConfig {
 export interface RoutineConfig {
   name: string;
   template: string;
+}
+
+export interface StatConfig {
+  name: string;
+  query: string;
+  repository: string[];
+  groupBy: string[];
+  visualization: 'pie' | 'map' | 'timeline' | 'calendar';
+  value?: string;
+  mapping?: { [key: string]: string };
 }
 
 /* Dynamic Config */
@@ -231,6 +242,11 @@ export interface Media {
   kind: string;
   extension: string;
   blobs: Blob[];
+}
+
+export interface MediaDirStat {
+  relativePath: string;
+  size: number;
 }
 
 export interface Note {

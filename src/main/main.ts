@@ -236,6 +236,46 @@ ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
 });
 
 ipcMain.handle(
+  'get-note-statistics',
+  async (
+    _event,
+    repositorySlugs: string[],
+    query: string,
+    groupBy: string[],
+    value?: string,
+  ) => {
+    console.debug(
+      `Getting note statistics for query "${query}" with groupBy ${groupBy}`,
+    );
+    const result = await db.getNoteStatistics(
+      repositorySlugs,
+      query,
+      groupBy,
+      value,
+    );
+    console.debug(`Found ${result.length} statistics`);
+    return result;
+  },
+);
+
+ipcMain.handle('count-objects', async (_event, repositorySlugs: string[]) => {
+  console.debug(`Counting objects for ${repositorySlugs}`);
+  const result = await db.countObjects(repositorySlugs);
+  console.debug(`Found ${result.size} object types`);
+  return result;
+});
+
+ipcMain.handle(
+  'get-medias-disk-usage',
+  async (_event, repositorySlugs: string[]) => {
+    console.debug(`Getting media disk usage for ${repositorySlugs}`);
+    const result = await db.getMediasDiskUsage(repositorySlugs);
+    console.debug(`Found ${result.length} media directories`);
+    return result;
+  },
+);
+
+ipcMain.handle(
   'get-pending-reminders',
   async (_event, repositorySlugs: string[]) => {
     console.debug(`Getting pending reminders for ${repositorySlugs}`);
@@ -631,11 +671,12 @@ ipcMain.handle(
       return new Promise((resolve, reject) => {
         exec(
           `nt add "${fullFilePath}"`,
-          { cwd: repositoryPath,
+          {
+            cwd: repositoryPath,
             env: {
               ...process.env,
               NT_HOME: '', // Avoid propagating NT_HOME also used by the-notewriter-desktop
-            }
+            },
           },
           (error: any, stdout: string, stderr: string) => {
             if (error) {
