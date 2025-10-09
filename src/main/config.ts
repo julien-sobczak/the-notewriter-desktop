@@ -83,6 +83,12 @@ export default class ConfigManager {
 
     console.log(`Reading configuration from ${homeConfigPath}`);
 
+    // Several solutions exist to evaluate Jsonnet files in Node.js:
+    // * Use a WebAssembly to run the Jsonnet VM in the browser (no popular library found)
+    // * Use a native Node.js addon (ex: https://github.com/hanazuki/node-jsonnet but many issues after every upgrade of cmake)
+    // * Use the jsonnet binary directly (requires users to install jsonnet separately)
+    // For simplicity, we use the latest solution for now.
+
     try {
       // Execute jsonnet binary from PATH
       const { stdout } = await execFileAsync('jsonnet', [homeConfigPath]);
