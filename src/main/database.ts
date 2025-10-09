@@ -589,7 +589,7 @@ export default class DatabaseManager {
 
             const tablePromises = tables.map(
               (table) =>
-                new Promise<void>((resolveTable) => {
+                new Promise<void>((_resolve) => {
                   db.get(
                     `SELECT COUNT(*) as count FROM ${table}`,
                     (err: any, row: any) => {
@@ -598,15 +598,22 @@ export default class DatabaseManager {
                       } else {
                         result.set(table, row.count);
                       }
-                      resolveTable();
+                      _resolve();
                     },
                   );
                 }),
             );
 
-            Promise.all(tablePromises).then(() => {
-              resolve(result);
-            });
+            Promise.all(tablePromises)
+              .then(() => {
+                resolve(result);
+                return result;
+              })
+              .catch((error) => {
+                console.error('Error counting objects:', error);
+                resolve(result);
+                return result;
+              });
           }),
         );
       }
