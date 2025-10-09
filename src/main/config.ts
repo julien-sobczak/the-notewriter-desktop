@@ -3,7 +3,8 @@ import os from 'os';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid'; // uuidv4()
-import { Jsonnet } from '@hanazuki/node-jsonnet';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 import {
   EditorStaticConfig,
@@ -18,6 +19,8 @@ import {
   DeckConfig,
 } from '../shared/Model';
 import { normalizePath } from './util';
+
+const execFileAsync = promisify(execFile);
 
 // Returns the home directory except if the environment variable $NT_HOME is set.
 export function homeDir() {
@@ -80,10 +83,19 @@ export default class ConfigManager {
 
     console.log(`Reading configuration from ${homeConfigPath}`);
 
-    const jsonnet = new Jsonnet();
-    const jsonStr = await jsonnet.evaluateFile(homeConfigPath);
-    const config = JSON.parse(jsonStr) as EditorStaticConfig;
-    return ConfigManager.#applyDefaultStaticConfig(config);
+    try {
+      // Execute jsonnet binary from PATH
+      const { stdout } = await execFileAsync('jsonnet', [homeConfigPath]);
+      const config = JSON.parse(stdout) as EditorStaticConfig;
+      return ConfigManager.#applyDefaultStaticConfig(config);
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new Error(
+          'jsonnet binary not found in PATH. Please install jsonnet: https://github.com/google/go-jsonnet',
+        );
+      }
+      throw new Error(`Failed to evaluate Jsonnet file: ${error.message}`);
+    }
   }
 
   static async #readDynamicConfig(): Promise<EditorDynamicConfig> {
