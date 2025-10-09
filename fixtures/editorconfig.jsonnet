@@ -113,4 +113,14 @@
       ],
     },
   ],
+
+  stats: [
+    {
+      name: 'Quotes by Type',
+      query: '@type:Quote',
+      repository: ['life'],
+      groupBy: ['type'],
+      visualization: 'pie',
+    },
+  ],
 }
