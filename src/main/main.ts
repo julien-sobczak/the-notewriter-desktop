@@ -48,15 +48,10 @@ import OperationsManager from './operations';
 import { generateOid } from './oid';
 import { NoteWriterSRS } from '../shared/srs';
 
-const config = new ConfigManager();
-const db = new DatabaseManager();
-config
-  .repositories()
-  .forEach((repository) => db.registerRepository(repository));
-const op = new OperationsManager();
-config
-  .repositories()
-  .forEach((repository) => op.registerRepository(repository));
+// These will be initialized asynchronously
+let config: ConfigManager;
+let db: DatabaseManager;
+let op: OperationsManager;
 let configSaved = false; // true after saving configuration back to file before closing the application
 
 class AppUpdater {
@@ -782,12 +777,28 @@ const createWindow = async () => {
  * Add event listeners...
  */
 
+// Initialize configuration asynchronously
+async function initializeConfig() {
+  config = await ConfigManager.create();
+  db = await DatabaseManager.create();
+  config
+    .repositories()
+    .forEach((repository) => db.registerRepository(repository));
+  op = await OperationsManager.create();
+  config
+    .repositories()
+    .forEach((repository) => op.registerRepository(repository));
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app
   .whenReady()
-  .then(() => {
+  .then(async () => {
+    // Initialize config first
+    await initializeConfig();
+
     installExtension(REACT_DEVELOPER_TOOLS)
       .then((name) => console.log(`Added Extension:  ${name}`))
       .catch((err) => console.log('An error occurred: ', err));

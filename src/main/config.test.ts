@@ -10,22 +10,29 @@ describe('ConfigManager', () => {
   // mocking the environment
   beforeEach(() => {
     ntHomeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nt-'));
-    env = process.env.NT_HOME;
-    process.env = { NT_HOME: ntHomeDir };
+    env = process.env;
+    process.env = { ...process.env, NT_HOME: ntHomeDir };
   });
 
   test('read configuration files', async () => {
     fs.writeFileSync(
-      path.join(ntHomeDir, 'editorconfig.yaml'),
+      path.join(ntHomeDir, 'editorconfig.jsonnet'),
       `
-repositories:
-- name: Main
-  slug: main
-  path: ${ntHomeDir}/main
-- name: My Company
-  slug: my-company
-  path: ${ntHomeDir}/work
-  selected: false
+{
+  repositories: [
+    {
+      name: 'Main',
+      slug: 'main',
+      path: '${ntHomeDir}/main',
+    },
+    {
+      name: 'My Company',
+      slug: 'my-company',
+      path: '${ntHomeDir}/work',
+      selected: false,
+    },
+  ],
+}
 `,
     );
 
@@ -34,15 +41,15 @@ repositories:
       path.join(ntHomeDir, 'main/.nt/.config.json'),
       `
 {
-  "Core": {
-    "Extensions": [
+  "core": {
+    "extensions": [
       "md",
       "markdown"
     ],
-    "Medias": {
-      "Command": "ffmpeg",
-      "Parallel": 1,
-      "Preset": "ultrafast"
+    "medias": {
+      "command": "ffmpeg",
+      "parallel": 1,
+      "preset": "ultrafast"
     }
   }
 }
@@ -54,22 +61,22 @@ repositories:
       path.join(ntHomeDir, 'work/.nt/.config.json'),
       `
 {
-  "Core": {
-    "Extensions": [
+  "core": {
+    "extensions": [
       "md",
       "markdown"
     ],
-    "Medias": {
-      "Command": "ffmpeg",
-      "Parallel": 1,
-      "Preset": "ultrafast"
+    "medias": {
+      "command": "ffmpeg",
+      "parallel": 1,
+      "preset": "ultrafast"
     }
   }
 }
 `,
     );
 
-    const configManager = new ConfigManager();
+    const configManager = await ConfigManager.create();
     expect(Object.keys(configManager.repositoryConfigs).length).toBe(2);
   });
 

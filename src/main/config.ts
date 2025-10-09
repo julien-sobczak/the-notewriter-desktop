@@ -3,6 +3,8 @@ import os from 'os';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid'; // uuidv4()
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 import {
   EditorStaticConfig,
@@ -18,6 +20,8 @@ import {
 } from '../shared/Model';
 import { normalizePath } from './util';
 
+const execFileAsync = promisify(execFile);
+
 // Returns the home directory except if the environment variable $NT_HOME is set.
 export function homeDir() {
   console.log(`NT_HOME is set to ${process.env.NT_HOME}`);
@@ -28,7 +32,7 @@ export function homeDir() {
 }
 
 export default class ConfigManager {
-  // Static (~/.nt/editorconfig.yml), Dynamic (~/.nt/editorconfig.json) or Collection (.nt/config)?
+  // Static (~/.nt/editorconfig.jsonnet), Dynamic (~/.nt/editorconfig.json) or Collection (.nt/config)?
   //
   // * Static configuration refers to configuration specific to The NoteWriter Desktop application
   //   Ex: journaling templates, etc.
@@ -39,42 +43,68 @@ export default class ConfigManager {
   //   All configurations that must be shared between applications (CLI, Nomad, Desktop) must be
   //   present in this file as these configurations are saved in remote too.
 
-  editorStaticConfig: EditorStaticConfig;
+  editorStaticConfig!: EditorStaticConfig;
 
-  editorDynamicConfig: EditorDynamicConfig;
+  editorDynamicConfig!: EditorDynamicConfig;
 
   repositoryConfigs: { [key: string]: RepositoryConfig } = {};
 
-  constructor() {
-    this.editorStaticConfig = ConfigManager.#readStaticConfig();
-    this.editorDynamicConfig = ConfigManager.#readDynamicConfig();
-    for (const repositoryConfig of this.editorStaticConfig.repositories) {
-      this.repositoryConfigs[repositoryConfig.slug] =
-        ConfigManager.#readRepositoryConfig(repositoryConfig);
+  private constructor() {
+    // Private constructor to enforce use of create() factory method
+  }
+
+  // Async factory method for creating ConfigManager
+  static async create(): Promise<ConfigManager> {
+    const staticConfig = await ConfigManager.#readStaticConfig();
+    const dynamicConfig = await ConfigManager.#readDynamicConfig();
+
+    // Create instance manually to avoid calling constructor
+    const instance = Object.create(ConfigManager.prototype);
+    instance.editorStaticConfig = staticConfig;
+    instance.editorDynamicConfig = dynamicConfig;
+    instance.repositoryConfigs = {};
+
+    for (const repositoryConfig of instance.editorStaticConfig.repositories) {
+      instance.repositoryConfigs[repositoryConfig.slug] =
+        await ConfigManager.#readRepositoryConfig(repositoryConfig);
+    }
+
+    return instance;
+  }
+
+  static async #readStaticConfig(): Promise<EditorStaticConfig> {
+    const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet');
+
+    if (!fs.existsSync(homeConfigPath)) {
+      throw new Error(
+        `No configuration file found. Expected: ${homeConfigPath}`,
+      );
+    }
+
+    console.log(`Reading configuration from ${homeConfigPath}`);
+
+    // Several solutions exist to evaluate Jsonnet files in Node.js:
+    // * Use a WebAssembly to run the Jsonnet VM in the browser (no popular library found)
+    // * Use a native Node.js addon (ex: https://github.com/hanazuki/node-jsonnet but many issues after every upgrade of cmake)
+    // * Use the jsonnet binary directly (requires users to install jsonnet separately)
+    // For simplicity, we use the latest solution for now.
+
+    try {
+      // Execute jsonnet binary from PATH
+      const { stdout } = await execFileAsync('jsonnet', [homeConfigPath]);
+      const config = JSON.parse(stdout) as EditorStaticConfig;
+      return ConfigManager.#applyDefaultStaticConfig(config);
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new Error(
+          'jsonnet binary not found in PATH. Please install jsonnet: https://github.com/google/go-jsonnet',
+        );
+      }
+      throw new Error(`Failed to evaluate Jsonnet file: ${error.message}`);
     }
   }
 
-  static #readStaticConfig() {
-    // Ensure the configuration file exists
-    const homeConfigPath1 = path.join(homeDir(), 'editorconfig.yaml');
-    const homeConfigPath2 = path.join(homeDir(), 'editorconfig.yml');
-    if (!fs.existsSync(homeConfigPath1) && !fs.existsSync(homeConfigPath2)) {
-      throw new Error(`No configuration file not found in home directory`);
-    }
-
-    // We know only one path exists
-    let homeConfigValidPath = homeConfigPath1;
-    if (!fs.existsSync(homeConfigPath1)) {
-      homeConfigValidPath = homeConfigPath2;
-    }
-
-    console.log(`Reading configuration from ${homeConfigValidPath}`);
-    const data = fs.readFileSync(homeConfigValidPath, 'utf8');
-    const config = yaml.load(data) as EditorStaticConfig;
-    return ConfigManager.#applyDefaultStaticConfig(config);
-  }
-
-  static #readDynamicConfig() {
+  static async #readDynamicConfig(): Promise<EditorDynamicConfig> {
     const homeConfigPath = path.join(homeDir(), 'editorconfig.json');
     if (!fs.existsSync(homeConfigPath)) {
       // Define default configuration
@@ -89,9 +119,9 @@ export default class ConfigManager {
     return JSON.parse(data) as EditorDynamicConfig;
   }
 
-  static #readRepositoryConfig(
+  static async #readRepositoryConfig(
     repositoryRef: RepositoryRefConfig,
-  ): RepositoryConfig {
+  ): Promise<RepositoryConfig> {
     const repositoryPath = normalizePath(repositoryRef.path);
     const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json');
     if (!fs.existsSync(repositoryConfigPath)) {
