@@ -1,10 +1,10 @@
-import path from 'path';
-import os from 'os';
-import fs from 'fs';
-import yaml from 'js-yaml';
-import { v4 as uuidv4 } from 'uuid'; // uuidv4()
-import { execFile } from 'child_process';
-import { promisify } from 'util';
+import path from 'path'
+import os from 'os'
+import fs from 'fs'
+import yaml from 'js-yaml'
+import { v4 as uuidv4 } from 'uuid' // uuidv4()
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 
 import {
   EditorStaticConfig,
@@ -16,19 +16,19 @@ import {
   Review,
   PackFile,
   Study,
-  DeckConfig,
-} from '../shared/Model';
-import { normalizePath } from './util';
+  DeckConfig
+} from './Model'
+import { normalizePath } from './util'
 
-const execFileAsync = promisify(execFile);
+const execFileAsync = promisify(execFile)
 
 // Returns the home directory except if the environment variable $NT_HOME is set.
 export function homeDir() {
-  console.log(`NT_HOME is set to ${process.env.NT_HOME}`);
+  console.log(`NT_HOME is set to ${process.env.NT_HOME}`)
   if (process.env.NT_HOME) {
-    return process.env.NT_HOME;
+    return process.env.NT_HOME
   }
-  return path.join(os.homedir(), '.nt');
+  return path.join(os.homedir(), '.nt')
 }
 
 export default class ConfigManager {
@@ -43,11 +43,11 @@ export default class ConfigManager {
   //   All configurations that must be shared between applications (CLI, Nomad, Desktop) must be
   //   present in this file as these configurations are saved in remote too.
 
-  editorStaticConfig!: EditorStaticConfig;
+  editorStaticConfig!: EditorStaticConfig
 
-  editorDynamicConfig!: EditorDynamicConfig;
+  editorDynamicConfig!: EditorDynamicConfig
 
-  repositoryConfigs: { [key: string]: RepositoryConfig } = {};
+  repositoryConfigs: { [key: string]: RepositoryConfig } = {}
 
   private constructor() {
     // Private constructor to enforce use of create() factory method
@@ -55,33 +55,31 @@ export default class ConfigManager {
 
   // Async factory method for creating ConfigManager
   static async create(): Promise<ConfigManager> {
-    const staticConfig = await ConfigManager.#readStaticConfig();
-    const dynamicConfig = await ConfigManager.#readDynamicConfig();
+    const staticConfig = await ConfigManager.#readStaticConfig()
+    const dynamicConfig = await ConfigManager.#readDynamicConfig()
 
     // Create instance manually to avoid calling constructor
-    const instance = Object.create(ConfigManager.prototype);
-    instance.editorStaticConfig = staticConfig;
-    instance.editorDynamicConfig = dynamicConfig;
-    instance.repositoryConfigs = {};
+    const instance = Object.create(ConfigManager.prototype)
+    instance.editorStaticConfig = staticConfig
+    instance.editorDynamicConfig = dynamicConfig
+    instance.repositoryConfigs = {}
 
     for (const repositoryConfig of instance.editorStaticConfig.repositories) {
       instance.repositoryConfigs[repositoryConfig.slug] =
-        await ConfigManager.#readRepositoryConfig(repositoryConfig);
+        await ConfigManager.#readRepositoryConfig(repositoryConfig)
     }
 
-    return instance;
+    return instance
   }
 
   static async #readStaticConfig(): Promise<EditorStaticConfig> {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet');
+    const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet')
 
     if (!fs.existsSync(homeConfigPath)) {
-      throw new Error(
-        `No configuration file found. Expected: ${homeConfigPath}`,
-      );
+      throw new Error(`No configuration file found. Expected: ${homeConfigPath}`)
     }
 
-    console.log(`Reading configuration from ${homeConfigPath}`);
+    console.log(`Reading configuration from ${homeConfigPath}`)
 
     // Several solutions exist to evaluate Jsonnet files in Node.js:
     // * Use a WebAssembly to run the Jsonnet VM in the browser (no popular library found)
@@ -91,63 +89,61 @@ export default class ConfigManager {
 
     try {
       // Execute jsonnet binary from PATH
-      const { stdout } = await execFileAsync('jsonnet', [homeConfigPath]);
-      const config = JSON.parse(stdout) as EditorStaticConfig;
-      return ConfigManager.#applyDefaultStaticConfig(config);
+      const { stdout } = await execFileAsync('jsonnet', [homeConfigPath])
+      const config = JSON.parse(stdout) as EditorStaticConfig
+      return ConfigManager.#applyDefaultStaticConfig(config)
     } catch (error: any) {
       if (error.code === 'ENOENT') {
         throw new Error(
-          'jsonnet binary not found in PATH. Please install jsonnet: https://github.com/google/go-jsonnet',
-        );
+          'jsonnet binary not found in PATH. Please install jsonnet: https://github.com/google/go-jsonnet'
+        )
       }
-      throw new Error(`Failed to evaluate Jsonnet file: ${error.message}`);
+      throw new Error(`Failed to evaluate Jsonnet file: ${error.message}`)
     }
   }
 
   static async #readDynamicConfig(): Promise<EditorDynamicConfig> {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.json');
+    const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
     if (!fs.existsSync(homeConfigPath)) {
       // Define default configuration
       return {
         desks: [],
         favorites: [],
-        bookmarks: [],
-      } as EditorDynamicConfig;
+        bookmarks: []
+      } as EditorDynamicConfig
     }
 
-    const data = fs.readFileSync(homeConfigPath, 'utf8');
-    return JSON.parse(data) as EditorDynamicConfig;
+    const data = fs.readFileSync(homeConfigPath, 'utf8')
+    return JSON.parse(data) as EditorDynamicConfig
   }
 
   static async #readRepositoryConfig(
-    repositoryRef: RepositoryRefConfig,
+    repositoryRef: RepositoryRefConfig
   ): Promise<RepositoryConfig> {
-    const repositoryPath = normalizePath(repositoryRef.path);
-    const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json');
+    const repositoryPath = normalizePath(repositoryRef.path)
+    const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json')
     if (!fs.existsSync(repositoryConfigPath)) {
-      throw new Error(`Missing configuration ${repositoryConfigPath}`);
+      throw new Error(`Missing configuration ${repositoryConfigPath}`)
     }
-    const data = fs.readFileSync(repositoryConfigPath, 'utf8');
-    const config = JSON.parse(data) as RepositoryConfig;
-    return config;
+    const data = fs.readFileSync(repositoryConfigPath, 'utf8')
+    const config = JSON.parse(data) as RepositoryConfig
+    return config
   }
 
   // Traverse the static configuration to apply default values.
-  static #applyDefaultStaticConfig(
-    config: EditorStaticConfig,
-  ): EditorStaticConfig {
-    const selectedRepositorySlugs: string[] = [];
+  static #applyDefaultStaticConfig(config: EditorStaticConfig): EditorStaticConfig {
+    const selectedRepositorySlugs: string[] = []
 
     // Select repositories by default
     if (config.repositories) {
       for (let i = 0; i < config.repositories.length; i++) {
-        const repository = config.repositories[i];
+        const repository = config.repositories[i]
         if (repository.selected === undefined) {
           // Repositories are selected by default
-          repository.selected = true;
+          repository.selected = true
         }
         if (repository.selected) {
-          selectedRepositorySlugs.push(repository.slug);
+          selectedRepositorySlugs.push(repository.slug)
         }
       }
     }
@@ -155,54 +151,52 @@ export default class ConfigManager {
     // Define default daily quote
     const defaultDailyQuote: DailyQuoteConfig = {
       query: `@type:quote`, // any quote
-      repositories: selectedRepositorySlugs, // default repositories
-    };
+      repositories: selectedRepositorySlugs // default repositories
+    }
     if (!config.dailyQuote) {
-      config.dailyQuote = defaultDailyQuote;
+      config.dailyQuote = defaultDailyQuote
     }
 
     // Use default selected repositories when none are specified
     if (config.zenMode) {
       for (let i = 0; i < config.zenMode.queries.length; i++) {
-        const query = config.zenMode.queries[i];
+        const query = config.zenMode.queries[i]
         if (!query.repositories) {
-          query.repositories = selectedRepositorySlugs;
+          query.repositories = selectedRepositorySlugs
         }
       }
     }
     if (config.inspirations) {
       for (let i = 0; i < config.inspirations.length; i++) {
-        const inspiration = config.inspirations[i];
+        const inspiration = config.inspirations[i]
         if (!inspiration.repositories) {
-          inspiration.repositories = selectedRepositorySlugs;
+          inspiration.repositories = selectedRepositorySlugs
         }
       }
     }
 
-    return config;
+    return config
   }
 
   // Returns all declared repositories.
   repositories(): RepositoryRefConfig[] {
-    return this.editorStaticConfig.repositories;
+    return this.editorStaticConfig.repositories
   }
 
   // Returns only repositories selected by default.
   selectedRepositories(): RepositoryRefConfig[] {
-    return this.editorStaticConfig.repositories.filter(
-      (repository) => repository.selected,
-    );
+    return this.editorStaticConfig.repositories.filter((repository) => repository.selected)
   }
 
   // eslint-disable-next-line class-methods-use-this
   save(config: EditorDynamicConfig) {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.json');
-    console.log(`Saving ${homeConfigPath}...`);
+    const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
+    console.log(`Saving ${homeConfigPath}...`)
     fs.writeFile(homeConfigPath, JSON.stringify(config), (err) => {
       if (err) {
-        console.error(err);
+        console.error(err)
       }
-    });
+    })
   }
 
   /*
@@ -221,29 +215,27 @@ export default class ConfigManager {
   // eslint-disable-next-line class-methods-use-this
   appendReviewToStudy(deckRef: DeckRef, review: Review) {
     // FIXME still useful?
-    const studyFilePath = studyPath(deckRef);
+    const studyFilePath = studyPath(deckRef)
 
-    const now = new Date();
+    const now = new Date()
 
     // Try to load the existing file
-    let studies: Study[] = [];
+    let studies: Study[] = []
     if (fs.existsSync(studyFilePath)) {
-      const data = fs.readFileSync(studyFilePath, 'utf8');
-      studies = yaml.load(data) as Study[];
+      const data = fs.readFileSync(studyFilePath, 'utf8')
+      studies = yaml.load(data) as Study[]
     }
     // Try to find a study in progress
-    let studyToComplete: Study | undefined;
+    let studyToComplete: Study | undefined
     // Studies are appended sequentially
     for (let i = studies.length - 1; i >= 0; i--) {
-      const study = studies[i];
-      const studyStartedAt = Date.parse(study.startedAt);
-      const elapsedTimeInHours = Math.ceil(
-        ((studyStartedAt - now.getDate()) / 1000) * 60 * 60,
-      );
+      const study = studies[i]
+      const studyStartedAt = Date.parse(study.startedAt)
+      const elapsedTimeInHours = Math.ceil(((studyStartedAt - now.getDate()) / 1000) * 60 * 60)
       if (elapsedTimeInHours <= 1) {
         // Started in the last hour?
-        studyToComplete = study;
-        break;
+        studyToComplete = study
+        break
       }
     }
     if (!studyToComplete) {
@@ -251,38 +243,38 @@ export default class ConfigManager {
         oid: uuidv4(),
         startedAt: now.toISOString(),
         endedAt: now.toISOString(),
-        reviews: [],
-      };
-      studies.push(studyToComplete);
+        reviews: []
+      }
+      studies.push(studyToComplete)
     }
 
     // Append the new review
-    studyToComplete.reviews.push(review);
+    studyToComplete.reviews.push(review)
 
     // Write back the study file
-    const studiesRaw = yaml.dump(studies, {});
-    fs.writeFileSync(studyFilePath, studiesRaw);
+    const studiesRaw = yaml.dump(studies, {})
+    fs.writeFileSync(studyFilePath, studiesRaw)
     // OPTIMIZE Save the file after every X reviews instead
   }
 
   // eslint-disable-next-line class-methods-use-this
   commitDeck(deckRef: DeckRef) {
-    const studyFilePath = studyPath(deckRef);
+    const studyFilePath = studyPath(deckRef)
 
     // Try to load the existing commit
     if (!fs.existsSync(studyFilePath)) {
       // Nothing to commit
-      return;
+      return
     }
 
-    const data = fs.readFileSync(studyFilePath, 'utf8');
-    const studies = yaml.load(data) as Study[];
+    const data = fs.readFileSync(studyFilePath, 'utf8')
+    const studies = yaml.load(data) as Study[]
     if (studies.length === 0) {
       // Nothing to commit
-      return;
+      return
     }
 
-    const now = new Date();
+    const now = new Date()
 
     // Create a new pack file
     const packFile: PackFile = {
@@ -291,16 +283,16 @@ export default class ConfigManager {
       file_size: 0,
       ctime: now.toISOString(),
       objects: [],
-      blobs: [],
-    };
+      blobs: []
+    }
     for (const study of studies) {
       packFile.objects.push({
         oid: study.oid,
         kind: 'study',
         description: 'Study',
         ctime: now.toISOString(),
-        data: `TODO`, // TODO now
-      });
+        data: `TODO` // TODO now
+      })
       /*
       Each object is self-containing through the `data` attribute and compressed using zlib and encoded in Base 64. You can easily retrieve the uncompressed content:
 
@@ -321,68 +313,58 @@ export default class ConfigManager {
     }
 
     // Create the pack file
-    const objectsPath = this.mustGetObjectsPath(deckRef.repositorySlug);
+    const objectsPath = this.mustGetObjectsPath(deckRef.repositorySlug)
 
-    const packFilePath = path.join(
-      objectsPath,
-      packFile.oid.substring(0, 2),
-      packFile.oid,
-    );
-    const packFileRaw = yaml.dump(packFile);
-    fs.writeFileSync(packFilePath, packFileRaw);
+    const packFilePath = path.join(objectsPath, packFile.oid.substring(0, 2), packFile.oid)
+    const packFileRaw = yaml.dump(packFile)
+    fs.writeFileSync(packFilePath, packFileRaw)
 
     // Clear local studies as everything is sync
-    fs.rmSync(studyFilePath);
+    fs.rmSync(studyFilePath)
   }
 
   // Returns the path .nt/objects for a given repository
   mustGetObjectsPath(repositorySlug: string): string {
-    const repositoryConfig = this.mustGetRepositoryRefConfig(repositorySlug);
-    const objectsPath = path.join(repositoryConfig.path, '.nt/objects');
+    const repositoryConfig = this.mustGetRepositoryRefConfig(repositorySlug)
+    const objectsPath = path.join(repositoryConfig.path, '.nt/objects')
     if (!fs.existsSync(objectsPath)) {
-      throw new Error(`${objectsPath} does not exist`);
+      throw new Error(`${objectsPath} does not exist`)
     }
-    return objectsPath;
+    return objectsPath
   }
 
   // Returns the config ref for the given repository.
   mustGetRepositoryRefConfig(repositorySlug: string): RepositoryRefConfig {
     for (const repositoryConfig of this.editorStaticConfig.repositories) {
       if (repositoryConfig.slug === repositorySlug) {
-        return repositoryConfig;
+        return repositoryConfig
       }
     }
-    throw new Error(`No repository with slug ${repositorySlug}`);
+    throw new Error(`No repository with slug ${repositorySlug}`)
   }
 
   // Returns the config for the given repository.
   mustGetRepositoryConfig(repositorySlug: string): RepositoryConfig {
     // Iterate over this.repositoryConfigs
-    const repositoryConfig = this.repositoryConfigs[repositorySlug];
+    const repositoryConfig = this.repositoryConfigs[repositorySlug]
     if (!repositoryConfig) {
-      throw new Error(`No repository config for slug ${repositorySlug}`);
+      throw new Error(`No repository config for slug ${repositorySlug}`)
     }
-    return repositoryConfig;
+    return repositoryConfig
   }
 
   // Returns the deck config.
   mustGetDeckConfig(deckRef: DeckRef): DeckConfig {
-    const repositoryConfig = this.mustGetRepositoryConfig(
-      deckRef.repositorySlug,
-    );
+    const repositoryConfig = this.mustGetRepositoryConfig(deckRef.repositorySlug)
     if (!repositoryConfig.decks) {
-      throw new Error(
-        `No decks found for repository ${deckRef.repositorySlug}`,
-      );
+      throw new Error(`No decks found for repository ${deckRef.repositorySlug}`)
     }
     for (const deck of repositoryConfig.decks) {
       if (deck.name === deckRef.name) {
-        return deck;
+        return deck
       }
     }
-    throw new Error(
-      `No deck with name ${deckRef.name} in repository ${deckRef.repositorySlug}`,
-    );
+    throw new Error(`No deck with name ${deckRef.name} in repository ${deckRef.repositorySlug}`)
   }
 }
 
@@ -391,13 +373,10 @@ export default class ConfigManager {
 // Returns the file path where uncommitted studies are persisted locally on-disk.
 export function studyPath(deckRef: DeckRef): string {
   // FIXME still usefu;?
-  const dirPath = path.join(homeDir(), 'studies');
+  const dirPath = path.join(homeDir(), 'studies')
   if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath);
+    fs.mkdirSync(dirPath)
   }
-  const filePath = path.join(
-    dirPath,
-    `${deckRef.repositorySlug}-${deckRef.name}.yml`,
-  );
-  return filePath;
+  const filePath = path.join(dirPath, `${deckRef.repositorySlug}-${deckRef.name}.yml`)
+  return filePath
 }

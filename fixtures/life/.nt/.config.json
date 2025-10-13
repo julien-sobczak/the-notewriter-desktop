@@ -1,0 +1,386 @@
+{
+  "core": {
+    "extensions": [
+      "md",
+      "markdown"
+    ],
+    "medias": {
+      "command": "ffmpeg",
+      "parallel": 1,
+      "preset": "ultrafast"
+    }
+  },
+  "attributes": {
+    "attended_date": {
+      "name": "attended_date",
+      "type": "string",
+      "format": "yyyy-mm-dd",
+      "memory": true,
+      "inherit": true,
+      "preserveShorthand": true
+    },
+    "date": {
+      "name": "date",
+      "type": "string",
+      "format": "date",
+      "inherit": true,
+      "preserveShorthand": null
+    },
+    "due": {
+      "name": "due",
+      "type": "date",
+      "format": "",
+      "inherit": true,
+      "preserveShorthand": true
+    },
+    "hook": {
+      "name": "hook",
+      "type": "string[]",
+      "format": "",
+      "inherit": false,
+      "preserveShorthand": null
+    },
+    "inspirations": {
+      "name": "inspirations",
+      "type": "string[]",
+      "format": "markdown",
+      "inherit": false,
+      "preserveShorthand": null
+    },
+    "priority": {
+      "name": "priority",
+      "type": "string",
+      "format": "",
+      "inherit": true,
+      "shorthands": {
+        "❗": "high",
+        "🔼": "medium",
+        "🔽": "low",
+        "🚨": "urgent"
+      },
+      "preserveShorthand": false,
+      "defaultValue": "medium"
+    },
+    "rating": {
+      "name": "rating",
+      "type": "integer",
+      "format": "",
+      "max": 10,
+      "inherit": true,
+      "shorthands": {
+        "★": 2,
+        "★★": 4,
+        "★★★": 6,
+        "★★★★": 8,
+        "★★★★★": 10,
+        "★★★★⯨": 9,
+        "★★★⯨": 7,
+        "★★⯨": 5,
+        "★⯨": 3,
+        "☆": 0,
+        "⯨": 1
+      },
+      "preserveShorthand": true
+    },
+    "read_date": {
+      "name": "read_date",
+      "type": "string",
+      "format": "yyyy-mm-dd",
+      "memory": true,
+      "inherit": true,
+      "preserveShorthand": true
+    },
+    "references": {
+      "name": "references",
+      "type": "string[]",
+      "format": "markdown",
+      "inherit": false,
+      "preserveShorthand": null
+    },
+    "slug": {
+      "name": "slug",
+      "type": "string",
+      "format": "",
+      "inherit": false,
+      "preserveShorthand": null
+    },
+    "source": {
+      "name": "source",
+      "type": "string",
+      "format": "markdown",
+      "inherit": true,
+      "preserveShorthand": null
+    },
+    "status": {
+      "name": "status",
+      "aliases": [
+        "state"
+      ],
+      "type": "string",
+      "format": "",
+      "inherit": true,
+      "shorthands": {
+        "⏱️": "in-progress",
+        "⏸️": "on-hold",
+        "✅": "done",
+        "❌": "cancelled",
+        "❓": "to-refine",
+        "📅": "planned",
+        "📝": "todo",
+        "🗄️": "archived",
+        "🚧": "blocked"
+      },
+      "preserveShorthand": false,
+      "defaultValue": "todo"
+    },
+    "tags": {
+      "name": "tags",
+      "type": "string[]",
+      "format": "",
+      "inherit": true,
+      "preserveShorthand": null
+    },
+    "title": {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "inherit": false,
+      "preserveShorthand": null
+    }
+  },
+  "noteTypes": {
+    "Artwork": {
+      "name": "Artwork",
+      "pattern": "(?i)^Artwork:\\s*(.*)$",
+      "processors": null,
+      "hooks": null
+    },
+    "BookReview": {
+      "name": "BookReview",
+      "pattern": "(?i)^BookReview:\\s*(.*)$",
+      "processors": null,
+      "hooks": [
+        "blog_review"
+      ]
+    },
+    "Feature": {
+      "name": "Feature",
+      "pattern": "(?i)^Feature:\\s*(.*)$",
+      "processors": null,
+      "attributes": [
+        {
+          "name": "status",
+          "required": true,
+          "inline": false
+        },
+        {
+          "name": "due",
+          "required": false,
+          "inline": false
+        },
+        {
+          "name": "priority",
+          "required": false,
+          "inline": false
+        }
+      ],
+      "hooks": null
+    },
+    "Flashcard": {
+      "name": "Flashcard",
+      "pattern": "(?i)^Flashcard:\\s*(.*)$",
+      "processors": [
+        "flashcard-extractor"
+      ],
+      "attributes": [
+        {
+          "name": "srs.algorithm",
+          "required": false,
+          "inline": false
+        },
+        {
+          "name": "srs.boostFactor",
+          "required": false,
+          "inline": false
+        }
+      ],
+      "hooks": null
+    },
+    "Generator": {
+      "name": "Generator",
+      "pattern": "(?i)^Generator:\\s*(.*)$",
+      "processors": [
+        "generator",
+        "list-items"
+      ],
+      "attributes": [
+        {
+          "name": "file",
+          "required": false,
+          "inline": false
+        },
+        {
+          "name": "interpreter",
+          "required": false,
+          "inline": false
+        }
+      ],
+      "hooks": null
+    },
+    "Journal": {
+      "name": "Journal",
+      "pattern": "(?i)^Journal:\\s*(.*)$",
+      "processors": [
+        "date-extractor",
+        "list-items"
+      ],
+      "attributes": [
+        {
+          "name": "date",
+          "required": true,
+          "inline": false
+        }
+      ],
+      "hooks": null
+    },
+    "List": {
+      "name": "List",
+      "pattern": "(?i)^List:\\s*(.*)$",
+      "processors": [
+        "list-items"
+      ],
+      "hooks": null
+    },
+    "Master": {
+      "name": "Master",
+      "pattern": "(?i)^Master:\\s*(.*)$",
+      "processors": null,
+      "hooks": null
+    },
+    "Note": {
+      "name": "Note",
+      "pattern": "(?i)^Note:\\s*(.*)$",
+      "processors": null,
+      "hooks": null
+    },
+    "Quote": {
+      "name": "Quote",
+      "pattern": "(?i)^Quote:\\s*(.*)$",
+      "processors": [
+        "quote-rewriter"
+      ],
+      "hooks": null
+    },
+    "ReadingList": {
+      "name": "ReadingList",
+      "pattern": "(?i)^ReadingList:\\s*(.*)$",
+      "processors": [
+        "list-items"
+      ],
+      "attributes": [
+        {
+          "name": "author",
+          "required": false,
+          "inline": false
+        },
+        {
+          "name": "rating",
+          "required": false,
+          "inline": false
+        }
+      ],
+      "hooks": null
+    },
+    "Routine": {
+      "name": "Routine",
+      "pattern": "(?i)^Routine:\\s*(.*)$",
+      "processors": null,
+      "hooks": null
+    },
+    "Task": {
+      "name": "Task",
+      "pattern": "(?i)^Task:\\s*(.*)$",
+      "processors": null,
+      "attributes": [
+        {
+          "name": "status",
+          "required": true,
+          "inline": false
+        },
+        {
+          "name": "due",
+          "required": false,
+          "inline": false
+        },
+        {
+          "name": "priority",
+          "required": false,
+          "inline": false
+        }
+      ],
+      "hooks": null
+    },
+    "Todo": {
+      "name": "Todo",
+      "pattern": "(?i)^Todo:\\s*(.*)$",
+      "processors": [
+        "list-items"
+      ],
+      "attributes": [
+        {
+          "name": "status",
+          "required": true,
+          "inline": true
+        },
+        {
+          "name": "due",
+          "required": false,
+          "inline": true
+        },
+        {
+          "name": "priority",
+          "required": true,
+          "inline": true
+        }
+      ],
+      "hooks": null
+    }
+  },
+  "fileTypes": null,
+  "remote": null,
+  "searches": {
+    "favoriteQuotes": {
+      "title": "Favorite Quotes",
+      "q": "-#ignore @object:quote"
+    }
+  },
+  "linter": {
+    "rules": null
+  },
+  "references": null,
+  "decks": [
+    {
+      "name": "Programming",
+      "query": "path:skills/programming",
+      "boostFactor": 100,
+      "newFlashcardsPerDay": 10,
+      "maxFlashcardsPerDay": 0,
+      "algorithm": "Anki2",
+      "algorithmSettings": {
+        "easeFactor": 2.5
+      }
+    },
+    {
+      "name": "Learning",
+      "query": "path:skills/learning",
+      "boostFactor": 100,
+      "newFlashcardsPerDay": 10,
+      "maxFlashcardsPerDay": 0,
+      "algorithm": "Anki2",
+      "algorithmSettings": {
+        "easeFactor": 2.5
+      }
+    }
+  ],
+  "books": null
+}
