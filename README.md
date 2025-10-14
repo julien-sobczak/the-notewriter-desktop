@@ -7,6 +7,7 @@
 
 </div>
 
+
 ## Install
 
 Clone the repo and install dependencies:
@@ -17,28 +18,25 @@ cd the-notewriter-desktop
 npm install
 ```
 
-## Starting Development
-
-Start the app in the `dev` environment:
+### Development
 
 ```bash
 npm run fixtures # Failed randomly. Rerun. Root cause still not found.
-env NT_SKIP_DAILY_QUOTE=true NT_HOME=$PWD/fixtures npm run start
+$ npm run dev
 ```
 
-## Packaging for Production
-
-To package apps for the local platform:
+### Build
 
 ```bash
-npm run package
+# For windows
+$ npm run build:win
+
+# For macOS
+$ npm run build:mac
+
+# For Linux
+$ npm run build:linux
 ```
-
-[github-actions-status]: https://github.com/julien-sobczak/the-notewriter-desktop/workflows/Test/badge.svg
-[github-actions-url]: https://github.com/julien-sobczak/the-notewriter-desktop/actions
-[github-tag-image]: https://img.shields.io/github/tag/julien-sobczak/the-notewriter-desktop.svg?label=version
-[github-tag-url]: https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest
-
 
 ## How to
 
@@ -47,4 +45,3 @@ npm run package
 ```shell
 $ open -a "DB Browser for SQLite" ./fixtures/life/.nt/database.db
 ```
-
