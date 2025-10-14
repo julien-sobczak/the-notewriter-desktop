@@ -18,8 +18,7 @@ import {
   Note,
   NoteRef,
   Query,
-  Review,
-  Statistics
+  Review
 } from './Model'
 import { exec, spawn } from 'child_process'
 import { generateOid } from './oid'
@@ -111,6 +110,9 @@ function createWindow(): void {
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.webContents.openDevTools({
+      mode: 'right'
+    })
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -296,14 +298,28 @@ app.whenReady().then(async () => {
     return note
   })
 
-  ipcMain.handle('get-statistics', async (_event, repositorySlugs) => {
-    const statistics: Statistics = {
-      countNotesPerType: new Map<string, number>(),
-      countNotesPerNationality: new Map<string, number>()
+  ipcMain.handle(
+    'get-note-statistics',
+    async (_event, repositorySlugs: string[], query: string, groupBy: string, value?: string) => {
+      console.debug(`Getting note statistics for query "${query}" with groupBy ${groupBy}`)
+      const result = await db.getNoteStatistics(repositorySlugs, query, groupBy, value)
+      console.debug(`Found ${result.length} statistics`)
+      return result
     }
-    statistics.countNotesPerNationality = await db.countNotesPerNationality(repositorySlugs)
-    statistics.countNotesPerType = await db.countNotesPerType(repositorySlugs)
-    return statistics
+  )
+
+  ipcMain.handle('count-objects', async (_event, repositorySlugs: string[]) => {
+    console.debug(`Counting objects for ${repositorySlugs}`)
+    const result = await db.countObjects(repositorySlugs)
+    console.debug(`Found ${result.size} object types`)
+    return result
+  })
+
+  ipcMain.handle('get-medias-disk-usage', async (_event, repositorySlugs: string[]) => {
+    console.debug(`Getting media disk usage for ${repositorySlugs}`)
+    const result = await db.getMediasDiskUsage(repositorySlugs)
+    console.debug(`Found ${result.length} media directories`)
+    return result
   })
 
   ipcMain.handle('get-pending-reminders', async (_event, repositorySlugs: string[]) => {

@@ -1586,3 +1586,26 @@ ul.Filter li.selected {
 }
 
 
+/*
+ * <Stats>
+ */
+
+.Stats {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--color-background-light);
+}
+.StatsChart {
+  width: 400px;
+  height: 400px;
+  margin: 1rem;
+  padding: 1rem;
+  background-color: white;
+}
+.StatsChartWide {
+  width: 800px;
+  height: 400px;
+}

@@ -12,6 +12,7 @@ import {
   Items,
   JournalActivity,
   Media,
+  MediaDirStat,
   Memory,
   Note,
   NoteRef,
@@ -453,6 +454,226 @@ export default class DatabaseManager {
         }
         resolve(result)
       })
+    })
+  }
+
+  // Generic method to get note statistics with flexible groupBy and value parameters
+  async getNoteStatistics(
+    repositorySlugs: string[],
+    query: string,
+    groupBy: string,
+    value?: string
+  ): Promise<[string, number][]> {
+    const repositoryResults: Promise<Array<[string, number]>>[] = []
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (repositorySlugs.length === 0 || repositorySlugs.includes(datasourceName)) {
+        const db = this.datasources.get(datasourceName)
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`)
+        }
+
+        repositoryResults.push(
+          new Promise<Array<[string, number]>>((resolve, reject) => {
+            let sql: string
+
+            const whereContent = queryPart2sql(query)
+
+            const groupByColumn =
+              groupBy === 'type' ? 'note_type' : `json_extract(attributes, '$.${groupBy}')`
+            const countColumn =
+              value && value !== '$count' ? `json_extract(attributes, '$.${value}')` : 'count(*)'
+
+            if (value && value !== '$count') {
+              // Query for specific value attribute
+              sql = `
+                SELECT
+                  ${groupByColumn} as group_key,
+                  ${countColumn} as count
+                FROM note
+                WHERE ${groupByColumn} IS NOT NULL
+                  AND ${countColumn} IS NOT NULL
+                  AND (${whereContent})
+                GROUP BY ${groupByColumn}
+              `
+            } else {
+              // Query for count
+              sql = `
+                SELECT
+                  ${groupByColumn} as group_key,
+                  count(*) as count
+                FROM note
+                WHERE ${groupByColumn} IS NOT NULL
+                  AND (${whereContent})
+                GROUP BY ${groupByColumn}
+              `
+            }
+
+            console.log(sql)
+            db.all(sql, (err: any, rows: any) => {
+              if (err) {
+                console.log('Error while getting note statistics', err)
+                reject(err)
+              } else {
+                const result: Array<[string, number]> = []
+                for (let i = 0; i < rows.length; i++) {
+                  const row = rows[i]
+                  const key = row.group_key as string
+                  const val = row.count as number
+                  result.push([key, val])
+                }
+                resolve(result)
+              }
+            })
+          })
+        )
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      // Merge results from all repositories
+      const mergedMap: Map<string, number> = new Map()
+      for (const repositoryResult of allRepositoryResults) {
+        for (const [key, val] of repositoryResult) {
+          if (!mergedMap.has(key)) {
+            mergedMap.set(key, 0)
+          }
+          const prevValue = mergedMap.get(key) || 0
+          mergedMap.set(key, prevValue + val)
+        }
+      }
+      // Convert back to array of tuples
+      const result: Array<[string, number]> = []
+      for (const [key, val] of mergedMap) {
+        result.push([key, val])
+      }
+      return result
+    })
+  }
+
+  // Count objects by kind (tables: file, note, flashcard, reminder, goto, memory)
+  async countObjects(repositorySlugs: string[]): Promise<Map<string, number>> {
+    const repositoryResults: Promise<Map<string, number>>[] = []
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (repositorySlugs.length === 0 || repositorySlugs.includes(datasourceName)) {
+        const db = this.datasources.get(datasourceName)
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`)
+        }
+
+        repositoryResults.push(
+          new Promise<Map<string, number>>((resolve) => {
+            const result: Map<string, number> = new Map()
+            const tables = ['file', 'note', 'flashcard', 'reminder', 'goto', 'memory']
+
+            const tablePromises = tables.map(
+              (table) =>
+                new Promise<void>((_resolve) => {
+                  db.get(`SELECT COUNT(*) as count FROM ${table}`, (err: any, row: any) => {
+                    if (err) {
+                      console.log(`Error counting ${table}:`, err)
+                    } else {
+                      result.set(table, row.count)
+                    }
+                    _resolve()
+                  })
+                })
+            )
+
+            Promise.all(tablePromises)
+              .then(() => {
+                resolve(result)
+                return result
+              })
+              .catch((error) => {
+                console.error('Error counting objects:', error)
+                resolve(result)
+                return result
+              })
+          })
+        )
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      const result: Map<string, number> = new Map()
+      for (const repositoryResult of allRepositoryResults) {
+        for (const [key, value] of repositoryResult) {
+          if (!result.has(key)) {
+            result.set(key, 0)
+          }
+          const prevValue = result.get(key) || 0
+          result.set(key, prevValue + value)
+        }
+      }
+      return result
+    })
+  }
+
+  // Get media disk usage by directory
+  async getMediasDiskUsage(repositorySlugs: string[]): Promise<MediaDirStat[]> {
+    const repositoryResults: Promise<MediaDirStat[]>[] = []
+
+    for (const datasourceName of this.datasources.keys()) {
+      if (repositorySlugs.length === 0 || repositorySlugs.includes(datasourceName)) {
+        const db = this.datasources.get(datasourceName)
+        if (!db) {
+          throw new Error(`No datasource ${datasourceName} found`)
+        }
+
+        repositoryResults.push(
+          new Promise<MediaDirStat[]>((resolve, reject) => {
+            db.all(
+              `
+                SELECT
+                  m.relative_path,
+                  m.size
+                FROM media m
+              `,
+              (err: any, rows: any) => {
+                if (err) {
+                  console.log('Error while getting media disk usage', err)
+                  reject(err)
+                } else {
+                  const dirSizeMap = new Map<string, number>()
+                  for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i]
+                    const relativePath = path.dirname(row.relative_path) + '/'
+                    const size = row.size || 0
+                    dirSizeMap.set(relativePath, size)
+                  }
+                  const result: MediaDirStat[] = []
+                  for (const [relativePath, size] of dirSizeMap) {
+                    result.push({ relativePath, size })
+                  }
+                  resolve(result)
+                }
+              }
+            )
+          })
+        )
+      }
+    }
+
+    return Promise.all(repositoryResults).then((allRepositoryResults) => {
+      // Merge results from all repositories
+      const mergedMap: Map<string, number> = new Map()
+      for (const repositoryResult of allRepositoryResults) {
+        for (const stat of repositoryResult) {
+          if (!mergedMap.has(stat.relativePath)) {
+            mergedMap.set(stat.relativePath, 0)
+          }
+          const prevSize = mergedMap.get(stat.relativePath) || 0
+          mergedMap.set(stat.relativePath, prevSize + stat.size)
+        }
+      }
+
+      const result: MediaDirStat[] = []
+      for (const [relativePath, size] of mergedMap) {
+        result.push({ relativePath, size })
+      }
+      return result
     })
   }
 
@@ -1442,6 +1663,11 @@ export function readStringValue(q: string): [string, string] {
 function queryPart2sql(qParent: string): string {
   const queryPart2sqlInner = (q: string): string => {
     const query = q.trim()
+
+    if (query === '') {
+      // Match all records with a "dummy" condition
+      return '1=1';
+    }
 
     if (query.startsWith('(')) {
       // Find closing parenthesis
