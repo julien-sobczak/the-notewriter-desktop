@@ -12,6 +12,7 @@ export interface EditorStaticConfig {
   zenMode?: ZenConfig
   planner?: PlannerConfig
   journal?: JournalConfig[]
+  stats?: StatConfig[]
 }
 
 export interface RepositoryRefConfig {
@@ -64,6 +65,18 @@ export interface RoutineConfig {
   name: string
   template: string
 }
+
+export interface StatConfig {
+  name: string
+  query: string
+  repositories: string[]
+  groupBy: string
+  visualization: 'pie' | 'map' | 'timeline' | 'calendar'
+  value?: string
+  mapping?: { [key: string]: string }
+}
+
+export type CountStat = [string, number]
 
 /* Dynamic Config */
 /* editorconfig.json */
@@ -190,14 +203,6 @@ export interface NoteRef {
   repositorySlug: string
 }
 
-export interface Statistics {
-  // Count of notes according the nationality of the author
-  countNotesPerNationality: Map<string, number>
-
-  // Count of notes by type
-  countNotesPerType: Map<string, number>
-}
-
 export interface Query {
   // The raw query string
   q: string
@@ -231,6 +236,11 @@ export interface Media {
   kind: string
   extension: string
   blobs: Blob[]
+}
+
+export interface MediaDirStat {
+  relativePath: string
+  size: number
 }
 
 export interface Note {

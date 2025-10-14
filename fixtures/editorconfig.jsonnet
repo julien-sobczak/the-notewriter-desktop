@@ -113,4 +113,37 @@
       ],
     },
   ],
+
+  stats: [
+    {
+      name: 'Quotes by nationality',
+      query: '@type:Quote',
+      repositories: ['life'],
+      groupBy: 'nationality',
+      visualization: 'pie',
+    },
+    {
+      name: "Steps by day",
+      query: "@type:Journal",
+      repository: ['life'],
+      groupBy: ['date'],
+      value: 'step',
+      visualization: 'calendar',
+    },
+    {
+      name: 'World Inspiration',
+      query: '@type:Quote',
+      repositories: ['life'],
+      groupBy: 'nationality',
+      visualization: 'map',
+      mapping: {
+        'Roman': 'ITA',
+        'Greek': 'GRC',
+        'German': 'DEU',
+        'French': 'FRA',
+        'American': 'USA',
+        'English': 'GBR',
+      },
+    },
+  ],
 }

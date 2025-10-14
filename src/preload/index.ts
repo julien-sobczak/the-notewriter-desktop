@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { DeckRef, EditorDynamicConfig, Flashcard, Note, NoteRef, Query, Review } from '../main/Model'
+import {
+  DeckRef,
+  EditorDynamicConfig,
+  Flashcard,
+  Note,
+  NoteRef,
+  Query,
+  Review
+} from '../main/Model'
 
 // Custom APIs for renderer
 const api = {
@@ -35,8 +43,11 @@ const api = {
   listFiles: (repositorySlug: string) => ipcRenderer.invoke('list-files', repositorySlug),
   listGotos: (repositorySlugs: string[]) => ipcRenderer.invoke('list-gotos', repositorySlugs),
   // Statistics
-  getStatistics: (repositorySlugs: string[]) =>
-    ipcRenderer.invoke('get-statistics', repositorySlugs),
+  getNoteStatistics: (repositorySlugs: string[], query: string, groupBy: string, value?: string) =>
+    ipcRenderer.invoke('get-note-statistics', repositorySlugs, query, groupBy, value),
+  countObjects: (repositorySlugs: string[]) => ipcRenderer.invoke('count-objects', repositorySlugs),
+  getMediasDiskUsage: (repositorySlugs: string[]) =>
+    ipcRenderer.invoke('get-medias-disk-usage', repositorySlugs),
   // Reminders and Memories
   getPendingReminders: (repositorySlugs: string[]) =>
     ipcRenderer.invoke('get-pending-reminders', repositorySlugs),
@@ -45,8 +56,6 @@ const api = {
   completeReminders: (reminderOids: string[]) =>
     ipcRenderer.invoke('complete-reminders', reminderOids),
   // Settings
-  getRepositoryConfig: (repositorySlug: string) =>
-    ipcRenderer.invoke('get-repository-config', repositorySlug),
   saveDynamicConfig: (dynamicConfig: EditorDynamicConfig) =>
     ipcRenderer.invoke('save-dynamic-config', dynamicConfig),
   // Flashcards

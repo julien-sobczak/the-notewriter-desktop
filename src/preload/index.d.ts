@@ -8,6 +8,7 @@ import {
   Query,
   Review
 } from '../main/Model'
+import { CommandExecution, JournalActivity, QueryResult } from '@renderer/Model'
 
 interface API {
   // Environment variables
@@ -25,36 +26,42 @@ interface API {
   browseUrl: (url: string) => void
 
   // 2-way renderer to main
-  getDailyQuote: () => Promise<any>
+  getDailyQuote: () => Promise<Note>
   find: (noteRef: NoteRef) => Promise<Note>
   mfind: (noteRefs: NoteRef[]) => Promise<Note[]>
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>
-  search: (query: Query) => Promise<any>
-  msearch: (queries: Query[]) => Promise<any>
-  listNotesInFile: (repositorySlug: string, filePath: string) => Promise<any>
-  listFiles: (repositorySlug: string) => Promise<any>
-  listGotos: (repositorySlugs: string[]) => Promise<any>
-  getStatistics: (repositorySlugs: string[]) => Promise<any>
-  getPendingReminders: (repositorySlugs: string[]) => Promise<any>
-  getPastMemories: (repositorySlugs: string[]) => Promise<any>
-  completeReminders: (reminderOids: string[]) => Promise<any>
-  getRepositoryConfig: (repositorySlug: string) => Promise<any>
-  saveDynamicConfig: (dynamicConfig: EditorDynamicConfig) => Promise<any>
-  listDecks: (repositorySlugs: string[]) => Promise<any>
-  listTodayFlashcards: (deckRef: DeckRef) => Promise<any>
-  flushOperations: (repositorySlugs: string[]) => Promise<any>
-  reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) => Promise<any>
-  runHooks: (note: Note) => Promise<any>
-  readNoteFile: (repositorySlug: string, filePath: string) => Promise<any>
-  appendToFile: (repositorySlug: string, filePath: string, content: string) => Promise<any>
-  determineJournalActivity: (repositorySlug: string, pathPrefix: string) => Promise<any>
+  search: (query: Query) => Promise<QueryResult[]>
+  msearch: (queries: Query[]) => Promise<QueryResult[]>
+  listNotesInFile: (repositorySlug: string, filePath: string) => Promise<Note[]>
+  listFiles: (repositorySlug: string) => Promise<File[]>
+  listGotos: (repositorySlugs: string[]) => Promise<Goto[]>
+  getNoteStatistics: (
+    repositorySlugs: string[],
+    query: string,
+    groupBy: string,
+    value?: string
+  ) => Promise<[string, number][]>
+  countObjects: (repositorySlugs: string[]) => Promise<Map<string, number>>
+  getMediasDiskUsage: (repositorySlugs: string[]) => Promise<MediaDirStat[]>
+  getPendingReminders: (repositorySlugs: string[]) => Promise<Reminder[]>
+  getPastMemories: (repositorySlugs: string[]) => Promise<Memory[]>
+  completeReminders: (reminderOids: string[]) => Promise<void>
+  saveDynamicConfig: (dynamicConfig: EditorDynamicConfig) => Promise<void>
+  listDecks: (repositorySlugs: string[]) => Promise<Deck[]>
+  listTodayFlashcards: (deckRef: DeckRef) => Promise<Flashcard[]>
+  flushOperations: (repositorySlugs: string[]) => Promise<void>
+  reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) => Promise<Flashcard>
+  runHooks: (note: Note) => Promise<CommandExecution>
+  readNoteFile: (repositorySlug: string, filePath: string) => Promise<string>
+  appendToFile: (repositorySlug: string, filePath: string, content: string) => Promise<boolean>
+  determineJournalActivity: (repositorySlug: string, pathPrefix: string) => Promise<JournalActivity>
   findJournalEntries: (
     repositorySlug: string,
     pathPrefix: string,
     start: string,
     end: string
-  ) => Promise<any>
-  forceAdd: (repositorySlug: string, filePath: string) => Promise<any>
+  ) => Promise<ParentNote[]>
+  forceAdd: (repositorySlug: string, filePath: string) => Promise<boolean>
 }
 
 declare global {
