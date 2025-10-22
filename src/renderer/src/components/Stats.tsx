@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState, useContext, useMemo } from 'react'
 import { Pie } from '@nivo/pie'
 import { Line } from '@nivo/line'
 import { Calendar } from '@nivo/calendar'
@@ -9,6 +9,15 @@ import worldFeatures from '../assets/world_countries.json'
 import { RepositoryRefConfig, StatConfig, MediaDirStat, CountStat } from '@renderer/Model'
 import Loader from './Loader'
 import { ConfigContext } from '@renderer/ConfigContext'
+import {
+  format,
+  parseISO,
+  eachDayOfInterval,
+  subDays,
+  subMonths,
+  subYears,
+  isAfter
+} from 'date-fns'
 
 // Helper function to generate a slug from a string
 function slugify(text: string): string {
@@ -138,12 +147,49 @@ function MapChart({
 
 // TimelineChart component
 function TimelineChart({ name, data }: { name: string; data: CountStat[] }) {
+  const [filter, setFilter] = useState<'week' | 'month' | 'year' | 'all'>('month')
+
   if (!data || data.length === 0) return
+
+  // Fill missing dates
+  const dateLabels = data.map(([label]) => label)
+  const dateObjs = dateLabels.map((d) => parseISO(d))
+  const minDate = dateObjs.length
+    ? new Date(Math.min(...dateObjs.map((d) => d.getTime())))
+    : new Date()
+  const maxDate = dateObjs.length
+    ? new Date(Math.max(...dateObjs.map((d) => d.getTime())))
+    : new Date()
+
+  // Build a map for fast lookup
+  const countMap = new Map<string, number>(data.map(([label, count]) => [label, count]))
+
+  // Fill all dates in interval
+  const allDates = eachDayOfInterval({ start: minDate, end: maxDate })
+  const filledData: CountStat[] = allDates.map((date: Date) => {
+    const label = format(date, 'yyyy-MM-dd')
+    return [label, countMap.get(label) ?? 0]
+  })
+
+  // Filtering logic
+  let filteredData: CountStat[] = filledData
+  const today = maxDate
+  if (filter === 'week') {
+    const from = subDays(today, 6)
+    filteredData = filledData.filter(([label]) => isAfter(parseISO(label), subDays(from, 1)))
+  } else if (filter === 'month') {
+    const from = subMonths(today, 1)
+    filteredData = filledData.filter(([label]) => isAfter(parseISO(label), subDays(from, 1)))
+  } else if (filter === 'year') {
+    const from = subYears(today, 1)
+    filteredData = filledData.filter(([label]) => isAfter(parseISO(label), subDays(from, 1)))
+  }
+  // 'all' shows everything
 
   const chartData = [
     {
       id: slugify(name),
-      data: data.map(([label, count]) => ({
+      data: filteredData.map(([label, count]) => ({
         x: label,
         y: count
       }))
@@ -153,6 +199,21 @@ function TimelineChart({ name, data }: { name: string; data: CountStat[] }) {
   return (
     <div className="StatsChart">
       <h3>{name}</h3>
+      <div className="StatsChartFilterButtons">
+        Last:
+        <button onClick={() => setFilter('week')} disabled={filter === 'week'}>
+          week
+        </button>
+        <button onClick={() => setFilter('month')} disabled={filter === 'month'}>
+          month
+        </button>
+        <button onClick={() => setFilter('year')} disabled={filter === 'year'}>
+          year
+        </button>
+        <button onClick={() => setFilter('all')} disabled={filter === 'all'}>
+          all
+        </button>
+      </div>
       <Line
         {...chartCommonAttributes}
         data={chartData}
@@ -164,16 +225,11 @@ function TimelineChart({ name, data }: { name: string; data: CountStat[] }) {
           stacked: false,
           reverse: false
         }}
+        curve="step"
+        enableGridX={false}
         axisTop={null}
         axisRight={null}
-        axisBottom={{
-          tickSize: 5,
-          tickPadding: 5,
-          tickRotation: 0,
-          legend: 'date',
-          legendOffset: 36,
-          legendPosition: 'middle'
-        }}
+        axisBottom={null}
         axisLeft={{
           tickSize: 5,
           tickPadding: 5,
@@ -195,23 +251,45 @@ function TimelineChart({ name, data }: { name: string; data: CountStat[] }) {
 
 // CalendarChart component
 function CalendarChart({ name, data }: { name: string; data: CountStat[] }) {
+  const [selectedYear, setSelectedYear] = useState<number>(0)
+
+  // Refresh chartData, from, and to when selectedYear changes
+  const { chartData, from, to } = useMemo(() => {
+    const filtered = data
+      .filter(([label]) => parseISO(label).getFullYear() === selectedYear)
+      .map(([label, count]) => ({
+        day: label,
+        value: count
+      }))
+    return {
+      chartData: filtered,
+      from: `${selectedYear}-01-01`,
+      to: `${selectedYear}-12-31`
+    }
+  }, [data, selectedYear])
+
   if (!data || data.length === 0) return
 
-  const chartData = data.map(([label, count]) => ({
-    day: label,
-    value: count
-  }))
-
-  // Find min and max years from data
-  const years = chartData.map((d) => new Date(d.day).getFullYear())
-  const minYear = Math.min(...years)
-  const maxYear = Math.max(...years)
-  const from = `${minYear}-01-01`
-  const to = `${maxYear}-12-31`
+  // Extract years from data labels
+  const years = Array.from(new Set(data.map(([label]) => parseISO(label).getFullYear()))).sort(
+    (a, b) => b - a
+  )
 
   return (
     <div className="StatsChart StatsChartWide">
       <h3>{name}</h3>
+      <div className="StatsChartFilterButtons">
+        <label>
+          Year:&nbsp;
+          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <Calendar
         {...chartCommonAttributes}
         width={chartCommonAttributes.width * 2} // Wider for maps

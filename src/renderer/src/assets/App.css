@@ -1635,3 +1635,19 @@ ul.Filter li.selected {
   width: 800px;
   height: 400px;
 }
+.StatsChartFilterButtons {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 0.5rem;
+  font-size: 80%;
+  text-align: left;
+
+  button {
+    margin: 0 0.25rem;
+
+    &:disabled {
+      color: var(--color-text-dimmed);
+      cursor: not-allowed;
+    }
+  }
+}
