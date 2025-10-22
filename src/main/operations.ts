@@ -61,7 +61,7 @@ export default class OperationsManager {
 
     const repositoryPath = normalizePath(repository.path)
 
-    const walPath = path.join(repositoryPath, '.nt/operations/wal')
+    const walPath = path.join(repositoryPath, '.nt/wal')
     if (!fs.existsSync(walPath)) {
       // Create the operations directory if it doesn't exist
       fs.mkdirSync(walPath, { recursive: true })
@@ -105,7 +105,7 @@ export default class OperationsManager {
     }
 
     // List all files in the WAL directory
-    const walPath = path.join(repository.path, '.nt/operations/wal')
+    const walPath = path.join(repository.path, '.nt/wal')
     if (!fs.existsSync(walPath)) {
       throw new Error(`WAL directory not found: ${walPath}`)
     }
@@ -151,8 +151,8 @@ export default class OperationsManager {
         objects: packObjects,
         blobs: [] // No blobs in operations for now
       }
-      // Write the pack file to disk in `.nt/operations/{oid[0:2]}/{oid}.pack
-      const packDir = path.join(repository.path, '.nt/operations', packFile.oid.slice(0, 2))
+      // Write the pack file to disk in `.nt/objects/{oid[0:2]}/{oid}.pack
+      const packDir = path.join(repository.path, '.nt/objects', packFile.oid.slice(0, 2))
       if (!fs.existsSync(packDir)) {
         fs.mkdirSync(packDir, { recursive: true })
       }

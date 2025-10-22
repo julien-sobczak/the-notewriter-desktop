@@ -5,6 +5,7 @@ import { Deck, DeckRef, RepositoryRefConfig } from '@renderer/Model'
 import Loader from './Loader'
 import RenderedDeck from './RenderedDeck'
 import Slug from './Slug'
+import Question from './Question'
 
 type DecksProps = {
   deck: DeckRef | undefined
@@ -18,13 +19,14 @@ function Decks({ deck }: DecksProps) {
 
   const [decks, setDecks] = useState<Deck[]>()
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>(deck)
+  const [selectedRepositorySlugs, setSelectedRepositorySlugs] = useState<string[]>([])
 
   // Download decks
   useEffect(() => {
-    // Show only decks for currently selected decks
     const repositorySlugs: string[] = repositories
       .filter((w: RepositoryRefConfig) => w.selected)
       .map((w: RepositoryRefConfig) => w.slug)
+    setSelectedRepositorySlugs(repositorySlugs)
 
     const listDecks = async () => {
       const results: Deck[] = await window.api.listDecks(repositorySlugs)
@@ -32,6 +34,11 @@ function Decks({ deck }: DecksProps) {
     }
     listDecks()
   }, [repositories])
+
+  // Called when the user selects a deck to study
+  const onStudy = (clickedDeck: Deck) => {
+    setSelectedDeck({ ...clickedDeck })
+  }
 
   // Called when the user completes all flashcards in a deck or
   // when exited prematurely when clicking on the icon.
@@ -42,61 +49,50 @@ function Decks({ deck }: DecksProps) {
     setSelectedDeck(undefined)
   }
 
+  // Called when the user clicks on the flush button for a given repository
   const onFlush = (repositorySlug: string) => async () => {
     await window.api.flushOperations([repositorySlug])
     console.log(`Flushed pending operations for repository ${repositorySlug}`)
   }
 
-  const onStudy = (clickedDeck: Deck) => {
-    setSelectedDeck({ ...clickedDeck })
+  if (!decks || decks.length === 0) return <Loader />
+
+  if (selectedDeck) {
+    return (
+      <div className="FullScreen">
+        <RenderedDeck deckRef={selectedDeck} onQuit={onDeckQuitted} />
+      </div>
+    )
   }
 
   return (
-    <div className="Decks centered">
-      {!decks && <Loader />}
-      {!selectedDeck && decks && decks.length > 0 && (
-        <table className="List">
-          <thead>
-            <tr>
-              <th>&nbsp;</th>
-              <th>&nbsp;</th>
-              <th>New</th>
-              <th>Due</th>
-              <th>&nbsp;</th>
-            </tr>
-          </thead>
-          <tbody>
-            {decks.map((currentDeck: Deck) => (
-              <tr key={currentDeck.name}>
-                <td>
-                  <Slug value={currentDeck.repositorySlug} />
-                </td>
-                <td
-                  onClick={() =>
-                    setSelectedDeck({
-                      repositorySlug: currentDeck.repositorySlug,
-                      name: currentDeck.config.name
-                    })
-                  }
-                >
-                  <button type="button" onClick={() => onStudy(currentDeck)}>
-                    <DeckIcon /> {currentDeck.config.name}
-                  </button>
-                </td>
-                <td>{currentDeck.stats.new}</td>
-                <td>{currentDeck.stats.due}</td>
-                <td>
-                  {/* IMPROVEMENT move the button below decks as we flush per repository, not per deck really. */}
-                  <button type="button" onClick={onFlush(currentDeck.repositorySlug)}>
-                    <FlushIcon />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {selectedDeck && <RenderedDeck deckRef={selectedDeck} onQuit={onDeckQuitted} />}
+    <div className="Decks Screen">
+      <div className="DecksSelection">
+        <Question
+          question="Select a deck to study"
+          choices={decks}
+          renderChoice={(currentDeck: Deck) => (
+            <span>
+              <DeckIcon /> {currentDeck.config.name} &nbsp;
+              <sup>
+                <span className="DecksNew">{currentDeck.stats.new}</span>/
+                <span className="DecksDue">{currentDeck.stats.due}</span>
+              </sup>
+            </span>
+          )}
+          onChoiceSelected={onStudy}
+        />
+      </div>
+      <div className="DecksSync">
+        {selectedRepositorySlugs.map((repositorySlug) => (
+          <div key={repositorySlug}>
+            <Slug value={repositorySlug} />
+            <button type="button" onClick={onFlush(repositorySlug)}>
+              <FlushIcon />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
