@@ -165,12 +165,12 @@
         {
           "name": "srs.algorithm",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "srs.boostFactor",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -186,12 +186,12 @@
         {
           "name": "file",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "interpreter",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -207,7 +207,7 @@
         {
           "name": "date",
           "required": true,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -250,12 +250,12 @@
         {
           "name": "author",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "rating",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -274,17 +274,17 @@
         {
           "name": "status",
           "required": true,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "due",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "priority",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -299,17 +299,17 @@
         {
           "name": "status",
           "required": true,
-          "inline": true
+          "promoteInline": false
         },
         {
           "name": "due",
           "required": false,
-          "inline": true
+          "promoteInline": false
         },
         {
           "name": "priority",
           "required": true,
-          "inline": true
+          "promoteInline": false
         }
       ],
       "hooks": null

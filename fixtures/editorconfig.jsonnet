@@ -125,10 +125,18 @@
     {
       name: "Steps by day",
       query: "@type:Journal",
-      repository: ['life'],
+      repositories: ['life'],
       groupBy: ['date'],
-      value: 'step',
+      value: 'steps',
       visualization: 'calendar',
+    },
+    {
+      name: "Steps by day",
+      query: "@type:Journal",
+      repositories: ['life'],
+      groupBy: ['date'],
+      value: 'steps',
+      visualization: 'timeline',
     },
     {
       name: 'World Inspiration',

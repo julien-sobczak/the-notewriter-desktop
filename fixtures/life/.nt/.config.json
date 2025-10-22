@@ -133,6 +133,15 @@
       "preserveShorthand": false,
       "defaultValue": "todo"
     },
+    "steps": {
+      "name": "steps",
+      "type": "integer",
+      "format": "",
+      "max": 100000,
+      "inherit": true,
+      "shorthandPattern": "🥾 (\\d+)",
+      "preserveShorthand": true
+    },
     "tags": {
       "name": "tags",
       "type": "string[]",
@@ -171,17 +180,17 @@
         {
           "name": "status",
           "required": true,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "due",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "priority",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -196,12 +205,12 @@
         {
           "name": "srs.algorithm",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "srs.boostFactor",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -217,12 +226,12 @@
         {
           "name": "file",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "interpreter",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -238,7 +247,12 @@
         {
           "name": "date",
           "required": true,
-          "inline": false
+          "promoteInline": false
+        },
+        {
+          "name": "steps",
+          "required": false,
+          "promoteInline": true
         }
       ],
       "hooks": null
@@ -281,12 +295,12 @@
         {
           "name": "author",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "rating",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -305,17 +319,17 @@
         {
           "name": "status",
           "required": true,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "due",
           "required": false,
-          "inline": false
+          "promoteInline": false
         },
         {
           "name": "priority",
           "required": false,
-          "inline": false
+          "promoteInline": false
         }
       ],
       "hooks": null
@@ -330,17 +344,17 @@
         {
           "name": "status",
           "required": true,
-          "inline": true
+          "promoteInline": false
         },
         {
           "name": "due",
           "required": false,
-          "inline": true
+          "promoteInline": false
         },
         {
           "name": "priority",
           "required": true,
-          "inline": true
+          "promoteInline": false
         }
       ],
       "hooks": null

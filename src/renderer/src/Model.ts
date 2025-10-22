@@ -524,21 +524,13 @@ export interface Goto {
   name: string
 }
 
-export interface Study {
-  // TODO still useful?
-  oid: string
-  startedAt: string
-  endedAt: string
-  reviews: Review[]
-}
-
 export interface Review {
-  // TODO update?
   flashcardOID: string
   feedback: string // easy | good | again | hard | too-easy | too-hard
   durationInMs: number
   completedAt: string
   dueAt: string
+  algorithm: string
   settings: { [key: string]: any }
 }
 

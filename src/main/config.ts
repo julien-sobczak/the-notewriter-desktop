@@ -1,8 +1,6 @@
 import path from 'path'
 import os from 'os'
 import fs from 'fs'
-import yaml from 'js-yaml'
-import { v4 as uuidv4 } from 'uuid' // uuidv4()
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 
@@ -13,9 +11,6 @@ import {
   DailyQuoteConfig,
   RepositoryConfig,
   DeckRef,
-  Review,
-  PackFile,
-  Study,
   DeckConfig
 } from './Model'
 import { normalizePath } from './util'
@@ -188,7 +183,6 @@ export default class ConfigManager {
     return this.editorStaticConfig.repositories.filter((repository) => repository.selected)
   }
 
-  // eslint-disable-next-line class-methods-use-this
   save(config: EditorDynamicConfig) {
     const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
     console.log(`Saving ${homeConfigPath}...`)
@@ -197,130 +191,6 @@ export default class ConfigManager {
         console.error(err)
       }
     })
-  }
-
-  /*
-   * Study Management
-   */
-
-  // Review objects are grouped into Study objects that are committed,
-  // just like when you use the command 'nt commit'.
-  // To not create too much commits, the user must triggers the action explicitly.
-  // During that time, we still need to save reviews locally.
-  // We use the directory ~/.nt/study where a single file is present for every deck
-  // (the file is only created after the first review and deleted after a commit).
-  // These files are YAML files containing a list of Study objects.
-  // These files are not packfiles (to make easy to read them without unpacking them first).
-
-  // eslint-disable-next-line class-methods-use-this
-  appendReviewToStudy(deckRef: DeckRef, review: Review) {
-    // FIXME still useful?
-    const studyFilePath = studyPath(deckRef)
-
-    const now = new Date()
-
-    // Try to load the existing file
-    let studies: Study[] = []
-    if (fs.existsSync(studyFilePath)) {
-      const data = fs.readFileSync(studyFilePath, 'utf8')
-      studies = yaml.load(data) as Study[]
-    }
-    // Try to find a study in progress
-    let studyToComplete: Study | undefined
-    // Studies are appended sequentially
-    for (let i = studies.length - 1; i >= 0; i--) {
-      const study = studies[i]
-      const studyStartedAt = Date.parse(study.startedAt)
-      const elapsedTimeInHours = Math.ceil(((studyStartedAt - now.getDate()) / 1000) * 60 * 60)
-      if (elapsedTimeInHours <= 1) {
-        // Started in the last hour?
-        studyToComplete = study
-        break
-      }
-    }
-    if (!studyToComplete) {
-      studyToComplete = {
-        oid: uuidv4(),
-        startedAt: now.toISOString(),
-        endedAt: now.toISOString(),
-        reviews: []
-      }
-      studies.push(studyToComplete)
-    }
-
-    // Append the new review
-    studyToComplete.reviews.push(review)
-
-    // Write back the study file
-    const studiesRaw = yaml.dump(studies, {})
-    fs.writeFileSync(studyFilePath, studiesRaw)
-    // OPTIMIZE Save the file after every X reviews instead
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  commitDeck(deckRef: DeckRef) {
-    const studyFilePath = studyPath(deckRef)
-
-    // Try to load the existing commit
-    if (!fs.existsSync(studyFilePath)) {
-      // Nothing to commit
-      return
-    }
-
-    const data = fs.readFileSync(studyFilePath, 'utf8')
-    const studies = yaml.load(data) as Study[]
-    if (studies.length === 0) {
-      // Nothing to commit
-      return
-    }
-
-    const now = new Date()
-
-    // Create a new pack file
-    const packFile: PackFile = {
-      oid: uuidv4(),
-      file_mtime: '',
-      file_size: 0,
-      ctime: now.toISOString(),
-      objects: [],
-      blobs: []
-    }
-    for (const study of studies) {
-      packFile.objects.push({
-        oid: study.oid,
-        kind: 'study',
-        description: 'Study',
-        ctime: now.toISOString(),
-        data: `TODO` // TODO now
-      })
-      /*
-      Each object is self-containing through the `data` attribute and compressed using zlib and encoded in Base 64. You can easily retrieve the uncompressed content:
-
-      ```shell
-      # On MacOS
-      $ brew install qpdf
-      $ echo "<value>" | base64 -d | zlib-flate -uncompress
-      oid: 6ee8a962
-      file_oid: d19a2bba
-      kind: note
-      relative_path: hello.md
-      wikilink: 'hello#Note: Hello'
-      content_raw: Coucou
-      content_hash: b70f7d0e2acef2e0fa1c6f117e3c11e0d7082232
-      ...
-      ```
-    */
-    }
-
-    // Create the pack file
-    const objectsPath = this.mustGetObjectsPath(deckRef.repositorySlug)
-
-    const packFilePath = path.join(objectsPath, packFile.oid.substring(0, 2), packFile.oid)
-    const packFileRaw = yaml.dump(packFile)
-    fs.writeFileSync(packFilePath, packFileRaw)
-
-    // Clear local studies as everything is sync
-    fs.rmSync(studyFilePath)
   }
 
   // Returns the path .nt/objects for a given repository
@@ -366,17 +236,4 @@ export default class ConfigManager {
     }
     throw new Error(`No deck with name ${deckRef.name} in repository ${deckRef.repositorySlug}`)
   }
-}
-
-/* Helpers */
-
-// Returns the file path where uncommitted studies are persisted locally on-disk.
-export function studyPath(deckRef: DeckRef): string {
-  // FIXME still usefu;?
-  const dirPath = path.join(homeDir(), 'studies')
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath)
-  }
-  const filePath = path.join(dirPath, `${deckRef.repositorySlug}-${deckRef.name}.yml`)
-  return filePath
 }

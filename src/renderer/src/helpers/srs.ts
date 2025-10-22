@@ -1,5 +1,3 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable max-classes-per-file */
 import { DeckConfig, Flashcard, Review } from '@renderer/Model'
 
 export interface SRSAlgorithm {
@@ -89,9 +87,6 @@ export class NoteWriterSRS implements SRSAlgorithm {
         switch (study.feedback) {
           case 'too-hard':
             // Restart again from scratch
-            newSettings.queue = 'learning'
-            newSettings.easyFactor = 0
-            newSettings.interval = steps[0]
             break
           case 'hard':
             // Restart learning again but keep a ease factor
@@ -255,6 +250,7 @@ export function intervalFn(config: DeckConfig): (card: Flashcard, feedback: stri
       feedback,
       completedAt: '',
       dueAt: card.dueAt,
+      algorithm: 'nt0',
       settings: card.settings
     }
     return algorithm.interval(config, card, review)

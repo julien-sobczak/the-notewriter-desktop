@@ -5,6 +5,7 @@ import {
   Flashcard,
   Note,
   NoteRef,
+  File,
   Query,
   Review
 } from '../main/Model'
@@ -30,7 +31,7 @@ interface API {
   find: (noteRef: NoteRef) => Promise<Note>
   mfind: (noteRefs: NoteRef[]) => Promise<Note[]>
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>
-  search: (query: Query) => Promise<QueryResult[]>
+  search: (query: Query) => Promise<QueryResult>
   msearch: (queries: Query[]) => Promise<QueryResult[]>
   listNotesInFile: (repositorySlug: string, filePath: string) => Promise<Note[]>
   listFiles: (repositorySlug: string) => Promise<File[]>

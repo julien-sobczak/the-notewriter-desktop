@@ -531,6 +531,7 @@ export interface Review {
   durationInMs: number
   completedAt: string
   dueAt: string
+  algorithm: string
   settings: { [key: string]: any }
 }
 

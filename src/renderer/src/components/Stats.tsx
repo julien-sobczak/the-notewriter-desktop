@@ -110,7 +110,7 @@ function MapChart({
         features={worldFeatures.features}
         domain={[minV, maxV]}
         unknownColor="white"
-        xXSZX="properties.name"
+        label="properties.name"
         valueFormat={(value) => Math.ceil(value).toString()}
         enableGraticule={false}
         borderWidth={0.5}
@@ -187,7 +187,7 @@ function TimelineChart({ name, data }: { name: string; data: CountStat[] }) {
         pointBorderWidth={2}
         pointBorderColor={{ from: 'serieColor' }}
         pointLabelYOffset={-12}
-        useMesh={true}
+        useMesh={false}
       />
     </div>
   )
@@ -210,10 +210,11 @@ function CalendarChart({ name, data }: { name: string; data: CountStat[] }) {
   const to = `${maxYear}-12-31`
 
   return (
-    <div className="StatsChart">
+    <div className="StatsChart StatsChartWide">
       <h3>{name}</h3>
       <Calendar
         {...chartCommonAttributes}
+        width={chartCommonAttributes.width * 2} // Wider for maps
         data={chartData}
         from={from}
         to={to}

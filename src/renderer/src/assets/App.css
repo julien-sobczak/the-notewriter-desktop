@@ -1599,6 +1599,7 @@ ul.Filter li.selected {
   background-color: var(--color-background-light);
 }
 .StatsChart {
+  border: 1px solid var(--color-separator);
   width: 400px;
   height: 400px;
   margin: 1rem;
