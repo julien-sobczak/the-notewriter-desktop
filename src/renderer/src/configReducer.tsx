@@ -4,6 +4,7 @@ import {
   RepositoryConfig,
   Desk,
   Bookmark,
+  TabRef,
 } from '@renderer/Model';
 
 export type Config = {
@@ -56,6 +57,10 @@ export default function configReducer(draft: Config, action: Action): any {
     case 'add-bookmark': {
       if (!draft.dynamic.bookmarks) draft.dynamic.bookmarks = [];
       draft.dynamic.bookmarks.push(action.payload as Bookmark);
+      break;
+    }
+    case 'updateTabs': {
+      draft.dynamic.tabs = action.payload as TabRef[];
       break;
     }
     default: {

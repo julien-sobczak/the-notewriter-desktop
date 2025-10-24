@@ -30,6 +30,10 @@ import {
   File,
   FileRef,
   NoteRef,
+  TabRef,
+  FileTab,
+  NotesTab,
+  DeskTab,
   Goto
 } from '@renderer/Model'
 import Hi from './Hi'
@@ -42,6 +46,9 @@ import Decks from './Decks'
 import ZenMode from './ZenMode'
 import RenderedDesk from './RenderedDesk'
 import NoteContainer from './NoteContainer'
+import RenderedFileTab from './RenderedFileTab'
+import RenderedNotesTab from './RenderedNotesTab'
+import RenderedDeskTab from './RenderedDeskTab'
 import Journal from './Journal'
 import NoteType from './NoteType'
 import Markdown from './Markdown'
@@ -575,28 +582,6 @@ export interface Activity {
   icon: Icon
 }
 
-// Tab-related types
-export interface FileTab {
-  file: FileRef
-  relativePath: string
-}
-
-export interface NotesTab {
-  notes: NoteRef[]
-  query: string
-}
-
-export interface DeskTab {
-  oid: string
-}
-
-export interface TabRef {
-  kind: 'file' | 'notes' | 'desk'
-  title: string
-  data: FileTab | NotesTab | DeskTab
-  stale: boolean
-}
-
 function Main() {
   const { config, dispatch } = useContext(ConfigContext)
 
@@ -643,9 +628,11 @@ function Main() {
   // Files
   const [files, setFiles] = useState<File[]>([])
 
-  // Tabs
-  const [openedTabs, setOpenedTabs] = useState<TabRef[]>([])
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1)
+  // Tabs - Initialize from dynamic config
+  const [openedTabs, setOpenedTabs] = useState<TabRef[]>(dynamicConfig.tabs || [])
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(
+    dynamicConfig.tabs && dynamicConfig.tabs.length > 0 ? 0 : -1
+  )
 
   // Function to add a new tab
   const addTab = (kind: 'file' | 'notes' | 'desk', title: string, data: FileTab | NotesTab | DeskTab) => {
@@ -658,6 +645,11 @@ function Main() {
     setOpenedTabs((prevTabs) => {
       const newTabs = [...prevTabs, newTab]
       setActiveTabIndex(newTabs.length - 1) // Set the new tab as active
+      // Dispatch to save tabs to config
+      dispatch({
+        type: 'updateTabs',
+        payload: newTabs
+      })
       return newTabs
     })
   }
@@ -763,8 +755,9 @@ function Main() {
   }
 
   const handleFileSelected = (file: File) => {
-    // Get the filename from the relative path
-    const filename = file.relativePath.split('/').pop() || file.relativePath
+    // Get the filename from the relative path - path.basename equivalent
+    const pathParts = file.relativePath.split('/')
+    const filename = pathParts[pathParts.length - 1] || file.relativePath
     const fileTab: FileTab = { 
       file: { oid: file.oid, repositorySlug: file.repositorySlug },
       relativePath: file.relativePath
@@ -788,6 +781,12 @@ function Main() {
     e.stopPropagation() // Prevent tab selection when closing
     const newTabs = openedTabs.filter((_, i) => i !== index)
     setOpenedTabs(newTabs)
+    
+    // Dispatch to save tabs to config
+    dispatch({
+      type: 'updateTabs',
+      payload: newTabs
+    })
     
     // Update active tab index
     if (activeTabIndex === index) {
@@ -1007,25 +1006,11 @@ function Main() {
             {(() => {
               const activeTab = openedTabs[activeTabIndex]
               if (activeTab.kind === 'file') {
-                const fileData = activeTab.data as FileTab
-                // Create a File object for Browser component
-                const fileForBrowser: File = {
-                  oid: fileData.file.oid,
-                  repositorySlug: fileData.file.repositorySlug,
-                  relativePath: fileData.relativePath,
-                  slug: '',
-                  repositoryPath: '',
-                  wikilink: '',
-                  title: '',
-                  shortTitle: ''
-                }
-                return <Browser file={fileForBrowser} />
+                return <RenderedFileTab tab={activeTab.data as FileTab} />
               } else if (activeTab.kind === 'notes') {
-                // TODO: Implement notes tab rendering
-                return <div>Notes tab not yet implemented</div>
+                return <RenderedNotesTab tab={activeTab.data as NotesTab} />
               } else if (activeTab.kind === 'desk') {
-                // TODO: Implement desk tab rendering
-                return <div>Desk tab not yet implemented</div>
+                return <RenderedDeskTab tab={activeTab.data as DeskTab} />
               }
               return null
             })()}
