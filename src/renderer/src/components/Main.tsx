@@ -655,8 +655,11 @@ function Main() {
       data,
       stale: false
     }
-    setOpenedTabs((prevTabs) => [...prevTabs, newTab])
-    setActiveTabIndex(openedTabs.length) // Set the new tab as active
+    setOpenedTabs((prevTabs) => {
+      const newTabs = [...prevTabs, newTab]
+      setActiveTabIndex(newTabs.length - 1) // Set the new tab as active
+      return newTabs
+    })
   }
 
   // Selection
