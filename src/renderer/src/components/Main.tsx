@@ -960,7 +960,7 @@ function Main() {
           </div>
         )}
 
-        {/* Tab Bar */}
+        {/* Tab Bar - Always shown when tabs exist */}
         {openedTabs.length > 0 && (
           <div className="TabBar">
             <nav>
@@ -995,8 +995,11 @@ function Main() {
           </div>
         )}
 
-        {/* Tab Content */}
-        {openedTabs.length > 0 && activeTabIndex >= 0 && activeTabIndex < openedTabs.length && (
+        {/* Tab Content - Shown when tabs exist and no overlay activity */}
+        {openedTabs.length > 0 && 
+         activeTabIndex >= 0 && 
+         activeTabIndex < openedTabs.length &&
+         activity === 'browser' && (
           <div className="TabContent">
             {(() => {
               const activeTab = openedTabs[activeTabIndex]
@@ -1032,8 +1035,8 @@ function Main() {
         {/* Bookmarks */}
         {activity === 'bookmarker' && <Bookmarker bookmark={selectedBookmark} />}
 
-        {/* Browse */}
-        {activity === 'browser' && !openedTabs.length && <Browser />}
+        {/* Browse - Show empty browser if no tabs */}
+        {activity === 'browser' && openedTabs.length === 0 && <Browser />}
 
         {/* Desktop */}
         {activity === 'desktop' && (
