@@ -203,6 +203,11 @@ export interface NoteRef {
   repositorySlug: string
 }
 
+export interface FileRef {
+  oid: string
+  repositorySlug: string
+}
+
 export interface Query {
   // The raw query string
   q: string

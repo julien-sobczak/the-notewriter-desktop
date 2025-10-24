@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react'
-// import { v4 as uuidv4 } from 'uuid'; // uuidv4()
+import { v4 as uuidv4 } from 'uuid'
 import {
   HandWavingIcon as HiIcon,
   FileSearchIcon as BrowserIcon,
@@ -15,7 +15,8 @@ import {
   Icon,
   StarIcon as BookmarkerIcon,
   XCircleIcon as CancelIcon,
-  CheckCircleIcon as OpenIcon
+  CheckCircleIcon as OpenIcon,
+  PlusIcon
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
 import { Command } from 'cmdk'
@@ -27,6 +28,8 @@ import {
   DeckRef,
   Bookmark,
   File,
+  FileRef,
+  NoteRef,
   Goto
 } from '@renderer/Model'
 import Hi from './Hi'
@@ -572,6 +575,28 @@ export interface Activity {
   icon: Icon
 }
 
+// Tab-related types
+export interface FileTab {
+  file: FileRef
+  relativePath: string
+}
+
+export interface NotesTab {
+  notes: NoteRef[]
+  query: string
+}
+
+export interface DeskTab {
+  oid: string
+}
+
+export interface TabRef {
+  kind: 'file' | 'notes' | 'desk'
+  title: string
+  data: FileTab | NotesTab | DeskTab
+  stale: boolean
+}
+
 function Main() {
   const { config, dispatch } = useContext(ConfigContext)
 
@@ -618,8 +643,23 @@ function Main() {
   // Files
   const [files, setFiles] = useState<File[]>([])
 
+  // Tabs
+  const [openedTabs, setOpenedTabs] = useState<TabRef[]>([])
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1)
+
+  // Function to add a new tab
+  const addTab = (kind: 'file' | 'notes' | 'desk', title: string, data: FileTab | NotesTab | DeskTab) => {
+    const newTab: TabRef = {
+      kind,
+      title,
+      data,
+      stale: false
+    }
+    setOpenedTabs((prevTabs) => [...prevTabs, newTab])
+    setActiveTabIndex(openedTabs.length) // Set the new tab as active
+  }
+
   // Selection
-  const [selectedFile, setSelectedFile] = useState<File | undefined>()
   const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>()
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>()
 
@@ -720,7 +760,13 @@ function Main() {
   }
 
   const handleFileSelected = (file: File) => {
-    setSelectedFile(file)
+    // Get the filename from the relative path
+    const filename = file.relativePath.split('/').pop() || file.relativePath
+    const fileTab: FileTab = { 
+      file: { oid: file.oid, repositorySlug: file.repositorySlug },
+      relativePath: file.relativePath
+    }
+    addTab('file', filename, fileTab)
   }
 
   const handleZenModeClose = () => {
@@ -729,6 +775,36 @@ function Main() {
     } else {
       switchActivity('hi')
     }
+  }
+
+  const handleTabClick = (index: number) => {
+    setActiveTabIndex(index)
+  }
+
+  const handleTabClose = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent tab selection when closing
+    const newTabs = openedTabs.filter((_, i) => i !== index)
+    setOpenedTabs(newTabs)
+    
+    // Update active tab index
+    if (activeTabIndex === index) {
+      // If closing the active tab, switch to the previous tab
+      setActiveTabIndex(Math.max(0, index - 1))
+    } else if (activeTabIndex > index) {
+      // If closing a tab before the active one, adjust the index
+      setActiveTabIndex(activeTabIndex - 1)
+    }
+    
+    // If no tabs left, reset to -1
+    if (newTabs.length === 0) {
+      setActiveTabIndex(-1)
+    }
+  }
+
+  const handleNewDeskTab = () => {
+    const newDeskId = uuidv4()
+    const deskTab: DeskTab = { oid: newDeskId }
+    addTab('desk', 'New Desk', deskTab)
   }
 
   const activities: Activity[] = [
@@ -884,6 +960,72 @@ function Main() {
           </div>
         )}
 
+        {/* Tab Bar */}
+        {openedTabs.length > 0 && (
+          <div className="TabBar">
+            <nav>
+              <ul>
+                {openedTabs.map((tab, index) => (
+                  <li
+                    key={index}
+                    className={classNames({
+                      selected: index === activeTabIndex,
+                      stale: tab.stale
+                    })}
+                    onClick={() => handleTabClick(index)}
+                  >
+                    <span className="TabTitle">{tab.title}</span>
+                    <button
+                      type="button"
+                      className="TabCloseButton"
+                      onClick={(e) => handleTabClose(index, e)}
+                      title="Close tab"
+                    >
+                      <CloseIcon size={12} />
+                    </button>
+                  </li>
+                ))}
+                <li className="TabAddButton" onClick={handleNewDeskTab}>
+                  <button type="button" title="New Desk">
+                    <PlusIcon size={16} />
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        )}
+
+        {/* Tab Content */}
+        {openedTabs.length > 0 && activeTabIndex >= 0 && activeTabIndex < openedTabs.length && (
+          <div className="TabContent">
+            {(() => {
+              const activeTab = openedTabs[activeTabIndex]
+              if (activeTab.kind === 'file') {
+                const fileData = activeTab.data as FileTab
+                // Create a File object for Browser component
+                const fileForBrowser: File = {
+                  oid: fileData.file.oid,
+                  repositorySlug: fileData.file.repositorySlug,
+                  relativePath: fileData.relativePath,
+                  slug: '',
+                  repositoryPath: '',
+                  wikilink: '',
+                  title: '',
+                  shortTitle: ''
+                }
+                return <Browser file={fileForBrowser} />
+              } else if (activeTab.kind === 'notes') {
+                // TODO: Implement notes tab rendering
+                return <div>Notes tab not yet implemented</div>
+              } else if (activeTab.kind === 'desk') {
+                // TODO: Implement desk tab rendering
+                return <div>Desk tab not yet implemented</div>
+              }
+              return null
+            })()}
+          </div>
+        )}
+
         {/* Hi */}
         {activity === 'hi' && <Hi />}
 
@@ -891,7 +1033,7 @@ function Main() {
         {activity === 'bookmarker' && <Bookmarker bookmark={selectedBookmark} />}
 
         {/* Browse */}
-        {activity === 'browser' && <Browser file={selectedFile} />}
+        {activity === 'browser' && !openedTabs.length && <Browser />}
 
         {/* Desktop */}
         {activity === 'desktop' && (
