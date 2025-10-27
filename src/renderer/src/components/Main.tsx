@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react'
-import { v4 as uuidv4 } from 'uuid'
+import { generateOid } from '@renderer/helpers/oid'
 import {
   HandWavingIcon as HiIcon,
   FileSearchIcon as BrowserIcon,
@@ -642,15 +642,13 @@ function Main() {
       data,
       stale: false
     }
-    setOpenedTabs((prevTabs) => {
-      const newTabs = [...prevTabs, newTab]
-      setActiveTabIndex(newTabs.length - 1) // Set the new tab as active
-      // Dispatch to save tabs to config
-      dispatch({
-        type: 'updateTabs',
-        payload: newTabs
-      })
-      return newTabs
+    const newTabs = [...openedTabs, newTab]
+    setOpenedTabs(newTabs)
+    setActiveTabIndex(newTabs.length - 1) // Set the new tab as active
+    // Dispatch to save tabs to config
+    dispatch({
+      type: 'updateTabs',
+      payload: newTabs
     })
   }
 
@@ -804,7 +802,7 @@ function Main() {
   }
 
   const handleNewDeskTab = () => {
-    const newDeskId = uuidv4()
+    const newDeskId = generateOid()
     const deskTab: DeskTab = { oid: newDeskId }
     addTab('desk', 'New Desk', deskTab)
   }
@@ -1006,11 +1004,14 @@ function Main() {
             {(() => {
               const activeTab = openedTabs[activeTabIndex]
               if (activeTab.kind === 'file') {
-                return <RenderedFileTab tab={activeTab.data as FileTab} />
+                const fileData = activeTab.data as FileTab
+                return <RenderedFileTab title={activeTab.title} {...fileData} />
               } else if (activeTab.kind === 'notes') {
-                return <RenderedNotesTab tab={activeTab.data as NotesTab} />
+                const notesData = activeTab.data as NotesTab
+                return <RenderedNotesTab title={activeTab.title} {...notesData} />
               } else if (activeTab.kind === 'desk') {
-                return <RenderedDeskTab tab={activeTab.data as DeskTab} />
+                const deskData = activeTab.data as DeskTab
+                return <RenderedDeskTab title={activeTab.title} {...deskData} />
               }
               return null
             })()}

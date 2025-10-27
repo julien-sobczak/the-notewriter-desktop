@@ -1,20 +1,21 @@
-import { DeskTab, Desk } from '@renderer/Model'
+import { Desk } from '@renderer/Model'
 import RenderedDesk from './RenderedDesk'
 import { useState, useEffect } from 'react'
 
 type RenderedDeskTabProps = {
-  tab: DeskTab
+  title: string
+  oid: string
 }
 
-function RenderedDeskTab({ tab }: RenderedDeskTabProps) {
+function RenderedDeskTab({ title, oid }: RenderedDeskTabProps) {
   const [desk, setDesk] = useState<Desk | null>(null)
 
   useEffect(() => {
     // Load or create a desk based on the oid
     // For now, create a blank desk structure
     const newDesk: Desk = {
-      id: tab.oid,
-      name: 'New Desk',
+      id: oid,
+      name: title,
       root: {
         id: 'root',
         name: null,
@@ -28,7 +29,7 @@ function RenderedDeskTab({ tab }: RenderedDeskTabProps) {
       }
     }
     setDesk(newDesk)
-  }, [tab.oid])
+  }, [oid, title])
 
   if (!desk) {
     return <div>Loading desk...</div>

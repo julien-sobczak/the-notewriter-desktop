@@ -1,26 +1,30 @@
-import { NotesTab, Note } from '@renderer/Model'
+import { NoteRef, Note } from '@renderer/Model'
 import NoteContainer from './NoteContainer'
 import { useState, useEffect } from 'react'
 
 type RenderedNotesTabProps = {
-  tab: NotesTab
+  title: string
+  notes: NoteRef[]
+  query: string
 }
 
-function RenderedNotesTab({ tab }: RenderedNotesTabProps) {
+function RenderedNotesTab({ title, notes: noteRefs, query }: RenderedNotesTabProps) {
   const [notes, setNotes] = useState<Note[]>([])
 
   useEffect(() => {
     // Load the notes based on the noteRefs in the tab
     const loadNotes = async () => {
-      // For now, we'll need to implement a way to load notes by their refs
-      // This is a placeholder implementation
-      // TODO: Implement proper note loading by refs
-      setNotes([])
+      if (!noteRefs || noteRefs.length === 0) {
+        setNotes([])
+        return
+      }
+      const result: Note[] = await window.api.mfind(noteRefs)
+      setNotes(result)
     }
     loadNotes()
-  }, [tab.notes])
+  }, [noteRefs])
 
-  return <NoteContainer name={tab.query} notes={notes} layout="list" layoutSelectable={true} />
+  return <NoteContainer name={query} notes={notes} layout="list" layoutSelectable={true} />
 }
 
 export default RenderedNotesTab
