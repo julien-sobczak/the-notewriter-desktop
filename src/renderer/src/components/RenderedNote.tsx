@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import React, { useRef, useContext, useState, useEffect } from 'react'
 import {
   ArrowsOutCardinalIcon as MoveIcon,
@@ -40,7 +39,6 @@ function formatContent(note: Note, tags: string[] = []): string {
 
   // Extract <Media /> tags
   const mediaTags: string[] = []
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     m = reMedias.exec(result)
     if (m == null) {
@@ -224,7 +222,8 @@ export default function RenderedNote({
     setCurrentFilterTags(filterTags)
     setCurrentFilterAttributes(filterAttributes)
     setCurrentFilterEmojis(filterEmojis)
-  }, [viewMode, filterTags, filterAttributes, filterEmojis])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode])
 
   const handleListMode = () => {
     setCurrentViewMode('list')

@@ -228,6 +228,7 @@ export interface NoteRef {
 export interface FileRef {
   oid: string
   repositorySlug: string
+  relativePath?: string
 }
 
 export interface Query {

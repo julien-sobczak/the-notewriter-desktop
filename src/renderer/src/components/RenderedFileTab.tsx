@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { Note, FileRef } from '@renderer/Model'
 import NoteContainer from './NoteContainer'
 
@@ -9,17 +8,14 @@ type RenderedFileTabProps = {
   relativePath: string
 }
 
-function RenderedFileTab({ title, file, relativePath }: RenderedFileTabProps) {
+function RenderedFileTab({ file, relativePath }: RenderedFileTabProps) {
   const [notes, setNotes] = useState<Note[]>([])
 
   useEffect(() => {
     if (!file.repositorySlug || !relativePath) return
 
     const listNotesInFile = async () => {
-      const result: Note[] = await window.api.listNotesInFile(
-        file.repositorySlug,
-        relativePath
-      )
+      const result: Note[] = await window.api.listNotesInFile(file.repositorySlug, relativePath)
       setNotes(result)
     }
     listNotesInFile()

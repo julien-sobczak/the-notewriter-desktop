@@ -1,7 +1,7 @@
 import { useEffect, useContext, useState } from 'react'
 import { StackSimpleIcon as DeckIcon, FilePlusIcon as FlushIcon } from '@phosphor-icons/react'
-import { ConfigContext } from '@renderer/ConfigContext'
-import { Deck, DeckRef, RepositoryRefConfig } from '@renderer/Model'
+import { ConfigContext, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
+import { Deck, DeckRef } from '@renderer/Model'
 import Loader from './Loader'
 import RenderedDeck from './RenderedDeck'
 import Slug from './Slug'
@@ -15,7 +15,7 @@ function Decks({ deck }: DecksProps) {
   const { config } = useContext(ConfigContext)
 
   // Read configured repositories (useful to populate the dropdown)
-  const { repositories } = config.static
+  const staticConfig = config.static
 
   const [decks, setDecks] = useState<Deck[]>()
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>(deck)
@@ -23,9 +23,7 @@ function Decks({ deck }: DecksProps) {
 
   // Download decks
   useEffect(() => {
-    const repositorySlugs: string[] = repositories
-      .filter((w: RepositoryRefConfig) => w.selected)
-      .map((w: RepositoryRefConfig) => w.slug)
+    const repositorySlugs = getSelectedRepositorySlugs(staticConfig)
     setSelectedRepositorySlugs(repositorySlugs)
 
     const listDecks = async () => {
@@ -33,7 +31,7 @@ function Decks({ deck }: DecksProps) {
       setDecks(results)
     }
     listDecks()
-  }, [repositories])
+  }, [staticConfig])
 
   // Called when the user selects a deck to study
   const onStudy = (clickedDeck: Deck) => {

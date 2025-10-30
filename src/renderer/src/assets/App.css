@@ -220,6 +220,23 @@ svg {
   color: black;
 }
 
+.ActivitySidebar {
+  min-width: 300px;
+  max-width: 50%;
+  height: 100%;
+  border-right: 1px solid var(--color-separator);
+}
+
+.EditorArea {
+  flex-grow: 1;
+  display: none;
+}
+.EditorArea.focused {
+  display: flex;
+  flex-direction: column;
+}
+
+
 /* <DailyQuote> */
 
 .DailyQuote {
@@ -652,82 +669,77 @@ ul.Filter li.selected {
 
 .TabBar {
   width: 100%;
-  border-bottom: 1px solid var(--color-separator);
-}
 
-.TabBar > nav ul {
-  display: flex;
-  flex-direction: row;
-  padding: 0;
-  margin: 0;
-}
+  > nav ul {
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    margin: 0;
 
-.TabBar > nav li {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  list-style-type: none;
-  font-size: 0.8rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  color: var(--color-text-dimmed);
-  border-right: 1px solid var(--color-separator);
-  position: relative;
-}
+    li {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      list-style-type: none;
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      color: var(--color-text-dimmed);
+      border-bottom: 1px solid var(--color-separator);
+      border-right: 1px solid var(--color-separator);
+      position: relative;
 
-.TabBar > nav li:hover {
-  background-color: var(--color-background-light);
-}
+      &:hover {
+        background-color: var(--color-background-light);
+      }
+      &.selected {
+        border-top: 1px solid black;
+        border-bottom: 1px solid white;
+        color: black;
+        background-color: white;
+      }
+      &.stale {
+        font-style: italic;
+      }
 
-.TabBar > nav li.selected {
-  border-bottom: 2px solid black;
-  color: black;
-  background-color: white;
-}
+      .TabTitle {
+        padding-right: 0.5rem;
+      }
 
-.TabBar > nav li.stale {
-  font-style: italic;
-}
+      .TabCloseButton {
+        display: flex;
+        align-items: center;
+        opacity: 0.5;
+      }
+      .TabCloseButton:hover {
+        opacity: 1;
+      }
 
-.TabBar > nav li .TabTitle {
-  padding-right: 0.5rem;
-}
+      &.TabAddButton {
+        color: var(--color-text-dimmed);
+        border-right: none;
+        flex-grow: 1;
+        justify-content: flex-start;
+        border-bottom: 1px solid var(--color-separator);
 
-.TabBar > nav li .TabCloseButton {
-  display: flex;
-  align-items: center;
-  padding: 0.2rem;
-  opacity: 0.5;
-}
-
-.TabBar > nav li .TabCloseButton:hover {
-  opacity: 1;
-  background-color: var(--color-separator);
-  border-radius: 2px;
-}
-
-.TabBar > nav li.TabAddButton {
-  padding: 0.5rem;
-  border: none;
-  color: var(--color-text-dimmed);
-}
-
-.TabBar > nav li.TabAddButton button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.2rem;
-}
-
-.TabBar > nav li.TabAddButton:hover {
-  background-color: var(--color-background-light);
+        &:hover {
+          background-color: var(--color-background-light);
+        }
+      }
+    }
+  }
 }
 
 .TabContent {
   width: 100%;
   height: calc(100% - 2rem); /* Subtract tab bar height */
   overflow: auto;
+  display: none; /* Only the selected tab is visible */
 }
+.TabContent.selected {
+  display: block;
+}
+
 
 /* .SearchPanel */
 

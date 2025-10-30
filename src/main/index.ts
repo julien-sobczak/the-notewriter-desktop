@@ -218,7 +218,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('save-dynamic-config', (_event, dynamicConfig: EditorDynamicConfig) => {
     console.log('received save-dynamic-config')
     console.log('Saving...', dynamicConfig)
-    // await config.save(dynamicConfig); // FIXME uncomment
+    config.save(dynamicConfig)
     configSaved = true
     mainWindow?.close()
     mainWindow = null

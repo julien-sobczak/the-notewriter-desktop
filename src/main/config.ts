@@ -104,12 +104,16 @@ export default class ConfigManager {
       return {
         desks: [],
         favorites: [],
-        bookmarks: []
+        bookmarks: [],
+        tags: [],
       } as EditorDynamicConfig
     }
 
     const data = fs.readFileSync(homeConfigPath, 'utf8')
-    return JSON.parse(data) as EditorDynamicConfig
+    console.log(`Reading dynamic configuration from ${homeConfigPath}...`)
+    const config = JSON.parse(data) as EditorDynamicConfig
+    console.log(data, config)
+    return config
   }
 
   static async #readRepositoryConfig(
@@ -186,7 +190,9 @@ export default class ConfigManager {
   save(config: EditorDynamicConfig) {
     const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
     console.log(`Saving ${homeConfigPath}...`)
-    fs.writeFile(homeConfigPath, JSON.stringify(config), (err) => {
+    const content = JSON.stringify(config)
+    console.log(content)
+    fs.writeFile(homeConfigPath, content, (err) => {
       if (err) {
         console.error(err)
       }

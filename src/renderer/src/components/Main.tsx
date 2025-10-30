@@ -28,16 +28,14 @@ import {
   DeckRef,
   Bookmark,
   File,
-  FileRef,
-  NoteRef,
   TabRef,
   FileTab,
   NotesTab,
   DeskTab,
-  Goto
+  Goto,
+  FileRef
 } from '@renderer/Model'
 import Hi from './Hi'
-import Browser from './Browser'
 import Bookmarker from './Bookmarker'
 import Planner from './Planner'
 import Stats from './Stats'
@@ -54,6 +52,7 @@ import NoteType from './NoteType'
 import Markdown from './Markdown'
 import NotificationsStatus from './Notifications'
 import { ConfigContext } from '@renderer/ConfigContext'
+import BrowserSidebar from './BrowserSidebar'
 
 const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g
 
@@ -629,13 +628,18 @@ function Main() {
   const [files, setFiles] = useState<File[]>([])
 
   // Tabs - Initialize from dynamic config
+  console.log('dynamicConfig.tabs:', dynamicConfig.tabs) // FIXME remove
   const [openedTabs, setOpenedTabs] = useState<TabRef[]>(dynamicConfig.tabs || [])
   const [activeTabIndex, setActiveTabIndex] = useState<number>(
     dynamicConfig.tabs && dynamicConfig.tabs.length > 0 ? 0 : -1
   )
 
   // Function to add a new tab
-  const addTab = (kind: 'file' | 'notes' | 'desk', title: string, data: FileTab | NotesTab | DeskTab) => {
+  const addTab = (
+    kind: 'file' | 'notes' | 'desk',
+    title: string,
+    data: FileTab | NotesTab | DeskTab
+  ) => {
     const newTab: TabRef = {
       kind,
       title,
@@ -670,6 +674,13 @@ function Main() {
     }
     listFiles()
   }, [staticConfig.repositories])
+
+  useEffect(() => {
+    // Update opened tabs when staticConfig.tabs changes
+    if (!dynamicConfig.tabs) return
+    setOpenedTabs(dynamicConfig.tabs)
+    if (activeTabIndex === -1) setActiveTabIndex(0) // Force the first tab by default
+  }, [dynamicConfig.tabs]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -752,12 +763,26 @@ function Main() {
     setSelectedBookmark(bookmark)
   }
 
+  // Called when the user selects a file from the Cmd+K menu
   const handleFileSelected = (file: File) => {
     // Get the filename from the relative path - path.basename equivalent
     const pathParts = file.relativePath.split('/')
     const filename = pathParts[pathParts.length - 1] || file.relativePath
-    const fileTab: FileTab = { 
+    const fileTab: FileTab = {
       file: { oid: file.oid, repositorySlug: file.repositorySlug },
+      relativePath: file.relativePath
+    }
+    addTab('file', filename, fileTab)
+  }
+
+  // Called when the user selects a file from the file explorer
+  const handleFileRefSelected = (file: FileRef) => {
+    // Get the filename from the relative path - path.basename equivalent
+    if (!file.relativePath) return
+    const pathParts = file.relativePath.split('/')
+    const filename = pathParts[pathParts.length - 1] || file.relativePath
+    const fileTab: FileTab = {
+      file,
       relativePath: file.relativePath
     }
     addTab('file', filename, fileTab)
@@ -779,13 +804,13 @@ function Main() {
     e.stopPropagation() // Prevent tab selection when closing
     const newTabs = openedTabs.filter((_, i) => i !== index)
     setOpenedTabs(newTabs)
-    
+
     // Dispatch to save tabs to config
     dispatch({
       type: 'updateTabs',
       payload: newTabs
     })
-    
+
     // Update active tab index
     if (activeTabIndex === index) {
       // If closing the active tab, switch to the previous tab
@@ -794,7 +819,7 @@ function Main() {
       // If closing a tab before the active one, adjust the index
       setActiveTabIndex(activeTabIndex - 1)
     }
-    
+
     // If no tabs left, reset to -1
     if (newTabs.length === 0) {
       setActiveTabIndex(-1)
@@ -806,6 +831,8 @@ function Main() {
     const deskTab: DeskTab = { oid: newDeskId }
     addTab('desk', 'New Desk', deskTab)
   }
+
+  console.log(`openedTabs: ${JSON.stringify(openedTabs)}`) // FIXME remove
 
   const activities: Activity[] = [
     {
@@ -936,6 +963,15 @@ function Main() {
           </ul>
         </div>
 
+        {activity === 'browser' && (
+          <div className="ActivitySidebar">
+            <BrowserSidebar
+              onFileSelected={handleFileRefSelected}
+              onClose={() => setActivity('')}
+            />
+          </div>
+        )}
+
         {showSearchResults && (
           <div
             className={classNames({
@@ -960,61 +996,62 @@ function Main() {
           </div>
         )}
 
-        {/* Tab Bar - Always shown when tabs exist */}
         {openedTabs.length > 0 && (
-          <div className="TabBar">
-            <nav>
-              <ul>
-                {openedTabs.map((tab, index) => (
-                  <li
-                    key={index}
-                    className={classNames({
-                      selected: index === activeTabIndex,
-                      stale: tab.stale
-                    })}
-                    onClick={() => handleTabClick(index)}
-                  >
-                    <span className="TabTitle">{tab.title}</span>
-                    <button
-                      type="button"
-                      className="TabCloseButton"
-                      onClick={(e) => handleTabClose(index, e)}
-                      title="Close tab"
-                    >
-                      <CloseIcon size={12} />
-                    </button>
-                  </li>
-                ))}
-                <li className="TabAddButton" onClick={handleNewDeskTab}>
-                  <button type="button" title="New Desk">
-                    <PlusIcon size={16} />
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        )}
+          <div className={classNames({ EditorArea: true, focused: activity === 'browser' })}>
+            {openedTabs.length > 0 && (
+              <div className="TabBar">
+                <nav>
+                  <ul>
+                    {openedTabs.map((tab, index) => (
+                      <li
+                        key={index}
+                        className={classNames({
+                          selected: index === activeTabIndex,
+                          stale: tab.stale
+                        })}
+                        onClick={() => handleTabClick(index)}
+                      >
+                        <span className="TabTitle">{tab.title}</span>
+                        <button
+                          type="button"
+                          className="TabCloseButton"
+                          onClick={(e) => handleTabClose(index, e)}
+                          title="Close tab"
+                        >
+                          <CloseIcon size={12} />
+                        </button>
+                      </li>
+                    ))}
+                    <li className="TabAddButton" onClick={handleNewDeskTab}>
+                      <button type="button" title="New Desk">
+                        <PlusIcon size={16} />
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
 
-        {/* Tab Content - Shown when tabs exist and no overlay activity */}
-        {openedTabs.length > 0 && 
-         activeTabIndex >= 0 && 
-         activeTabIndex < openedTabs.length &&
-         activity === 'browser' && (
-          <div className="TabContent">
-            {(() => {
-              const activeTab = openedTabs[activeTabIndex]
-              if (activeTab.kind === 'file') {
-                const fileData = activeTab.data as FileTab
-                return <RenderedFileTab title={activeTab.title} {...fileData} />
-              } else if (activeTab.kind === 'notes') {
-                const notesData = activeTab.data as NotesTab
-                return <RenderedNotesTab title={activeTab.title} {...notesData} />
-              } else if (activeTab.kind === 'desk') {
-                const deskData = activeTab.data as DeskTab
-                return <RenderedDeskTab title={activeTab.title} {...deskData} />
-              }
-              return null
-            })()}
+            {openedTabs.map((tab, index) => (
+              <div
+                key={index}
+                className={classNames({ selected: index === activeTabIndex, TabContent: true })}
+              >
+                {(() => {
+                  if (tab.kind === 'file') {
+                    const fileData = tab.data as FileTab
+                    return <RenderedFileTab title={tab.title} {...fileData} />
+                  } else if (tab.kind === 'notes') {
+                    const notesData = tab.data as NotesTab
+                    return <RenderedNotesTab title={tab.title} {...notesData} />
+                  } else if (tab.kind === 'desk') {
+                    const deskData = tab.data as DeskTab
+                    return <RenderedDeskTab title={tab.title} {...deskData} />
+                  }
+                  return null
+                })()}
+              </div>
+            ))}
           </div>
         )}
 
@@ -1023,9 +1060,6 @@ function Main() {
 
         {/* Bookmarks */}
         {activity === 'bookmarker' && <Bookmarker bookmark={selectedBookmark} />}
-
-        {/* Browse - Show empty browser if no tabs */}
-        {activity === 'browser' && openedTabs.length === 0 && <Browser />}
 
         {/* Desktop */}
         {activity === 'desktop' && (
