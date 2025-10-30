@@ -84,6 +84,28 @@ export type CountStat = [string, number]
 export interface EditorDynamicConfig {
   bookmarks?: Bookmark[]
   desks?: Desk[]
+  tabs?: TabRef[]
+}
+
+export interface TabRef {
+  kind: 'file' | 'notes' | 'desk'
+  title: string
+  data: FileTab | NotesTab | DeskTab
+  stale: boolean
+}
+
+export interface FileTab {
+  file: FileRef
+  relativePath: string
+}
+
+export interface NotesTab {
+  notes: NoteRef[]
+  query: string
+}
+
+export interface DeskTab {
+  oid: string
 }
 
 export interface Bookmark {
@@ -201,6 +223,12 @@ export interface DeckRef {
 export interface NoteRef {
   oid: string
   repositorySlug: string
+}
+
+export interface FileRef {
+  oid: string
+  repositorySlug: string
+  relativePath?: string
 }
 
 export interface Query {
