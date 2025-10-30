@@ -400,7 +400,7 @@ app.whenReady().then(async () => {
             stats: deckStats
           })
         })
-        statsPromises.push(promise) // FIXME remove Seems empty
+        statsPromises.push(promise)
       }
     }
 

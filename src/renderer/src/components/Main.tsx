@@ -628,7 +628,6 @@ function Main() {
   const [files, setFiles] = useState<File[]>([])
 
   // Tabs - Initialize from dynamic config
-  console.log('dynamicConfig.tabs:', dynamicConfig.tabs) // FIXME remove
   const [openedTabs, setOpenedTabs] = useState<TabRef[]>(dynamicConfig.tabs || [])
   const [activeTabIndex, setActiveTabIndex] = useState<number>(
     dynamicConfig.tabs && dynamicConfig.tabs.length > 0 ? 0 : -1
@@ -831,8 +830,6 @@ function Main() {
     const deskTab: DeskTab = { oid: newDeskId }
     addTab('desk', 'New Desk', deskTab)
   }
-
-  console.log(`openedTabs: ${JSON.stringify(openedTabs)}`) // FIXME remove
 
   const activities: Activity[] = [
     {

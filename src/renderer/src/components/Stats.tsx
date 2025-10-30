@@ -50,7 +50,6 @@ function PieChart({ name, data }: { name: string; data: CountStat[] }) {
   const vals = data.map((s) => s[1])
   const minV = Math.min(...vals)
   const maxV = Math.max(...vals)
-  console.log(data); // FIXME remove
   const chartData = data.map(([label, count]) => ({
     id: slugify(label),
     label: label,

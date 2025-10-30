@@ -391,12 +391,6 @@ ul.Filter li.selected {
   border-color: var(--color-separator-dark);
 }
 
-
-.Hello {
-  background-color: black;
-  display: none; /* FIXME remove, only keep there to have an example of how to include an image */
-}
-
 /* Resizing based on https://stackoverflow.com/questions/46044589/dynamically-resize-columns-in-css-grid-layout-with-mouse */
 .Grid {
   width: 100%;

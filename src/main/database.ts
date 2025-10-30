@@ -1590,7 +1590,6 @@ export default class DatabaseManager {
   }
 
   #rowToNote(row: any, repositorySlug: string): Note {
-    console.log(row) // FIXME remove
     let parsedTags = []
     if (row.tags !== '') parsedTags = row.tags.split(',')
     return {

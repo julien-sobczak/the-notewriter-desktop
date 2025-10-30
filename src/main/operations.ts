@@ -71,7 +71,7 @@ export default class OperationsManager {
     const walFilePath = path.join(walPath, 'wal.json')
     if (fs.existsSync(walFilePath)) {
       const stats = fs.statSync(walFilePath)
-      console.log(`Current WAL file size: ${stats.size} bytes`) // FIXME remove
+      console.log(`Current WAL file size: ${stats.size} bytes`)
       // If the WAL file exceeds the
       if (stats.size > this.maxWalSize) {
         // Rename the file into wal.<timestamp>.json

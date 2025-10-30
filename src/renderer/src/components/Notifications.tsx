@@ -186,7 +186,6 @@ function NotificationsStatus() {
   }, [loadRemindersAndMemories])
 
   const handleCountClick = () => {
-    console.log('NotificationsStatus: Count clicked, toggling popup') // FIXME remove
     setShowPopup(true)
   }
 
@@ -206,7 +205,6 @@ function NotificationsStatus() {
         type="button"
         className={`NotificationsCount ${hasPastReminders ? 'urgent' : ''}`}
         onClick={() => {
-          console.log('NotificationsStatus: Button clicked') // FIXME remove
           handleCountClick()
         }}
         title={`${reminders.length} reminders, ${memories.length} memories`}
