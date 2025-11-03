@@ -396,33 +396,33 @@ ul.Filter li.selected {
   width: 100%;
   height: 100vh;
 }
-.Grid, .Container, .HorizontalPane, .VerticalPane { /* FIXME still useful */
+.Grid, .Container, .BlockHorizontal, .BlockVertical { /* FIXME still useful */
   display: flex;
   position: relative;
   margin: var(--desktop-layout-margin);
   overflow: auto;
   flex-grow: 1; /* Fill space equally */
 }
-.Grid, .Container, .VerticalPane {
+.Grid, .Container, .BlockVertical {
   flex-direction: row;
 }
-.HorizontalPane {
+.BlockHorizontal {
   flex-direction: column;
 }
 .Grid > * {
   resize: horizontal;
 }
-.HorizontalPane > * {
+.BlockHorizontal > * {
   resize: horizontal;
 }
-.VerticalPane > * {
+.BlockVertical > * {
   resize: vertical;
 }
 .Note {
   padding: 1em;
   margin: 1em;
 }
-.PaneContainer, .NoteContainer {
+.BlockContainer, .NoteContainer {
   border: 1px dotted var(--color-separator);
   margin: var(--desktop-layout-margin);
   border-radius: var(--desktop-layout-radius);
@@ -1736,5 +1736,17 @@ ul.Filter li.selected {
       color: var(--color-text-dimmed);
       cursor: not-allowed;
     }
+  }
+}
+
+.DesktopSidebar {
+
+  ul {
+    list-style-type: none;
+  }
+  .DeskTitle {
+    cursor: pointer; /* Filters are clickable */
+    font-size: 0.9rem;
+    padding: 0.5rem;
   }
 }

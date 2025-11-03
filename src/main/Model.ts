@@ -6,6 +6,7 @@ export interface EditorStaticConfig {
   zenMode?: ZenConfig
   planner?: PlannerConfig
   journal?: JournalConfig[]
+  desks?: Desk[]
   stats?: StatConfig[]
 }
 
@@ -112,19 +113,22 @@ export interface Bookmark {
 }
 
 export interface Desk {
-  id: string
+  oid?: string // A static identifier will be determined from the name if empty
   // Name of the desk
-  name: string
-  // Layout
+  name: string // The name must be unique
+  description: string | null
   root: Block
+  // True to indicate this is a template for new desks
+  // Query inside blocks can use @query to refer to the query used to create the desk from the template
+  template?: boolean
 }
 
 export interface Block {
   // Unique identifier inside a single desk
-  id: string
+  oid?: string
   name: string | null
   layout: string // container | horizontal | vertical
-  repositories: string[] // Repositories to use by default on queries (recursively)
+  repositorySlugs: string[] // Repositories to use by default on queries (recursively)
   view: string | null // single | grid | list | free
   // Percentage of this block on parent size (height for vertical, width for horizontal)
   size: string | null
@@ -229,9 +233,9 @@ export interface Query {
   // The selected repositories
   repositories: string[]
   // The desk where the query originated
-  deskId: string | null | undefined
+  deskOid: string | null | undefined
   // The block where the query originated
-  blockId: string | null | undefined
+  blockOid: string | null | undefined
   limit: number // Use 0 to not limit
   shuffle: boolean
 }

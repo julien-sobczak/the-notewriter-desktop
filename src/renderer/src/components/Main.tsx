@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react'
-import { generateOid } from '@renderer/helpers/oid'
+import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 import {
   HandWavingIcon as HiIcon,
   FileSearchIcon as BrowserIcon,
@@ -42,7 +42,6 @@ import Stats from './Stats'
 import Inspiration from './Inspiration'
 import Decks from './Decks'
 import ZenMode from './ZenMode'
-import RenderedDesk from './RenderedDesk'
 import NoteContainer from './NoteContainer'
 import RenderedFileTab from './RenderedFileTab'
 import RenderedNotesTab from './RenderedNotesTab'
@@ -53,6 +52,7 @@ import Markdown from './Markdown'
 import NotificationsStatus from './Notifications'
 import { ConfigContext } from '@renderer/ConfigContext'
 import BrowserSidebar from './BrowserSidebar'
+import DesktopSidebar from './DesktopSidebar'
 
 const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g
 
@@ -486,7 +486,7 @@ function CommandMenu({
               <>
                 {desks.map((desk: Desk) => (
                   <Command.Item
-                    key={desk.id}
+                    key={desk.oid}
                     value={desk.name}
                     onSelect={() => handleDeskSelected(desk)}
                   >
@@ -620,10 +620,6 @@ function Main() {
     setActivity(newActivity)
   }
 
-  // Desks
-  const [openedDesks, setOpenedDesks] = useState<Desk[]>([])
-  const [selectedDeskId, setSelectedDeskId] = useState<string | undefined>(undefined)
-
   // Files
   const [files, setFiles] = useState<File[]>([])
 
@@ -704,8 +700,8 @@ function Main() {
     const query: Query = {
       q: searchQuery,
       repositories: selectedRepositorySlugs,
-      blockId: null,
-      deskId: null,
+      blockOid: null,
+      deskOid: null,
       limit: 0,
       shuffle: false
     }
@@ -713,7 +709,7 @@ function Main() {
     const search = async () => {
       const result: QueryResult = await window.api.search(query)
       console.debug(`Found ${result.notes.length} results for ${result.query.q}`)
-      if (!result.query.blockId) {
+      if (!result.query.blockOid) {
         // global search
         setSearchResults(result)
         setShowSearchResults(true)
@@ -734,24 +730,29 @@ function Main() {
     })
   }
 
-  const handleDeskSelected = (desk: Desk) => {
-    // Search in already open desks
+  const handleDeskSelected = async (desk: Desk) => {
+    // Search in already opened desks to not open duplicates
     let found = false
-    for (const openedDesk of openedDesks) {
-      if (openedDesk.id === desk.id) {
+    let foundIndex = -1
+    for (const tab of openedTabs) {
+      if (tab.kind !== 'desk') continue
+      const openedDesk = tab.data as DeskTab
+      if (openedDesk.oid === desk.oid) {
         found = true
+        foundIndex = openedTabs.indexOf(tab)
       }
     }
-    if (!found) {
-      // Open only if not already opened
-      setOpenedDesks([...openedDesks, desk])
-    }
-    // Use as default in all cases
-    setSelectedDeskId(desk.id)
-  }
 
-  const handleDeskClick = (id: string) => {
-    setSelectedDeskId(id)
+    if (found) {
+      setActiveTabIndex(foundIndex)
+      return
+    }
+
+    const deskTab: DeskTab = {
+      // Ensure we have an oid for tab to correctly identify the right desk to render
+      oid: desk.oid ? desk.oid : await generateOidFromString(desk.name)
+    }
+    addTab('desk', desk.name, deskTab)
   }
 
   const handleDeckSelected = (deck: DeckRef) => {
@@ -764,6 +765,23 @@ function Main() {
 
   // Called when the user selects a file from the Cmd+K menu
   const handleFileSelected = (file: File) => {
+    // Search in already opened desks to not open duplicates
+    let found = false
+    let foundIndex = -1
+    for (const tab of openedTabs) {
+      if (tab.kind !== 'file') continue
+      const openedFile = tab.data as FileTab
+      if (openedFile.file.oid === file.oid) {
+        found = true
+        foundIndex = openedTabs.indexOf(tab)
+      }
+    }
+
+    if (found) {
+      setActiveTabIndex(foundIndex)
+      return
+    }
+
     // Get the filename from the relative path - path.basename equivalent
     const pathParts = file.relativePath.split('/')
     const filename = pathParts[pathParts.length - 1] || file.relativePath
@@ -969,6 +987,12 @@ function Main() {
           </div>
         )}
 
+        {activity === 'desktop' && (
+          <div className="ActivitySidebar">
+            <DesktopSidebar onDeskSelected={handleDeskSelected} onClose={() => setActivity('')} />
+          </div>
+        )}
+
         {showSearchResults && (
           <div
             className={classNames({
@@ -994,7 +1018,12 @@ function Main() {
         )}
 
         {openedTabs.length > 0 && (
-          <div className={classNames({ EditorArea: true, focused: activity === 'browser' })}>
+          <div
+            className={classNames({
+              EditorArea: true,
+              focused: activity === 'browser' || activity === 'desktop'
+            })}
+          >
             {openedTabs.length > 0 && (
               <div className="TabBar">
                 <nav>
@@ -1058,37 +1087,6 @@ function Main() {
         {/* Bookmarks */}
         {activity === 'bookmarker' && <Bookmarker bookmark={selectedBookmark} />}
 
-        {/* Desktop */}
-        {activity === 'desktop' && (
-          <>
-            {/* TODO create a BlankDesk component to show recent opened desks
-            like when opening Adobe Illustrator without any file selected */}
-            {openedDesks && (
-              <div className="DeskContainer">
-                <nav>
-                  <ul>
-                    {openedDesks.map((desk) => (
-                      <li
-                        key={desk.id}
-                        className={classNames({
-                          selected: desk.id === selectedDeskId
-                        })}
-                        onClick={() => handleDeskClick(desk.id)}
-                      >
-                        <span>{desk.name}</span>
-                        <CloseIcon size={12} />
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-                {openedDesks.map((desk) => (
-                  <RenderedDesk key={desk.id} desk={desk} selected={desk.id === selectedDeskId} />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
         {/* Journal */}
         {activity === 'journal' && <Journal />}
 
@@ -1112,8 +1110,3 @@ function Main() {
 }
 
 export default Main
-
-// TODO create a component Desk
-// useState to store the current desk layout (updated when using click on close/split buttons)
-// useRef to store the current version with change like resizing (= does not trigger a redraw) (updated every time)
-// BUG: How to persist the data in useRef when leaving the application => Force user to save desk explicity using Ctrl+S (see hook https://stackoverflow.com/questions/70545552/custom-react-hook-on-ctrls-keydown)

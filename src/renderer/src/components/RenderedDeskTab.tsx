@@ -1,41 +1,67 @@
-import { Desk } from '@renderer/Model'
+import { Block, Desk } from '@renderer/Model'
 import RenderedDesk from './RenderedDesk'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
+import { ConfigContext } from '@renderer/ConfigContext'
+import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 
 type RenderedDeskTabProps = {
   title: string
   oid: string
 }
 
-function RenderedDeskTab({ title, oid }: RenderedDeskTabProps) {
+function RenderedDeskTab({ oid }: RenderedDeskTabProps) {
   const [desk, setDesk] = useState<Desk | null>(null)
 
+  const { config } = useContext(ConfigContext)
+  const staticDecks = config.static.desks
+  const dynamicDecks = config.dynamic.desks
+
   useEffect(() => {
-    // Load or create a desk based on the oid
-    // For now, create a blank desk structure
-    const newDesk: Desk = {
-      id: oid,
-      name: title,
-      root: {
-        id: 'root',
-        name: null,
-        layout: 'container',
-        repositories: [],
-        view: 'list',
-        size: null,
-        elements: null,
-        query: null,
-        noteRefs: []
+    // Search for a desk with OID in dynamic, then static config.
+    // Ignore templates and generate the OIDs from the names for static desks.
+    const foundDesk =
+      dynamicDecks?.find((d) => d.oid === oid) ||
+      staticDecks?.find(async (d) => (await generateOidFromString(d.name)) === oid && !d.template)
+
+    if (!foundDesk) return
+
+    const editBlock = (currentBlock: Block, parentRepositories: string[]): Block => {
+      const editedRepositories = currentBlock.repositorySlugs ?? parentRepositories
+      const editedElements: Block[] = []
+      for (const child of currentBlock.elements ?? []) {
+        editedElements.push(editBlock(child, editedRepositories))
+      }
+      return {
+        ...currentBlock,
+        oid: currentBlock.oid ? currentBlock.oid : generateOid(),
+        layout: currentBlock.layout ? currentBlock.layout : 'container',
+        repositorySlugs: editedRepositories,
+        elements: editedElements
       }
     }
-    setDesk(newDesk)
-  }, [oid, title])
+
+    // Edit desk to populate OID if missing (static decks omit them for convenience)
+    const editDesk = async (currentDesk: Desk): Promise<Desk> => {
+      let deskOid = currentDesk.oid
+      if (!deskOid) {
+        deskOid = await generateOidFromString(currentDesk.name)
+      }
+      return {
+        ...currentDesk,
+        oid: deskOid,
+        root: await editBlock(currentDesk.root, [])
+      }
+    }
+
+    editDesk(foundDesk).then((editedDesk) => setDesk(editedDesk))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!desk) {
     return <div>Loading desk...</div>
   }
 
-  return <RenderedDesk desk={desk} selected={true} />
+  return <RenderedDesk desk={desk} />
 }
 
 export default RenderedDeskTab

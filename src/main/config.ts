@@ -105,7 +105,7 @@ export default class ConfigManager {
         desks: [],
         favorites: [],
         bookmarks: [],
-        tags: [],
+        tags: []
       } as EditorDynamicConfig
     }
 
