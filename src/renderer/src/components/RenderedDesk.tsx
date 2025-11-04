@@ -1,12 +1,25 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useRef, useEffect } from 'react'
-import { ArrowsOutLineHorizontalIcon, ArrowsOutLineVerticalIcon } from '@phosphor-icons/react'
+import { useState, useRef, useEffect, useContext } from 'react'
+import {
+  ArrowsOutLineHorizontalIcon as HorizontalIcon,
+  ArrowsOutLineVerticalIcon as VerticalIcon,
+  XIcon as CloseIcon
+} from '@phosphor-icons/react'
 import classNames from 'classnames'
-import { Desk, Block, Note, NoteRef, Query, QueryResult } from '@renderer/Model'
+import { Desk, Block, Note, Query, QueryResult } from '@renderer/Model'
 import NoteContainer from './NoteContainer'
 import Loader from './Loader'
 import { Action, Actions } from './Actions'
 import { capitalize } from '@renderer/helpers/strings'
+import { generateOid } from '@renderer/helpers/oid'
+import { ConfigContext, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
+import {
+  deleteBlock,
+  extractNoteRefs,
+  extractQueries,
+  findBlock,
+  splitBlock
+} from '@renderer/helpers/desk'
 
 /* Implementation
  *
@@ -22,87 +35,34 @@ import { capitalize } from '@renderer/helpers/strings'
  * and then render the desk once all notes are loaded.
  */
 
-// Return all note refs present in a desk recursively.
-function extractNoteRefs(desk: Desk): NoteRef[] {
-  return extractNoteRefsFromBlock(desk, desk.root, desk.root.repositorySlugs)
-}
-
-// Same as extractNoteRefs but from a given Block instead.
-function extractNoteRefsFromBlock(desk: Desk, block: Block, repositories: string[]): NoteRef[] {
-  // Determine on which repository we are working
-  let selectedRepositories: string[] = []
-  if (!block.repositorySlugs || block.repositorySlugs.length === 0) {
-    selectedRepositories = block.repositorySlugs
-  } else {
-    selectedRepositories = repositories
-  }
-
-  const results: NoteRef[] = []
-  if (block.layout === 'container') {
-    if (!block.noteRefs) return results
-    results.push(...block.noteRefs)
-  } else if (block.layout === 'horizontal' || block.layout === 'vertical') {
-    if (!block.elements) return results
-    for (const element of block.elements) {
-      results.push(...extractNoteRefsFromBlock(desk, element, selectedRepositories))
-    }
-  }
-
-  return results
-}
-
-// Return all queries present in a desk recursively.
-function extractQueries(desk: Desk): Query[] {
-  return extractQueriesFromBlock(desk, desk.root)
-}
-
-// Same as extractQueries but from a given Block instead.
-function extractQueriesFromBlock(desk: Desk, block: Block): Query[] {
-  const results: Query[] = []
-  if (block.layout === 'container') {
-    if (!block.query) return results
-    results.push({
-      deskOid: desk.oid,
-      blockOid: block.oid,
-      q: block.query,
-      repositories: block.repositorySlugs ?? [],
-      limit: 0,
-      shuffle: false
-    })
-  } else if (block.layout === 'horizontal' || block.layout === 'vertical') {
-    if (!block.elements) return results
-    for (const element of block.elements) {
-      results.push(...extractQueriesFromBlock(desk, element))
-    }
-  }
-
-  return results
-}
-
-// TODO handle split/close buttons
-// TODO now save icon when a desk is updated
-// TODO now move note between container (add unlock icon)
-// TODO test drag & drop API between NoteContainer
-
 type RenderedDeskProps = {
   desk: Desk
 }
 
-export default function RenderedDesk({ desk }: RenderedDeskProps) {
+export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
+  const { config } = useContext(ConfigContext)
+  const staticConfig = config.static
+
+  const [desk, setDesk] = useState(initialDesk)
   const [queriesLoaded, setQueriesLoaded] = useState(false)
   const [noteRefsLoaded, setNoteRefsLoaded] = useState(false)
-  // Cache loaded notes here to avoid re-fetching
   const notesCache = useRef(new Map<string, Note[]>())
+
+  // Helper to update desk and force reload notes
+  const updateDesk = (newDesk: Desk) => {
+    console.log('Updating desk', newDesk) // FIXME remove
+    setDesk(newDesk)
+    setQueriesLoaded(false)
+    setNoteRefsLoaded(false)
+    notesCache.current = new Map<string, Note[]>()
+  }
 
   useEffect(() => {
     // Start by loading all notes
     if (queriesLoaded && noteRefsLoaded) return
 
-    console.log(`desk`, desk) // FIXME remove
     const queries = extractQueries(desk)
     const noteRefs = extractNoteRefs(desk)
-
-    console.log(`RenderedDesk: loading ${queries.length} queries and ${noteRefs.length} noteRefs`) // FIXME remove
 
     const msearch = async () => {
       const results: QueryResult[] = await window.api.msearch(queries)
@@ -123,16 +83,73 @@ export default function RenderedDesk({ desk }: RenderedDeskProps) {
 
     msearch()
     mfind()
-  }, [])
+  }, [desk])
 
   const loaded = queriesLoaded && noteRefsLoaded
+
+  // Handler to delete a block by oid
+  const handleDeleteBlock = (oid: string) => {
+    const newRoot = deleteBlock(desk.root, oid)
+    if (newRoot) {
+      updateDesk({ ...desk, root: newRoot })
+    } else {
+      updateDesk({
+        ...desk,
+        root: {
+          oid: generateOid(),
+          layout: 'container',
+          name: '',
+          query: '',
+          noteRefs: [],
+          view: 'list',
+          repositorySlugs: getSelectedRepositorySlugs(staticConfig),
+          elements: [],
+          size: null
+        }
+      })
+    }
+  }
+
+  // Handler to split a block
+  const handleSplitBlock = (oid: string, direction: 'horizontal' | 'vertical') => {
+    updateDesk({ ...desk, root: splitBlock(desk.root, oid, direction) })
+  }
+
+  // Handler to submit a query for a container block
+  const handleSubmitQuery = async (blockOid: string, query: string) => {
+    const block = findBlock(desk.root, blockOid)
+    if (!block) return
+    block.query = query
+    updateDesk({ ...desk })
+    // Fetch notes for this query
+    const q: Query = {
+      deskOid: desk.oid,
+      blockOid: blockOid,
+      q: query,
+      repositories: block.repositorySlugs ?? [],
+      limit: 0,
+      shuffle: false
+    }
+    const results: QueryResult[] = await window.api.msearch([q])
+    for (const result of results) {
+      if (!result.query.blockOid) continue
+      notesCache.current.set(result.query.blockOid, result.notes)
+    }
+    setQueriesLoaded(true)
+  }
 
   return (
     <>
       {!loaded && <Loader />}
       {loaded && (
         <div className={classNames({ Desk: true })}>
-          <BlockContainer block={desk.root} notesCache={notesCache.current} />
+          <BlockContainer
+            block={desk.root}
+            notesCache={notesCache.current}
+            onDeleteBlock={handleDeleteBlock}
+            onSplitBlock={handleSplitBlock}
+            onSubmitQuery={handleSubmitQuery}
+          />
         </div>
       )}
     </>
@@ -142,11 +159,21 @@ export default function RenderedDesk({ desk }: RenderedDeskProps) {
 type BlockContainerProps = {
   block: Block
   notesCache: Map<string, Note[]>
+  onDeleteBlock: (oid: string) => void
+  onSplitBlock: (oid: string, direction: 'horizontal' | 'vertical') => void
+  onSubmitQuery: (blockOid: string, query: string) => void
 }
 
-function BlockContainer({ block, notesCache }: BlockContainerProps) {
+function BlockContainer({
+  block,
+  notesCache,
+  onDeleteBlock,
+  onSplitBlock,
+  onSubmitQuery
+}: BlockContainerProps) {
+  const [queryInput, setQueryInput] = useState('')
+
   if (block.layout === 'container') {
-    // Search for notes in cache
     const notes: Note[] = []
     if (block.query) {
       const foundNotes = notesCache.get(block.oid ?? '')
@@ -162,18 +189,61 @@ function BlockContainer({ block, notesCache }: BlockContainerProps) {
         }
       }
     }
-    return <NoteContainer name={block.name} notes={notes} />
+    // Show input if no query and no noteRefs
+    if (!block.query && (!block.noteRefs || block.noteRefs.length === 0)) {
+      return (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (queryInput.trim()) {
+              onSubmitQuery(block.oid ?? '', queryInput)
+            }
+          }}
+        >
+          <input
+            type="text"
+            value={queryInput}
+            onChange={(e) => setQueryInput(e.target.value)}
+            placeholder="Enter query"
+          />
+          <button type="submit">Search</button>
+        </form>
+      )
+    }
+    return (
+      <NoteContainer
+        name={block.name}
+        notes={notes}
+        onClose={() => onDeleteBlock(block.oid ?? '')}
+      />
+    )
   }
 
   return (
     <div className="BlockContainer">
-      <Actions>
-        <Action icon={<ArrowsOutLineHorizontalIcon />} title="Horizontal split" />
-        <Action icon={<ArrowsOutLineVerticalIcon />} title="Vertical split" />
+      <Actions className="BlockContainerActions">
+        <Action
+          icon={<HorizontalIcon />}
+          title="Horizontal split"
+          onClick={() => onSplitBlock(block.oid ?? '', 'horizontal')}
+        />
+        <Action
+          icon={<VerticalIcon />}
+          title="Vertical split"
+          onClick={() => onSplitBlock(block.oid ?? '', 'vertical')}
+        />
+        <Action icon={<CloseIcon />} title="Close" onClick={() => onDeleteBlock(block.oid ?? '')} />
       </Actions>
       <div className={`Block${capitalize(block.layout ?? 'container')}`}>
         {block.elements?.map((element) => (
-          <BlockContainer key={element.oid} block={element} notesCache={notesCache} />
+          <BlockContainer
+            key={element.oid}
+            block={element}
+            notesCache={notesCache}
+            onDeleteBlock={onDeleteBlock}
+            onSplitBlock={onSplitBlock}
+            onSubmitQuery={onSubmitQuery}
+          />
         ))}
       </div>
     </div>

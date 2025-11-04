@@ -140,7 +140,7 @@ function NoteContainer({
     <div className="NoteContainer">
       <div className="Header">
         {name && <div className="Name">{name}</div>}
-        <Actions>
+        <Actions className="NoteContainerActions">
           <Action title="Sort notes" icon={<ListNumbersIcon />}>
             <Subaction
               title="Sort ascending"

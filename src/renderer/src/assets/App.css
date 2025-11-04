@@ -430,6 +430,31 @@ ul.Filter li.selected {
   height: 100%;
 }
 
+/* Hide actions by default and show them on hover */
+.BlockContainer .RenderedNoteActions,
+.BlockContainer .NoteContainerActions {
+  visibility: hidden;
+}
+.BlockContainer .RenderedNote:hover .RenderedNoteActions,
+.BlockContainer .NoteContainer:hover .NoteContainerActions {
+  visibility: visible;
+}
+.BlockContainer {
+  position: relative; /* To position the actions absolutely inside */
+}
+.BlockContainerActions {
+  visibility: hidden;
+}
+.BlockContainer:hover {
+  border: 1px solid black;
+}
+.BlockContainer:hover .BlockContainerActions {
+  visibility: visible;
+  background-color: white;
+  z-index: 999;
+  border: 1px solid black;
+}
+
 /* Tricks to make the UI more clean */
 
 /* 1. Highlight the current container on hover */

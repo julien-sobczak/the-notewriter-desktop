@@ -23,6 +23,7 @@ type ActionProps = {
 
 type ActionsProps = {
   children: ReactNode
+  className?: string
 }
 
 export function Indicator({ children }: IndicatorProps) {
@@ -53,7 +54,7 @@ export function Action({ children }: ActionProps) {
   return children
 }
 
-export function Actions({ children }: ActionsProps) {
+export function Actions({ children, className }: ActionsProps) {
   const [activeAction, setActiveAction] = useState<ReactElement<ActionProps> | null>(null)
 
   const handleActionClick = (e: MouseEvent, action: ReactElement<ActionProps>) => {
@@ -117,5 +118,5 @@ export function Actions({ children }: ActionsProps) {
     )
   }
 
-  return <nav className="Actions">{renderActions()}</nav>
+  return <nav className={`Actions${className ? ` ${className}` : ''}`}>{renderActions()}</nav>
 }

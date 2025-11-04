@@ -1021,7 +1021,7 @@ function Main() {
           <div
             className={classNames({
               EditorArea: true,
-              focused: activity === 'browser' || activity === 'desktop'
+              focused: ['', 'browser', 'desktop'].includes(activity)
             })}
           >
             {openedTabs.length > 0 && (

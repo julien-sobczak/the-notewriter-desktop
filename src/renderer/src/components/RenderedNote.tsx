@@ -518,7 +518,7 @@ export default function RenderedNote({
           onMouseUp={handleMouseEnd}
           onMouseOut={handleMouseOut} // FIXME BUG we need to stop drag when the mouse is released outside the viewport. This solution doesn't seem to work...
         >
-          <Actions>
+          <Actions className="RenderedNoteActions">
             {sourceURL && (
               <Action
                 title="Follow source"

@@ -114,6 +114,39 @@
     },
   ],
 
+  // List of desks
+  desks: [
+    {
+      name: 'My Project',
+      root: {
+        repositorySlugs: ['life'],
+        layout: 'vertical',  // vertical | horizontal | container (default)
+        elements: [
+          {
+            name: 'Notes',
+            size: '70%',
+            query: 'path:projects/the-notewriter (@type:Note)',
+          },
+          {
+            layout: 'horizontal',
+            elements: [
+              {
+                name: 'Backlog',
+                query: 'path:projects/the-notewriter @type:Todo @title:Backlog',
+                view: 'single',  // single | grid (default) | list | free
+                size: '30%',
+              },
+              {
+                name: 'Features',
+                query: 'path:projects/the-notewriter (@type:Feature)',
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+
   stats: [
     {
       name: 'Quotes by nationality',
@@ -145,6 +178,7 @@
       groupBy: 'nationality',
       visualization: 'map',
       mapping: {
+        # https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3
         'Roman': 'ITA',
         'Greek': 'GRC',
         'German': 'DEU',
