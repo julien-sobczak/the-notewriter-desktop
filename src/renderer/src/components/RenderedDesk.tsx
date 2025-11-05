@@ -143,7 +143,7 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
       {!loaded && <Loader />}
       {loaded && (
         <div className={classNames({ Desk: true })}>
-          <BlockContainer
+          <RenderedBlock
             block={desk.root}
             notesCache={notesCache.current}
             onDeleteBlock={handleDeleteBlock}
@@ -156,7 +156,7 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
   )
 }
 
-type BlockContainerProps = {
+type RenderedBlockProps = {
   block: Block
   notesCache: Map<string, Note[]>
   onDeleteBlock: (oid: string) => void
@@ -164,64 +164,16 @@ type BlockContainerProps = {
   onSubmitQuery: (blockOid: string, query: string) => void
 }
 
-function BlockContainer({
+function RenderedBlock({
   block,
   notesCache,
   onDeleteBlock,
   onSplitBlock,
   onSubmitQuery
-}: BlockContainerProps) {
-  const [queryInput, setQueryInput] = useState('')
-
-  if (block.layout === 'container') {
-    const notes: Note[] = []
-    if (block.query) {
-      const foundNotes = notesCache.get(block.oid ?? '')
-      if (foundNotes && foundNotes.length > 0) {
-        notes.push(...foundNotes)
-      }
-    }
-    if (block.noteRefs) {
-      for (const noteRef of block.noteRefs) {
-        const foundNotes = notesCache.get(noteRef.oid)
-        if (foundNotes && foundNotes.length > 0) {
-          notes.push(foundNotes[0])
-        }
-      }
-    }
-    // Show input if no query and no noteRefs
-    if (!block.query && (!block.noteRefs || block.noteRefs.length === 0)) {
-      return (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (queryInput.trim()) {
-              onSubmitQuery(block.oid ?? '', queryInput)
-            }
-          }}
-        >
-          <input
-            type="text"
-            value={queryInput}
-            onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="Enter query"
-          />
-          <button type="submit">Search</button>
-        </form>
-      )
-    }
-    return (
-      <NoteContainer
-        name={block.name}
-        notes={notes}
-        onClose={() => onDeleteBlock(block.oid ?? '')}
-      />
-    )
-  }
-
+}: RenderedBlockProps) {
   return (
-    <div className="BlockContainer">
-      <Actions className="BlockContainerActions">
+    <div className="RenderedBlock">
+      <Actions className="RenderedBlockActions">
         <Action
           icon={<HorizontalIcon />}
           title="Horizontal split"
@@ -234,9 +186,12 @@ function BlockContainer({
         />
         <Action icon={<CloseIcon />} title="Close" onClick={() => onDeleteBlock(block.oid ?? '')} />
       </Actions>
+      {block.layout == 'container' && (
+        <BlockContainer block={block} notesCache={notesCache} onSubmitQuery={onSubmitQuery} />
+      )}
       <div className={`Block${capitalize(block.layout ?? 'container')}`}>
         {block.elements?.map((element) => (
-          <BlockContainer
+          <RenderedBlock
             key={element.oid}
             block={element}
             notesCache={notesCache}
@@ -248,4 +203,54 @@ function BlockContainer({
       </div>
     </div>
   )
+}
+
+type BlockContainerProps = {
+  block: Block
+  notesCache: Map<string, Note[]>
+  onSubmitQuery: (blockOid: string, query: string) => void
+}
+
+function BlockContainer({ block, notesCache, onSubmitQuery }: BlockContainerProps) {
+  const [queryInput, setQueryInput] = useState('')
+
+  const notes: Note[] = []
+  if (block.query) {
+    const foundNotes = notesCache.get(block.oid ?? '')
+    if (foundNotes && foundNotes.length > 0) {
+      notes.push(...foundNotes)
+    }
+  }
+  if (block.noteRefs) {
+    for (const noteRef of block.noteRefs) {
+      const foundNotes = notesCache.get(noteRef.oid)
+      if (foundNotes && foundNotes.length > 0) {
+        notes.push(foundNotes[0])
+      }
+    }
+  }
+
+  // Show input if no query and no noteRefs
+  if (!block.query && (!block.noteRefs || block.noteRefs.length === 0)) {
+    return (
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (queryInput.trim()) {
+            onSubmitQuery(block.oid ?? '', queryInput)
+          }
+        }}
+      >
+        <input
+          type="text"
+          value={queryInput}
+          onChange={(e) => setQueryInput(e.target.value)}
+          placeholder="Enter query"
+        />
+        <button type="submit">Search</button>
+      </form>
+    )
+  }
+
+  return <NoteContainer name={block.name} notes={notes} />
 }

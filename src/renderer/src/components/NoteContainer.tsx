@@ -163,7 +163,7 @@ function NoteContainer({
           {layoutSelectable && (
             <Action title="Free layout" onClick={() => changeLayout('free')} icon={<FreeIcon />} />
           )}
-          <Action title="Close panel" onClick={onClose} icon={<CloseIcon />} />
+          {onClose && <Action title="Close panel" onClick={onClose} icon={<CloseIcon />} />}
         </Actions>
       </div>
       <div
