@@ -1,9 +1,9 @@
-import { SpinnerGapIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon } from '@phosphor-icons/react'
 
 export default function Loader() {
   return (
     <div>
       <SpinnerGapIcon />
     </div>
-  );
+  )
 }

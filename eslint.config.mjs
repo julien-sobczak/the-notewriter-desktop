@@ -46,7 +46,7 @@ export default defineConfig(
       'no-console': 'off', // TODO Reconsider this exclusion later
       'no-continue': 'off',
       'react/require-default-props': 'off',
-      'prefer-destructuring': 'off',
+      'prefer-destructuring': 'off'
     }
   },
   eslintConfigPrettier

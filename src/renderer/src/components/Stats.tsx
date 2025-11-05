@@ -393,6 +393,13 @@ function Stats() {
       data: any
     }>
   >([])
+  const [dailyMetricsStats, setDailyMetricsStats] = useState<
+    Array<{
+      name: string
+      type: string
+      data: CountStat[]
+    }>
+  >([])
 
   useEffect(() => {
     const loadStatistics = async () => {
@@ -446,6 +453,44 @@ function Stats() {
         }
 
         setCustomStats(customStatsData)
+
+        // Load daily metrics from repository configurations
+        const dailyMetricsMap = new Map<string, { name: string; type: string }>()
+
+        // Collect all unique daily metrics across selected repositories
+        for (const repositorySlug of selectedRepositorySlugs) {
+          const repositoryConfig = config.repositories[repositorySlug]
+          if (!repositoryConfig || !repositoryConfig.attributes) continue
+
+          // Find all attributes marked as daily metrics
+          for (const [attrName, attrConfig] of Object.entries(repositoryConfig.attributes)) {
+            if (attrConfig.dailyMetrics && !dailyMetricsMap.has(attrName)) {
+              dailyMetricsMap.set(attrName, {
+                name: attrConfig.name,
+                type: attrConfig.type
+              })
+            }
+          }
+        }
+
+        // Load data for each daily metric from all selected repositories
+        const dailyMetricsData: Array<{ name: string; type: string; data: CountStat[] }> = []
+        for (const [attrName, metricInfo] of dailyMetricsMap.entries()) {
+          const data = await window.api.getNoteStatistics(
+            selectedRepositorySlugs,
+            '@type:Journal',
+            'date',
+            attrName
+          )
+
+          dailyMetricsData.push({
+            name: metricInfo.name,
+            type: metricInfo.type,
+            data: data
+          })
+        }
+
+        setDailyMetricsStats(dailyMetricsData)
       } catch (error) {
         console.error('Error loading statistics:', error)
       } finally {
@@ -488,6 +533,29 @@ function Stats() {
             if (stat.config.visualization === 'calendar') {
               return <CalendarChart key={key} name={stat.config.name} data={stat.data} />
             }
+            return null
+          })}
+
+          {/* Daily Metrics */}
+          {dailyMetricsStats.map((metric) => {
+            const key = `daily-metric-${metric.name}`
+            const metricType = metric.type.toLowerCase()
+
+            // Render TimelineChart for integer/float types
+            if (metricType === 'integer' || metricType === 'float') {
+              return <TimelineChart key={key} name={metric.name} data={metric.data} />
+            }
+
+            // Render CalendarChart for boolean/bool types
+            if (metricType === 'boolean' || metricType === 'bool') {
+              // Convert boolean values to 0/100 for calendar visualization
+              const transformedData: CountStat[] = metric.data.map(([date, value]) => {
+                const numValue = value ? 100 : 0
+                return [date, numValue]
+              })
+              return <CalendarChart key={key} name={metric.name} data={transformedData} />
+            }
+
             return null
           })}
         </>

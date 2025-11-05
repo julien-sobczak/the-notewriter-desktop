@@ -1665,7 +1665,7 @@ function queryPart2sql(qParent: string): string {
 
     if (query === '') {
       // Match all records with a "dummy" condition
-      return '1=1';
+      return '1=1'
     }
 
     if (query.startsWith('(')) {
@@ -1694,7 +1694,7 @@ function queryPart2sql(qParent: string): string {
         return `note.tags LIKE '%${query.substring(1)}%'`
       }
       // eslint-disable-next-line prettier/prettier
-      return `note.tags LIKE '%${query.substring(1, i)}%' AND ${queryPart2sqlInner(query.substring(i + 1))}`;
+      return `note.tags LIKE '%${query.substring(1, i)}%' AND ${queryPart2sqlInner(query.substring(i + 1))}`
     }
 
     if (query.startsWith('OR ') || query.startsWith('or ')) {

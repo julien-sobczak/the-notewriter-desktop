@@ -179,6 +179,7 @@ export interface AttributeConfig {
   shorthands: { [key: string]: any }
   preserveShorthand?: boolean
   defaultValue?: any
+  dailyMetrics?: boolean
 }
 export interface TypeConfig {
   name: string
