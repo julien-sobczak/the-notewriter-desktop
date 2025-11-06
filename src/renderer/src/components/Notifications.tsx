@@ -2,7 +2,7 @@ import { useEffect, useState, useContext, useCallback, useMemo } from 'react'
 import {
   ClockIcon as ClockIcon,
   CalendarIcon as CalendarIcon,
-  CalendarPlusIcon as CalendarPlusIcon,
+  CalendarPlusIcon as AddCalendarIcon,
   XIcon as CloseIcon,
   BellSlashIcon as SilenceIcon,
   CheckCircleIcon as CompleteIcon,
@@ -134,7 +134,7 @@ function NotificationsPopup({ reminders, memories, onClose }: NotificationPopupP
                   </div>
                   <Actions>
                     <Action
-                      icon={<CalendarPlusIcon />}
+                      icon={<AddCalendarIcon />}
                       title="Add event in calendar"
                       onClick={() => handleAddToCalendar(reminder)}
                     />

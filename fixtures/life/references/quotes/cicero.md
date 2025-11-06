@@ -13,6 +13,7 @@ url: https://en.wikipedia.org/wiki/Cicero
 
 A room without books is like a body without a soul.
 
+
 ## Quote: On Learning to Die
 
 `#favorite` `#life` `#death`

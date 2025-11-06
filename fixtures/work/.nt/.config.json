@@ -1,6 +1,9 @@
 {
   "core": {
-    "extensions": ["md", "markdown"],
+    "extensions": [
+      "md",
+      "markdown"
+    ],
     "medias": {
       "command": "ffmpeg",
       "parallel": 1,
@@ -110,7 +113,9 @@
     },
     "status": {
       "name": "status",
-      "aliases": ["state"],
+      "aliases": [
+        "state"
+      ],
       "type": "string",
       "format": "",
       "inherit": true,
@@ -153,7 +158,9 @@
     "Flashcard": {
       "name": "Flashcard",
       "pattern": "(?i)^Flashcard:\\s*(.*)$",
-      "processors": ["flashcard-extractor"],
+      "processors": [
+        "flashcard-extractor"
+      ],
       "attributes": [
         {
           "name": "srs.algorithm",
@@ -171,7 +178,10 @@
     "Generator": {
       "name": "Generator",
       "pattern": "(?i)^Generator:\\s*(.*)$",
-      "processors": ["generator", "list-items"],
+      "processors": [
+        "generator",
+        "list-items"
+      ],
       "attributes": [
         {
           "name": "file",
@@ -189,7 +199,10 @@
     "Journal": {
       "name": "Journal",
       "pattern": "(?i)^Journal:\\s*(.*)$",
-      "processors": ["date-extractor", "list-items"],
+      "processors": [
+        "date-extractor",
+        "list-items"
+      ],
       "attributes": [
         {
           "name": "date",
@@ -202,7 +215,9 @@
     "List": {
       "name": "List",
       "pattern": "(?i)^List:\\s*(.*)$",
-      "processors": ["list-items"],
+      "processors": [
+        "list-items"
+      ],
       "hooks": null
     },
     "Master": {
@@ -220,13 +235,17 @@
     "Quote": {
       "name": "Quote",
       "pattern": "(?i)^Quote:\\s*(.*)$",
-      "processors": ["quote-rewriter"],
+      "processors": [
+        "quote-rewriter"
+      ],
       "hooks": null
     },
     "ReadingList": {
       "name": "ReadingList",
       "pattern": "(?i)^ReadingList:\\s*(.*)$",
-      "processors": ["list-items"],
+      "processors": [
+        "list-items"
+      ],
       "attributes": [
         {
           "name": "author",
@@ -273,7 +292,9 @@
     "Todo": {
       "name": "Todo",
       "pattern": "(?i)^Todo:\\s*(.*)$",
-      "processors": ["list-items"],
+      "processors": [
+        "list-items"
+      ],
       "attributes": [
         {
           "name": "status",

@@ -6,11 +6,13 @@ nationality: Greek
 
 # Aristotle
 
+
 ## Quote: On Wisdom Listening
 
 `#favorite` `#listening`
 
 Wisdom is the reward you get for a lifetime of listening when you'd rather have been talking.
+
 
 ## Quote: On Excellence & Habits
 
@@ -21,6 +23,7 @@ Wisdom is the reward you get for a lifetime of listening when you'd rather have 
 We are what we repeatedly do. Excellence, then, is not an act, but a habit.
 
 > Excellence is a habit.
+
 
 ## Quote: On Reflection
 

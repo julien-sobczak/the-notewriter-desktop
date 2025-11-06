@@ -2,5 +2,5 @@
 
 `#bookmark`
 
-- [x] Review MRs
-- [ ] Complete ticket `TICKET-123`
+* [x] Review MRs
+* [ ] Complete ticket `TICKET-123`

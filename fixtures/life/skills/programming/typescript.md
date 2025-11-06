@@ -7,9 +7,11 @@ tags: typescript
 
 TypeScript is just like ES2015 with type-checking. All ES2015 (classes, etc) should work.
 
+
 ## Note: History
 
-[TypeScript](https://www.typescriptlang.org/ '#go/typescript') was released to the public in October 2012 after two years of internal development at Microsoft.
+[TypeScript](https://www.typescriptlang.org/ "#go/typescript") was released to the public in October 2012 after two years of internal development at Microsoft.
+
 
 ## Note: Declarations
 
@@ -23,6 +25,7 @@ function add (a: number, b: number): number {
 // Return type is optional
 function add (a: number, b: number) { ... }
 ```
+
 
 ## Note: Basic types
 
@@ -56,25 +59,26 @@ enum Color {
 let c: Color = Color.Green
 ```
 
+
 ## Note: Type assertions
 
 ### Variables
 
 ```typescript
 let len: number = (input as string).length
-let len: number = (<string>input).length /* not allowed in JSX */
+let len: number = (<string> input).length  /* not allowed in JSX */
 ```
 
 ### Functions
 
 ```typescript
-function object(this: { a: number; b: number }, a: number, b: number) {
-  this.a = a
-  this.b = b
-  return this
+function object(this: {a: number, b: number}, a: number, b: number) {
+  this.a = a;
+  this.b = b;
+  return this;
 }
 
 // this is used only for type declaration
-let a = object(1, 2)
+let a = object(1,2);
 // a has type {a: number, b: number}
 ```

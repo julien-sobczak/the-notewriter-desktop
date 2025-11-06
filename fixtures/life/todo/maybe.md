@@ -27,6 +27,7 @@ print(f"""
 """)
 ```
 
+
 ## Generator: Conferences
 
 `@interpreter: python3`
