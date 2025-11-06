@@ -57,9 +57,17 @@ function NotificationsPopup({ reminders, memories, onClose }: NotificationPopupP
       const reminderDate = new Date(reminder.nextPerformedAt)
       const now = new Date()
 
+      // Compare dates without time component
+      const reminderDateOnly = new Date(
+        reminderDate.getFullYear(),
+        reminderDate.getMonth(),
+        reminderDate.getDate()
+      )
+      const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
       // If the date is in the past, use tomorrow
       let eventDate: Date
-      if (reminderDate < now) {
+      if (reminderDateOnly < nowDateOnly) {
         eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
       } else {
         eventDate = reminderDate
