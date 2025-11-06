@@ -2,6 +2,7 @@ import { useEffect, useState, useContext, useCallback, useMemo } from 'react'
 import {
   ClockIcon as ClockIcon,
   CalendarIcon as CalendarIcon,
+  CalendarPlusIcon as AddCalendarIcon,
   XIcon as CloseIcon,
   BellSlashIcon as SilenceIcon,
   CheckCircleIcon as CompleteIcon,
@@ -14,6 +15,7 @@ import { Reminder, Memory, Note, NoteRef } from '@renderer/Model'
 import Markdown from './Markdown'
 import { toHumanReadableDate } from '@renderer/helpers/dateUtils'
 import { ConfigContext } from '@renderer/ConfigContext'
+import { stripMarkdownEmphasis } from '@renderer/helpers/strings'
 
 interface NotificationPopupProps {
   reminders: Reminder[]
@@ -47,6 +49,52 @@ function NotificationsPopup({ reminders, memories, onClose }: NotificationPopupP
       await window.api.completeReminders([reminderOid])
     } catch (error) {
       console.error('Error completing reminder:', error)
+    }
+  }
+
+  const handleAddToCalendar = (reminder: Reminder) => {
+    try {
+      // Format the date for Google Calendar (YYYYMMDD format for all-day events)
+      const reminderDate = new Date(reminder.nextPerformedAt)
+      const now = new Date()
+
+      // Compare dates without time component
+      const reminderDateOnly = new Date(
+        reminderDate.getFullYear(),
+        reminderDate.getMonth(),
+        reminderDate.getDate()
+      )
+      const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      // If the date is in the past, use tomorrow
+      let eventDate: Date
+      if (reminderDateOnly < nowDateOnly) {
+        eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      } else {
+        eventDate = reminderDate
+      }
+
+      // Format as YYYYMMDD
+      const year = eventDate.getFullYear()
+      const month = String(eventDate.getMonth() + 1).padStart(2, '0')
+      const day = String(eventDate.getDate()).padStart(2, '0')
+      const formattedDate = `${year}${month}${day}`
+
+      // Create event description
+      const description = `See note present in file ${reminder.relativePath} in repository ${reminder.repositorySlug}.`
+
+      // Build Google Calendar URL
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: stripMarkdownEmphasis(reminder.description),
+        dates: `${formattedDate}/${formattedDate}`,
+        details: description
+      })
+
+      const calendarUrl = `https://calendar.google.com/calendar/render?${params.toString()}`
+      window.api.browseUrl(calendarUrl)
+    } catch (error) {
+      console.error('Error creating calendar event:', error)
     }
   }
 
@@ -86,6 +134,11 @@ function NotificationsPopup({ reminders, memories, onClose }: NotificationPopupP
                     <Markdown md={reminder.description} inline />
                   </div>
                   <Actions>
+                    <Action
+                      icon={<AddCalendarIcon />}
+                      title="Add event in calendar"
+                      onClick={() => handleAddToCalendar(reminder)}
+                    />
                     <Action
                       icon={<CompleteIcon />}
                       title="Complete reminder"

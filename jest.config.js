@@ -17,6 +17,7 @@ module.exports = {
       {
         tsconfig: {
           jsx: 'react-jsx',
+          target: 'es2021',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
           moduleResolution: 'node',
