@@ -13,6 +13,16 @@ local srsAlgorithmSettings = {
       min: 0,
       max: 100000,
       shorthandPattern: '🥾 (\\d+)',
+      dailyMetrics: true,
+    },
+    meditation: {
+      name: 'meditation',
+      description: 'Completed a meditation session',
+      type: 'boolean',
+      shorthands: {
+        "🧘": true,
+      },
+      dailyMetrics: true,
     },
   },
   noteTypes: nt.DefaultNoteTypes {
@@ -24,6 +34,10 @@ local srsAlgorithmSettings = {
         },
         {
           name: "steps",
+          promoteInline: true,
+        },
+        {
+          name: "meditation",
           promoteInline: true,
         }
       ],

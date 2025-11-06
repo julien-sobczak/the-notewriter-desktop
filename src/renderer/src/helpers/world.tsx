@@ -220,4 +220,4 @@ export const nationalities: Map<string, string> = new Map([
 
   // + some older nationality
   ['Roman', 'IT'] // Roman Empire
-]);
+])

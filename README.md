@@ -7,7 +7,6 @@
 
 </div>
 
-
 ## Install
 
 Clone the repo and install dependencies:
@@ -25,7 +24,7 @@ npm run fixtures # Failed randomly. Rerun. Root cause still not found.
 $ npm run dev
 
 # Launch existing tests
-$ npm run test src/renderer/src/helpers/ 
+$ npm run test src/renderer/src/helpers/
 ```
 
 ### Build

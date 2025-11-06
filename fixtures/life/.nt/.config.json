@@ -47,6 +47,17 @@
       "inherit": false,
       "preserveShorthand": null
     },
+    "meditation": {
+      "name": "meditation",
+      "type": "boolean",
+      "format": "",
+      "inherit": true,
+      "shorthands": {
+        "🧘": true
+      },
+      "preserveShorthand": true,
+      "dailyMetrics": true
+    },
     "priority": {
       "name": "priority",
       "type": "string",
@@ -140,7 +151,8 @@
       "max": 100000,
       "inherit": true,
       "shorthandPattern": "🥾 (\\d+)",
-      "preserveShorthand": true
+      "preserveShorthand": true,
+      "dailyMetrics": true
     },
     "tags": {
       "name": "tags",
@@ -251,6 +263,11 @@
         },
         {
           "name": "steps",
+          "required": false,
+          "promoteInline": true
+        },
+        {
+          "name": "meditation",
           "required": false,
           "promoteInline": true
         }

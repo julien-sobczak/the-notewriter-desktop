@@ -2,9 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 :root {
-  --color-separator: #DDD;
+  --color-separator: #ddd;
   --color-separator-dark: gray;
-  --color-background-light: #F9F9F9;
+  --color-background-light: #f9f9f9;
   --color-text-dimmed: gray;
   --desktop-layout-margin: 0;
   --desktop-layout-radius: 0;
@@ -150,7 +150,7 @@ svg {
   padding: 0.25rem;
   height: var(--top-bar-height);
   text-align: center;
-  font-size: 0.70em;
+  font-size: 0.7em;
   border-bottom: 1px solid var(--color-separator);
   display: flex;
   flex-direction: row;
@@ -176,7 +176,8 @@ svg {
     text-align: center;
   }
 }
-.TopBar .RepositoryButtonGroup, .TopBar .NotificationsStatus {
+.TopBar .RepositoryButtonGroup,
+.TopBar .NotificationsStatus {
   margin-left: auto;
   -webkit-app-region: none;
 }
@@ -235,7 +236,6 @@ svg {
   display: flex;
   flex-direction: column;
 }
-
 
 /* <DailyQuote> */
 
@@ -299,9 +299,8 @@ svg {
   overflow: auto; /* show scrollbar only when needed */
 }
 .RenderedNoteContent {
-
   pre {
-    background-color: #FAFAFA;
+    background-color: #fafafa;
     overflow-x: scroll;
     /* padding: 0.5rem; FIXME bug the parent container exceed the size of its parent. */
   }
@@ -312,7 +311,7 @@ svg {
   }
   blockquote::before {
     font-family: Arial;
-    content: "\201C";
+    content: '\201C';
     color: black;
     font-size: 4em;
     position: absolute;
@@ -325,7 +324,8 @@ svg {
   a {
     color: black !important; /* Don't put too much emphasis on external links. We want to focus on offline notes. */
   }
-  .missing { /* Used on dangling medias */
+  .missing {
+    /* Used on dangling medias */
     width: 32px;
     height: 32px;
   }
@@ -396,14 +396,20 @@ ul.Filter li.selected {
   width: 100%;
   height: 100vh;
 }
-.Grid, .Container, .BlockHorizontal, .BlockVertical { /* FIXME still useful */
+.Grid,
+.Container,
+.BlockHorizontal,
+.BlockVertical {
+  /* FIXME still useful */
   display: flex;
   position: relative;
   margin: var(--desktop-layout-margin);
   overflow: auto;
   flex-grow: 1; /* Fill space equally */
 }
-.Grid, .Container, .BlockVertical {
+.Grid,
+.Container,
+.BlockVertical {
   flex-direction: row;
 }
 .BlockHorizontal {
@@ -422,7 +428,8 @@ ul.Filter li.selected {
   padding: 1em;
   margin: 1em;
 }
-.BlockContainer, .NoteContainer {
+.BlockContainer,
+.NoteContainer {
   margin: var(--desktop-layout-margin);
   width: 100%;
   height: 100%;
@@ -491,10 +498,10 @@ ul.Filter li.selected {
   visibility: visible !important;
 }
 
-
 /* Browser + Bookmarker */
 
-.Browser, .Bookmarker {
+.Browser,
+.Bookmarker {
   display: flex;
   flex-direction: row;
   width: 100%;
@@ -601,7 +608,6 @@ ul.Filter li.selected {
   display: inline-block;
 }
 
-
 /* NoteContainer */
 
 .NoteContainer .Header {
@@ -705,7 +711,6 @@ ul.Filter li.selected {
   display: flex;
 }
 
-
 /* Tab Bar - Similar to DeskContainer but for tabs */
 
 .TabBar {
@@ -781,7 +786,6 @@ ul.Filter li.selected {
   display: block;
 }
 
-
 /* .SearchPanel */
 
 .SearchPanel {
@@ -803,7 +807,6 @@ ul.Filter li.selected {
 .SearchPanel .RenderedNote {
   overflow: visible;
 }
-
 
 /* cmdk */
 /* Based on Linear style available at https://github.com/pacocoursey/cmdk/blob/main/website/styles/cmdk/linear.scss */
@@ -956,7 +959,8 @@ ul.Filter li.selected {
   /* Make sure only the zen mode is visible */
   display: none;
 }
-.ZenMode, .Inspiration {
+.ZenMode,
+.Inspiration {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -979,11 +983,9 @@ ul.Filter li.selected {
   justify-content: center;
 }
 
-
 .SpeedAction {
   font-size: 0.7rem;
 }
-
 
 /* <Question> */
 
@@ -1017,13 +1019,16 @@ ul.Filter li.selected {
 /* Timer */
 
 .Timer {
-  background: -webkit-linear-gradient(left, var(--color-separator-dark) 50%, white 50%); /* TODO find a way to avoid -webkit */
+  background: -webkit-linear-gradient(
+    left,
+    var(--color-separator-dark) 50%,
+    white 50%
+  ); /* TODO find a way to avoid -webkit */
   border-radius: 100%;
   height: calc(var(--size) * 1px);
   width: calc(var(--size) * 1px);
   position: relative;
   animation: time calc(var(--duration) * 1s) steps(1000, start) infinite;
-
 }
 .Timer .mask {
   border-radius: 100% 0 0 100% / 50% 0 0 50%;
@@ -1037,25 +1042,25 @@ ul.Filter li.selected {
 }
 @keyframes time {
   100% {
-      transform: rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 @keyframes mask {
   0% {
-      background: white;
-      transform: rotate(0deg);
+    background: white;
+    transform: rotate(0deg);
   }
   50% {
-      background: white;
-      transform: rotate(-180deg);
+    background: white;
+    transform: rotate(-180deg);
   }
   50.01% {
-      background: var(--color-separator-dark);
-      transform: rotate(0deg);
+    background: var(--color-separator-dark);
+    transform: rotate(0deg);
   }
   100% {
-      background: var(--color-separator-dark);
-      transform: rotate(-180deg);
+    background: var(--color-separator-dark);
+    transform: rotate(-180deg);
   }
 }
 
@@ -1092,7 +1097,6 @@ ul.Filter li.selected {
   }
 }
 
-
 /* <RenderedFlashcard> */
 
 .RenderedFlashcard {
@@ -1119,21 +1123,23 @@ ul.Filter li.selected {
   width: 100%;
   display: flex;
   justify-content: space-between; /* or: space-evenly */
-  align-items: center;            /* optional: vertical alignment */
+  align-items: center; /* optional: vertical alignment */
 }
 .ShowAnswerButton {
-  background-color: #465A64;
+  background-color: #465a64;
   color: white;
   flex: 1;
   text-align: center;
 }
 .FeedbackButton {
   padding: 0.5em 1em;
-  flex: 1;             /* each child takes equal space */
+  flex: 1; /* each child takes equal space */
   text-align: center;
   transition: width 3s ease;
 }
-.FeedbackTooHard, .FeedbackTooEasy, .FeedbackConfirmation {
+.FeedbackTooHard,
+.FeedbackTooEasy,
+.FeedbackConfirmation {
   color: yellow;
   background-color: black;
 }
@@ -1141,24 +1147,25 @@ ul.Filter li.selected {
   background-color: darkred;
   flex: 0.2; /* Make the cancel button smaller as "Too" buttons are already difficult to reach. Confirmation is only a safe guard but the user will almost always confirm. */
 }
-.FeedbackTooHard, .FeedbackTooEasy {
+.FeedbackTooHard,
+.FeedbackTooEasy {
   flex: 0.3; /* "Too" options are exceptional, make them smaller */
   flex-grow: 1;
 }
 .FeedbackHard {
-  background-color: #D32F2D;
+  background-color: #d32f2d;
   color: white;
 }
 .FeedbackAgain {
-  background-color: #465A64;
+  background-color: #465a64;
   color: white;
 }
 .FeedbackGood {
-  background-color: #4CB050;
+  background-color: #4cb050;
   color: white;
 }
 .FeedbackEasy {
-  background-color: #36A9F5;
+  background-color: #36a9f5;
   color: white;
 }
 .RenderedFlashcard sup.Interval {
@@ -1191,18 +1198,20 @@ ul.Filter li.selected {
 
 /* <Markdown> */
 
-.RenderedNoteContent, .RenderedFlashcard {
-  p, pre, hr {
+.RenderedNoteContent,
+.RenderedFlashcard {
+  p,
+  pre,
+  hr {
     margin: 1em 0;
   }
 }
-
 
 /* <FullScreenNote> */
 
 .FullScreenNote {
   display: flex;
-  width: 100%;;
+  width: 100%;
   flex-grow: 1;
   flex-direction: column;
 
@@ -1236,7 +1245,7 @@ ul.Filter li.selected {
       font-size: 0.7rem;
     }
     > div {
-     padding: 0.5rem;
+      padding: 0.5rem;
     }
   }
 }
@@ -1249,26 +1258,26 @@ ul.Filter li.selected {
   display: flex;
   flex-direction: row;
 
-  input, select {
-    display: inline-block;;
+  input,
+  select {
+    display: inline-block;
   }
 
   > * {
     display: flex;
-    align-items: flex-end;  /* push text to bottom */
+    align-items: flex-end; /* push text to bottom */
   }
 }
 .GotoPlaceholder {
   display: flex;
   flex-direction: column;
-  margin: 0 4px
+  margin: 0 4px;
 }
 .GotoPlaceholderName {
   font-size: 0.8em;
   color: #888;
   margin-bottom: 2px;
 }
-
 
 /* <HoveredNote> */
 
@@ -1486,13 +1495,12 @@ ul.Filter li.selected {
   padding: 0.25rem 0.5rem;
 }
 
-
 /* <RenderedRoutine> */
 
 .RenderedRoutine {
   display: flex;
   justify-content: center; /* horizontal */
-  align-items: center;     /* vertical */
+  align-items: center; /* vertical */
   flex-direction: column;
 
   .RenderedRoutineTemplate {
@@ -1501,7 +1509,9 @@ ul.Filter li.selected {
     padding: 1rem;
     border: 1px solid var(--color-separator-dark);
 
-    h1, h2, h3 {
+    h1,
+    h2,
+    h3 {
       /* Create a highlight effect */
       /* Inspired by https://max.hn/blog/how-to-create-a-highlighter-marker-effect-in-css */
       margin: 1em -0.4em;
@@ -1519,7 +1529,7 @@ ul.Filter li.selected {
     }
     /* Templates use h1, h2, h3 for different levels but must be rendered like smaller headings */
     h1 {
-      font-size: 1.20rem;
+      font-size: 1.2rem;
     }
     h2 {
       font-size: 1.15rem;
@@ -1529,12 +1539,13 @@ ul.Filter li.selected {
     }
 
     /* Make the input fields look like hand-written notes */
-    input, textarea {
-      border: none;                  /* remove all borders */
-      border-bottom: 1px solid #AAA; /* keep only bottom line */
-      outline: none;                 /* remove blue outline on focus */
+    input,
+    textarea {
+      border: none; /* remove all borders */
+      border-bottom: 1px solid #aaa; /* keep only bottom line */
+      outline: none; /* remove blue outline on focus */
       font-size: 1rem;
-      background: transparent;       /* no background fill */
+      background: transparent; /* no background fill */
       color: darkblue;
       font-family: 'Pacifico', cursive;
 
@@ -1543,7 +1554,7 @@ ul.Filter li.selected {
       }
     }
     input {
-      padding: 0.25rem 0.5rem;  /* space around text */
+      padding: 0.25rem 0.5rem; /* space around text */
     }
     textarea {
       width: 100%;
@@ -1556,13 +1567,12 @@ ul.Filter li.selected {
       background: repeating-linear-gradient(
         to bottom,
         white,
-        white calc(1.5em - 1px),  /* text area background */
-        #ccc calc(1.5em - 1px),   /* bottom border */
-        #ccc 1.5em                /* space until next line */
+        white calc(1.5em - 1px),
+        /* text area background */ #ccc calc(1.5em - 1px),
+        /* bottom border */ #ccc 1.5em /* space until next line */
       );
     }
   }
-
 }
 
 /*
@@ -1605,7 +1615,7 @@ ul.Filter li.selected {
     pointer-events: none;
   }
 
-  input[type="range"] {
+  input[type='range'] {
     position: absolute;
     width: 100%;
     height: 3px;
@@ -1623,7 +1633,9 @@ ul.Filter li.selected {
       pointer-events: auto;
       border: 1px solid black;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition:
+        transform 0.2s,
+        box-shadow 0.2s;
     }
     &::-webkit-slider-thumb:hover {
       transform: scale(1.1);
@@ -1635,10 +1647,10 @@ ul.Filter li.selected {
     }
   }
   /* Ensure end thumb is below the start thumb */
-  input[type="range"]:nth-child(1) {
+  input[type='range']:nth-child(1) {
     z-index: 3;
   }
-  input[type="range"]:nth-child(2) {
+  input[type='range']:nth-child(2) {
     z-index: 4;
   }
 }
@@ -1728,8 +1740,8 @@ ul.Filter li.selected {
   flex-direction: column;
 
   /* Make the aside resizable */
-  resize: horizontal;  /* allows user to drag */
-  overflow: auto;      /* required for resize to work */
+  resize: horizontal; /* allows user to drag */
+  overflow: auto; /* required for resize to work */
   min-width: 500px;
   max-width: 1000px;
   direction: rtl; /* Trick to have the resize handle on the left side */
@@ -1743,7 +1755,6 @@ ul.Filter li.selected {
     padding: 1rem;
   }
 }
-
 
 /*
  * <Stats>
@@ -1787,7 +1798,6 @@ ul.Filter li.selected {
 }
 
 .DesktopSidebar {
-
   ul {
     list-style-type: none;
   }
