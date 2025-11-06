@@ -5,11 +5,9 @@ tags: go
 
 # Go
 
-
 ## Note: History
 
-[Golang](https://go.dev/doc/ "#go/go") was designed by Robert Greisemer, Rob Pike, and Ken Thompson at Google in 2007.
-
+[Golang](https://go.dev/doc/ '#go/go') was designed by Robert Greisemer, Rob Pike, and Ken Thompson at Google in 2007.
 
 ## Note: Constants
 
@@ -36,7 +34,6 @@ const (
 )
 ```
 
-
 ## Flashcard: `iota`
 
 (Golang) What is the **value of `Sunday`**?
@@ -56,7 +53,6 @@ const (
 ---
 
 `iota` is reinitialized to `0` after every `const`.
-
 
 ## Note: Hello World
 
@@ -83,9 +79,7 @@ $ go build
 
 Or use the [Go repl](https://repl.it/languages/go).
 
-
 ## Basic Types
-
 
 ### Note: Strings
 
@@ -94,7 +88,6 @@ str := "Hello"
 str := `Multiline
 string`
 ```
-
 
 ### Flashcard: Multiline Strings
 
@@ -121,9 +114,7 @@ var u uint = 7        // uint (unsigned)
 var p float32 = 22.7  // 32-bit float
 ```
 
-
 ## Flow Control
-
 
 ### Note: Conditional
 
@@ -139,7 +130,6 @@ if day == "sunday" || day == "saturday" {
 
 See [`if`](https://tour.golang.org/flowcontrol/5)
 
-
 ### Note: Statements in `if`
 
 ```go
@@ -151,7 +141,6 @@ if _, err := doThing(); err != nil {
 A condition in an if statement can be preceded with a statement before a `;`. Variables declared by the statement are only in scope until the end of the `if`.
 
 See: [If with a short statement](https://tour.golang.org/flowcontrol/6)
-
 
 ### Note: Switch
 
@@ -170,7 +159,6 @@ switch day {
 ```
 
 See: [Switch](https://github.com/golang/go/wiki/Switch)
-
 
 #### Flashcard: Switch
 
@@ -194,7 +182,6 @@ switch day {
 
 Golang doesn't require `break`. There is **no fallthrough by default**.
 
-
 ### Note: For-Range loop
 
 ```go
@@ -206,7 +193,6 @@ for i, val := range entry {
 
 See: [For-Range loops](https://gobyexample.com/range)
 
-
 ### Note: For loop
 
 ```go
@@ -216,7 +202,6 @@ for count := 0; count <= 10; count++ {
 ```
 
 See: [For loops](https://tour.golang.org/flowcontrol/1)
-
 
 ### Flashcard: For range over integers
 
@@ -249,7 +234,6 @@ for n != x {
 ```
 
 See: [Go’s "while"](https://tour.golang.org/flowcontrol/3)
-
 
 ### Flashcard: Infinite Loop
 

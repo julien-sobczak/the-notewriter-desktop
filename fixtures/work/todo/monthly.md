@@ -1,4 +1,4 @@
 # TODO: This Week
 
-* [x] Demo
-* [ ] Design doc about testing
+- [x] Demo
+- [ ] Design doc about testing

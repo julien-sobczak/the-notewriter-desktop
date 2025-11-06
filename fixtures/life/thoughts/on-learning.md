@@ -1,15 +1,13 @@
 ---
 tags:
-- learning
+  - learning
 ---
 
 # On Learning
 
-
 ## Note: On Ignorance
 
 Learning requires ignorance. You cannot learn if you think you already know.
-
 
 ## Note: On Obstacles
 

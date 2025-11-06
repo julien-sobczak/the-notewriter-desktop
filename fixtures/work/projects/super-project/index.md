@@ -4,12 +4,10 @@
 
 My Super Project will do something great.
 
-
 ## TODO: Next Steps
 
-* [x] Deploy in staging
-* [ ] Toggle feature flag to enable new super feature
-
+- [x] Deploy in staging
+- [ ] Toggle feature flag to enable new super feature
 
 ## Cheatsheet: How to start
 

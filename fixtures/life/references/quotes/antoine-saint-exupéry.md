@@ -6,13 +6,11 @@ nationality: French
 
 # Antoine Saint Exupéry
 
-
 ## Quote: On Lands
 
 `#being`
 
 We do not inherit the land from our ancestors, we borrow it from our children.
-
 
 ## Quote: On Seeing With Heart
 

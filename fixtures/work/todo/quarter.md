@@ -1,5 +1,3 @@
 # TODO: This Quarter
 
-* [ ] Onboarding
-
-
+- [ ] Onboarding
