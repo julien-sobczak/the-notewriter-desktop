@@ -15,6 +15,7 @@ import { Reminder, Memory, Note, NoteRef } from '@renderer/Model'
 import Markdown from './Markdown'
 import { toHumanReadableDate } from '@renderer/helpers/dateUtils'
 import { ConfigContext } from '@renderer/ConfigContext'
+import { stripMarkdownEmphasis } from '@renderer/helpers/strings'
 
 interface NotificationPopupProps {
   reminders: Reminder[]
@@ -85,7 +86,7 @@ function NotificationsPopup({ reminders, memories, onClose }: NotificationPopupP
       // Build Google Calendar URL
       const params = new URLSearchParams({
         action: 'TEMPLATE',
-        text: reminder.description,
+        text: stripMarkdownEmphasis(reminder.description),
         dates: `${formattedDate}/${formattedDate}`,
         details: description
       })

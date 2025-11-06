@@ -2,6 +2,10 @@ export function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
+export function stripMarkdownEmphasis(text: string): string {
+  return text.replace(/(\*|_){1,3}(.+?)\1{1,3}/g, '$2')
+}
+
 /**
  * Evaluate template variables in a path or template string.
  *
