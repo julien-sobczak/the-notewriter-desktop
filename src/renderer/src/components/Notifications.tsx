@@ -54,13 +54,15 @@ function NotificationsPopup({ reminders, memories, onClose }: NotificationPopupP
   const handleAddToCalendar = (reminder: Reminder) => {
     try {
       // Format the date for Google Calendar (YYYYMMDD format for all-day events)
-      let eventDate = new Date(reminder.nextPerformedAt)
+      const reminderDate = new Date(reminder.nextPerformedAt)
       const now = new Date()
 
       // If the date is in the past, use tomorrow
-      if (eventDate < now) {
-        eventDate = new Date(now)
-        eventDate.setDate(eventDate.getDate() + 1)
+      let eventDate: Date
+      if (reminderDate < now) {
+        eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      } else {
+        eventDate = reminderDate
       }
 
       // Format as YYYYMMDD
