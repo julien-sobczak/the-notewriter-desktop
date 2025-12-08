@@ -79,11 +79,28 @@ elif [ "$platform" = "darwin" ]; then
 	echo "  1. Open the DMG file: open $bin_dir/the-notewriter-desktop.${ext}"
 	echo "  2. Drag the application to your Applications folder"
 	echo ""
+	echo "To make 'nt-desktop' command available in terminal:"
+	echo "  Create a wrapper script after installation:"
+	echo "    echo '#!/bin/sh' > $bin_dir/nt-desktop"
+	echo "    echo 'open -a \"the-notewriter-desktop\"' >> $bin_dir/nt-desktop"
+	echo "    chmod +x $bin_dir/nt-desktop"
+	echo ""
+	if ! command -v nt-desktop >/dev/null; then
+		case $SHELL in
+		/bin/zsh) shell_profile=".zshrc" ;;
+		*) shell_profile=".bashrc" ;;
+		esac
+		echo "  Then add the directory to your \$HOME/$shell_profile:"
+		echo "    export NT_DESKTOP_INSTALL=\"$nt_desktop_install\""
+		echo "    export PATH=\"\$NT_DESKTOP_INSTALL/bin:\$PATH\""
+		echo ""
+	fi
 else
 	# Windows
 	echo ""
 	echo "The NoteWriter Desktop installer was downloaded successfully to $bin_dir/the-notewriter-desktop.${ext}"
 	echo ""
 	echo "To install, run the installer: $bin_dir/the-notewriter-desktop.${ext}"
+	echo "The installer will make the application accessible from the Start menu and desktop."
 	echo ""
 fi

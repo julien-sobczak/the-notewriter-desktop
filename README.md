@@ -11,7 +11,7 @@
 
 ### Using the install script (recommended)
 
-The easiest way to install The NoteWriter Desktop is using the installation script:
+The easiest way to install _The NoteWriter Desktop_ is using the installation script:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/julien-sobczak/the-notewriter-desktop/main/install.sh | sh
@@ -97,7 +97,7 @@ $ npm run build:linux
 $ open -a "DB Browser for SQLite" ./fixtures/life/.nt/database.db
 ```
 
-[github-actions-status]: https://github.com/julien-sobczak/the-notewriter-desktop/workflows/Release/badge.svg
+[github-actions-status]: https://github.com/julien-sobczak/the-notewriter-desktop/workflows/CI/badge.svg
 [github-actions-url]: https://github.com/julien-sobczak/the-notewriter-desktop/actions
 [github-tag-image]: https://img.shields.io/github/tag/julien-sobczak/the-notewriter-desktop.svg?label=version
 [github-tag-url]: https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest
