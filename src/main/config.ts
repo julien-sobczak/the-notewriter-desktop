@@ -17,13 +17,52 @@ import { normalizePath } from './util'
 
 const execFileAsync = promisify(execFile)
 
-// Returns the home directory except if the environment variable $NT_HOME is set.
+// Global variable to store the config directory path
+// This is set during ConfigManager.create() based on launch context
+let configDirectory: string | null = null
+
+// Returns the configuration directory based on launch context
+// - If launched from within a repository or with a directory argument: <repo>/.nt
+// - Otherwise: $NT_HOME or ~/.nt
 export function homeDir() {
+  if (configDirectory) {
+    return configDirectory
+  }
   console.log(`NT_HOME is set to ${process.env.NT_HOME}`)
   if (process.env.NT_HOME) {
     return process.env.NT_HOME
   }
   return path.join(os.homedir(), '.nt')
+}
+
+// Detect if a directory is a NoteWriter repository
+function isRepository(dirPath: string): boolean {
+  const ntDir = path.join(dirPath, '.nt')
+  return fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()
+}
+
+// Determine the launch context and return the appropriate config directory
+function determineLaunchContext(): { configDir: string; repositoryPath: string | null } {
+  // Check if a directory argument was provided (process.argv[1] is the script, [2] is first arg)
+  const args = process.argv.slice(2) // Skip 'electron' and script path
+  if (args.length > 0 && fs.existsSync(args[0])) {
+    const argPath = path.resolve(args[0])
+    if (fs.statSync(argPath).isDirectory() && isRepository(argPath)) {
+      console.log(`Launched with repository argument: ${argPath}`)
+      return { configDir: path.join(argPath, '.nt'), repositoryPath: argPath }
+    }
+  }
+
+  // Check if current working directory is a repository
+  const cwd = process.cwd()
+  if (isRepository(cwd)) {
+    console.log(`Launched from repository: ${cwd}`)
+    return { configDir: path.join(cwd, '.nt'), repositoryPath: cwd }
+  }
+
+  // Default: use NT_HOME or ~/.nt
+  console.log('Launched in standard mode')
+  return { configDir: homeDir(), repositoryPath: null }
 }
 
 export default class ConfigManager {
@@ -50,7 +89,11 @@ export default class ConfigManager {
 
   // Async factory method for creating ConfigManager
   static async create(): Promise<ConfigManager> {
-    const staticConfig = await ConfigManager.#readStaticConfig()
+    // Determine launch context
+    const { configDir, repositoryPath } = determineLaunchContext()
+    configDirectory = configDir
+
+    const staticConfig = await ConfigManager.#readStaticConfig(repositoryPath)
     const dynamicConfig = await ConfigManager.#readDynamicConfig()
 
     // Create instance manually to avoid calling constructor
@@ -67,15 +110,32 @@ export default class ConfigManager {
     return instance
   }
 
-  static async #readStaticConfig(): Promise<EditorStaticConfig> {
+  static async #readStaticConfig(repositoryPath: string | null): Promise<EditorStaticConfig> {
     const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet')
 
+    // If launched from a repository, check for .nt/editorconfig.jsonnet
+    // If it doesn't exist, generate an in-memory config
+    if (repositoryPath) {
+      if (fs.existsSync(homeConfigPath)) {
+        console.log(`Reading configuration from ${homeConfigPath}`)
+        return await ConfigManager.#evaluateJsonnetConfig(homeConfigPath)
+      } else {
+        console.log(`No editorconfig.jsonnet found in repository, generating in-memory config`)
+        return ConfigManager.#generateDefaultRepositoryConfig(repositoryPath)
+      }
+    }
+
+    // Standard mode: read from NT_HOME or ~/.nt
     if (!fs.existsSync(homeConfigPath)) {
       throw new Error(`No configuration file found. Expected: ${homeConfigPath}`)
     }
 
     console.log(`Reading configuration from ${homeConfigPath}`)
+    return await ConfigManager.#evaluateJsonnetConfig(homeConfigPath)
+  }
 
+  // Evaluate a Jsonnet configuration file
+  static async #evaluateJsonnetConfig(configPath: string): Promise<EditorStaticConfig> {
     // Several solutions exist to evaluate Jsonnet files in Node.js:
     // * Use a WebAssembly to run the Jsonnet VM in the browser (no popular library found)
     // * Use a native Node.js addon (ex: https://github.com/hanazuki/node-jsonnet but many issues after every upgrade of cmake)
@@ -84,7 +144,7 @@ export default class ConfigManager {
 
     try {
       // Execute jsonnet binary from PATH
-      const { stdout } = await execFileAsync('jsonnet', [homeConfigPath])
+      const { stdout } = await execFileAsync('jsonnet', [configPath])
       const config = JSON.parse(stdout) as EditorStaticConfig
       return ConfigManager.#applyDefaultStaticConfig(config)
     } catch (error: any) {
@@ -95,6 +155,21 @@ export default class ConfigManager {
       }
       throw new Error(`Failed to evaluate Jsonnet file: ${error.message}`)
     }
+  }
+
+  // Generate a default configuration for a single repository
+  static #generateDefaultRepositoryConfig(repositoryPath: string): EditorStaticConfig {
+    const config: EditorStaticConfig = {
+      repositories: [
+        {
+          name: 'Default',
+          slug: 'default',
+          path: repositoryPath,
+          selected: true
+        }
+      ]
+    }
+    return ConfigManager.#applyDefaultStaticConfig(config)
   }
 
   static async #readDynamicConfig(): Promise<EditorDynamicConfig> {

@@ -414,7 +414,7 @@ function CommandMenu({
               </>
             )}
 
-            {!page && (
+            {!page && repositories.length > 1 && (
               <Command.Item
                 onSelect={() => {
                   setPages([...pages, 'repositories'])
@@ -922,16 +922,17 @@ function Main() {
           />
         </form>
         <nav className="RepositoryButtonGroup">
-          {staticConfig.repositories.map((repository: RepositoryRefConfig) => (
-            <button
-              type="button"
-              key={repository.name}
-              className={classNames({ selected: repository.selected })}
-              onClick={() => handleRepositoryToggle(repository.slug)}
-            >
-              {repository.name}
-            </button>
-          ))}
+          {staticConfig.repositories.length > 1 &&
+            staticConfig.repositories.map((repository: RepositoryRefConfig) => (
+              <button
+                type="button"
+                key={repository.name}
+                className={classNames({ selected: repository.selected })}
+                onClick={() => handleRepositoryToggle(repository.slug)}
+              >
+                {repository.name}
+              </button>
+            ))}
         </nav>
         <NotificationsStatus />
       </header>
