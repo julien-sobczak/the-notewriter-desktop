@@ -31,7 +31,7 @@ jobs:
             platform: darwin
             arch: x64
             artifact_name: the-notewriter-desktop-darwin-amd64.dmg
-            build_command: npm run build:mac
+            build_command: npm run build:mac -- --arch=x64
 
           # macOS (arm64)
           - os: macos-latest
