@@ -72,6 +72,12 @@ jobs:
             # macOS DMG
             ARTIFACT=$(find dist -name "*.dmg" | head -n 1)
           fi
+          
+          if [ -z "$ARTIFACT" ]; then
+            echo "Error: No artifact found for platform ${{ matrix.platform }}"
+            exit 1
+          fi
+          
           echo "artifact_path=$ARTIFACT" >> $GITHUB_OUTPUT
           echo "Found artifact: $ARTIFACT"
 

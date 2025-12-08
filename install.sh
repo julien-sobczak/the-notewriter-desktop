@@ -4,16 +4,6 @@
 
 set -e
 
-if ! command -v tar >/dev/null; then
-	echo "Error: tar is required to install The NoteWriter Desktop." 1>&2
-	exit 1
-fi
-
-if ! command -v unzip >/dev/null; then
-	echo "Error: unzip is required to install The NoteWriter Desktop." 1>&2
-	exit 1
-fi
-
 if [ "$OS" = "Windows_NT" ]; then
 	platform="windows"
 	arch="amd64"
@@ -54,7 +44,10 @@ if [ ! -d "$bin_dir" ]; then
 fi
 
 echo "Downloading The NoteWriter Desktop from $nt_desktop_uri..."
-curl --fail --location --progress-bar --output "$bin_dir/the-notewriter-desktop.${ext}" "$nt_desktop_uri"
+if ! curl --fail --location --progress-bar --output "$bin_dir/the-notewriter-desktop.${ext}" "$nt_desktop_uri"; then
+	echo "Error: Failed to download The NoteWriter Desktop from $nt_desktop_uri" 1>&2
+	exit 1
+fi
 
 if [ "$platform" = "linux" ]; then
 	# Make AppImage executable
