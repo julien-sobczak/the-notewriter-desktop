@@ -8,7 +8,7 @@ type RenderedNotesTabProps = {
   query: string
 }
 
-function RenderedNotesTab({ title, notes: noteRefs, query }: RenderedNotesTabProps) {
+function RenderedNotesTab({ notes: noteRefs, query }: RenderedNotesTabProps) {
   const [notes, setNotes] = useState<Note[]>([])
 
   useEffect(() => {

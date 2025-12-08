@@ -289,8 +289,8 @@ app.whenReady().then(async () => {
     const query: Query = {
       q: dailyQuote.query,
       repositories: dailyQuote.repositories,
-      blockId: undefined,
-      deskId: undefined,
+      blockOid: undefined,
+      deskOid: undefined,
       limit: 0,
       shuffle: false
     }
