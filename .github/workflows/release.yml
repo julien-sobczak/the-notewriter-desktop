@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          # Windows (amd64)
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            artifact_name: the-notewriter-desktop-windows-amd64.exe
+            build_command: npm run build:win
+
+          # Linux (amd64)
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            artifact_name: the-notewriter-desktop-linux-amd64.AppImage
+            build_command: npm run build:linux
+
+          # macOS (amd64)
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+            artifact_name: the-notewriter-desktop-darwin-amd64.dmg
+            build_command: npm run build:mac
+
+          # macOS (arm64)
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            artifact_name: the-notewriter-desktop-darwin-arm64.dmg
+            build_command: npm run build:mac -- --arch=arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: ${{ matrix.build_command }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find built artifacts
+        id: find_artifacts
+        shell: bash
+        run: |
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            # Windows NSIS installer
+            ARTIFACT=$(find dist -name "*.exe" | head -n 1)
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            # Linux AppImage
+            ARTIFACT=$(find dist -name "*.AppImage" | head -n 1)
+          elif [ "${{ matrix.platform }}" = "darwin" ]; then
+            # macOS DMG
+            ARTIFACT=$(find dist -name "*.dmg" | head -n 1)
+          fi
+          echo "artifact_path=$ARTIFACT" >> $GITHUB_OUTPUT
+          echo "Found artifact: $ARTIFACT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ steps.find_artifacts.outputs.artifact_path }}
+
+  create-release:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
