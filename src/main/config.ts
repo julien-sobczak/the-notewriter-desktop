@@ -17,16 +17,21 @@ import { normalizePath } from './util'
 
 const execFileAsync = promisify(execFile)
 
-// Global variable to store the config directory path
-// This is set during ConfigManager.create() based on launch context
-let configDirectory: string | null = null
+// Module-level state to store the active config directory path.
+// This is initialized once during ConfigManager.create() and determines where
+// configuration files are read from and saved to. It enables the homeDir()
+// function to return the correct path based on the launch context without
+// requiring all callers to pass the ConfigManager instance.
+let activeConfigDirectory: string | null = null
 
-// Returns the configuration directory based on launch context
+// Returns the configuration directory based on launch context.
+// This function's behavior is determined by activeConfigDirectory which is set
+// during ConfigManager.create() based on how the application was launched:
 // - If launched from within a repository or with a directory argument: <repo>/.nt
-// - Otherwise: $NT_HOME or ~/.nt
+// - Otherwise: $NT_HOME or ~/.nt (standard mode)
 export function homeDir() {
-  if (configDirectory) {
-    return configDirectory
+  if (activeConfigDirectory) {
+    return activeConfigDirectory
   }
   console.log(`NT_HOME is set to ${process.env.NT_HOME}`)
   if (process.env.NT_HOME) {
@@ -43,8 +48,11 @@ function isRepository(dirPath: string): boolean {
 
 // Determine the launch context and return the appropriate config directory
 function determineLaunchContext(): { configDir: string; repositoryPath: string | null } {
-  // Check if a directory argument was provided (process.argv[1] is the script, [2] is first arg)
-  const args = process.argv.slice(2) // Skip 'electron' and script path
+  // Check if a directory argument was provided
+  // process.argv[0] = node/electron executable
+  // process.argv[1] = script path (main.js)
+  // process.argv[2+] = user arguments
+  const args = process.argv.slice(2)
   if (args.length > 0 && fs.existsSync(args[0])) {
     const argPath = path.resolve(args[0])
     if (fs.statSync(argPath).isDirectory() && isRepository(argPath)) {
@@ -91,7 +99,7 @@ export default class ConfigManager {
   static async create(): Promise<ConfigManager> {
     // Determine launch context
     const { configDir, repositoryPath } = determineLaunchContext()
-    configDirectory = configDir
+    activeConfigDirectory = configDir
 
     const staticConfig = await ConfigManager.#readStaticConfig(repositoryPath)
     const dynamicConfig = await ConfigManager.#readDynamicConfig()
