@@ -54,6 +54,18 @@ mkdir -p ~/.local/bin
 mv nt-desktop.AppImage ~/.local/bin/nt-desktop
 ```
 
+## Releasing
+
+Create a tag in [GitHub](https://github.com/julien-sobczak/the-notewriter-desktop/tags) or run the commands locally:
+
+```bash
+# Trigger release
+$ git tag v0.1.0 && git push origin v0.1.0
+
+# Install latest
+$ curl -fsSL https://raw.githubusercontent.com/julien-sobczak/the-notewriter-desktop/main/install.sh | sh
+```
+
 ## Development
 
 ### Install
