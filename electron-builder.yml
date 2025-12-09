@@ -14,13 +14,11 @@ asarUnpack:
 win:
   executableName: the-notewriter-desktop
 nsis:
-  artifactName: ${name}-windows-amd64.${ext}
+  artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
-  target:
-    - dmg
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -29,14 +27,16 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: ${name}-darwin-${arch}.${ext}
+  artifactName: ${name}-${version}.${ext}
 linux:
   target:
     - AppImage
+    - snap
+    - deb
   maintainer: electronjs.org
   category: Utility
 appImage:
-  artifactName: ${name}-linux-${arch}.${ext}
+  artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
   provider: generic

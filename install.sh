@@ -4,24 +4,18 @@ set -e
 
 if [ "$OS" = "Windows_NT" ]; then
 	platform="windows"
-	arch="amd64"
 	ext="exe"
 else
 	case $(uname -s) in
 	"Darwin")
 		platform="darwin"
-		case $(uname -m) in
-		"arm64") arch="arm64" ;;
-		*) arch="amd64" ;;
-		esac
 		ext="dmg"
 		;;
 	"Linux")
 		platform="linux"
-		arch="amd64"
 		ext="AppImage"
 		;;
-	*) 
+	*)
 		echo "Error: Unsupported platform $(uname -s)" 1>&2
 		exit 1
 		;;
@@ -29,9 +23,9 @@ else
 fi
 
 if [ $# -eq 0 ]; then
-	nt_desktop_uri="https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-${platform}-${arch}.${ext}"
+	nt_desktop_uri="https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-${platform}-amd64.${ext}"
 else
-	nt_desktop_uri="https://github.com/julien-sobczak/the-notewriter-desktop/releases/download/${1}/the-notewriter-desktop-${platform}-${arch}.${ext}"
+	nt_desktop_uri="https://github.com/julien-sobczak/the-notewriter-desktop/releases/download/${1}/the-notewriter-desktop-${platform}-amd64.${ext}"
 fi
 
 nt_desktop_install="${NT_DESKTOP_INSTALL:-$HOME/.nt-desktop}"
@@ -55,7 +49,7 @@ if [ "$platform" = "linux" ]; then
 	echo ""
 	echo "The NoteWriter Desktop was installed successfully to $bin_dir"
 	echo ""
-	
+
 	if command -v nt-desktop >/dev/null; then
 		echo "Run 'nt-desktop' to get started"
 	else
