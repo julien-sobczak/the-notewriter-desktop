@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
 import path, { join } from 'path'
 import fs from 'fs'
+import os from 'os'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import ConfigManager from './config'
@@ -29,11 +30,80 @@ let db: DatabaseManager
 let op: OperationsManager
 let configSaved = false // true after saving configuration back to file before closing the application
 
+// Check if we are inside a repository by walking up the directory tree
+// Returns the repository root path if found, empty string otherwise
+function insideRepository(): string {
+  const homeDir = os.homedir()
+  let currentDir = process.cwd()
+
+  // Walk up the directory tree
+  while (currentDir !== '/' && currentDir !== homeDir) {
+    const ntDir = path.join(currentDir, '.nt')
+    const configFile = path.join(ntDir, 'config.jsonnet')
+
+    // Check if .nt directory exists and contains editorconfig.jsonnet
+    if (fs.existsSync(ntDir) && fs.existsSync(configFile)) {
+      // We found a valid .nt directory, return this as the repository root
+      return currentDir
+    }
+
+    // Move to parent directory
+    const parentDir = path.dirname(currentDir)
+
+    // Prevent infinite loop if dirname returns the same path
+    if (parentDir === currentDir) {
+      break
+    }
+
+    currentDir = parentDir
+  }
+
+  return ''
+}
+
 // Initialize configuration asynchronously
 async function initializeConfig() {
-  config = await ConfigManager.create()
+  // Determine launch context and create appropriate ConfigManager
+  // Check if a directory argument was provided
+  // process.argv[0] = node/electron executable
+  // process.argv[1] = script path (main.js)
+  // process.argv[2+] = user arguments
+  const args = process.argv.slice(2)
+
+  if (args.length > 0 && fs.existsSync(args[0])) {
+    const argPath = path.resolve(args[0])
+    if (fs.statSync(argPath).isDirectory()) {
+      const ntDir = path.join(argPath, '.nt')
+      if (fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()) {
+        console.log(`Launched with repository argument: ${argPath}`)
+        config = await ConfigManager.createFromRepository(argPath)
+        return
+      }
+    }
+  }
+
+  // Check if current working directory or parent is a repository
+  const repositoryPath = insideRepository()
+  if (repositoryPath) {
+    console.log(`Launched from repository: ${repositoryPath}`)
+    config = await ConfigManager.createFromRepository(repositoryPath)
+    return
+  }
+
+  // Default: use NT_HOME or ~/.nt (multi-repository mode)
+  console.log('Launched in standard mode')
+  const ntHome = process.env.NT_HOME || path.join(os.homedir(), '.nt')
+  config = await ConfigManager.create(ntHome)
+}
+
+// Initialize database asynchronously
+async function initializeDatabase() {
   db = await DatabaseManager.create()
   config.repositories().forEach((repository) => db.registerRepository(repository))
+}
+
+// Initialize operations asynchronously
+async function initializeOperations() {
   op = await OperationsManager.create()
   config.repositories().forEach((repository) => op.registerRepository(repository))
 }
@@ -127,6 +197,8 @@ app.whenReady().then(async () => {
 
   // Initialize config first
   await initializeConfig()
+  await initializeDatabase()
+  await initializeOperations()
 
   // Global shortcut are activated even when the window has not the focus
   globalShortcut.register('Alt+Space', () => {
@@ -289,8 +361,8 @@ app.whenReady().then(async () => {
     const query: Query = {
       q: dailyQuote.query,
       repositories: dailyQuote.repositories,
-      blockId: undefined,
-      deskId: undefined,
+      blockOid: undefined,
+      deskOid: undefined,
       limit: 0,
       shuffle: false
     }

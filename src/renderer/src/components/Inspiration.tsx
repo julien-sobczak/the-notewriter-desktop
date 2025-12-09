@@ -12,8 +12,8 @@ function extractQuery(inspiration: InspirationConfig): Query {
   const result: Query = {
     q: inspiration.query,
     repositories: inspiration.repositories ? inspiration.repositories : [],
-    deskId: undefined,
-    blockId: undefined,
+    deskOid: undefined,
+    blockOid: undefined,
     limit: 1000, // 1000 notes must be enough
     shuffle: true // Important!
   }

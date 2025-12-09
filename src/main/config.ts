@@ -17,15 +17,6 @@ import { normalizePath } from './util'
 
 const execFileAsync = promisify(execFile)
 
-// Returns the home directory except if the environment variable $NT_HOME is set.
-export function homeDir() {
-  console.log(`NT_HOME is set to ${process.env.NT_HOME}`)
-  if (process.env.NT_HOME) {
-    return process.env.NT_HOME
-  }
-  return path.join(os.homedir(), '.nt')
-}
-
 export default class ConfigManager {
   // Static (~/.nt/editorconfig.jsonnet), Dynamic (~/.nt/editorconfig.json) or Collection (.nt/config)?
   //
@@ -44,38 +35,76 @@ export default class ConfigManager {
 
   repositoryConfigs: { [key: string]: RepositoryConfig } = {}
 
-  private constructor() {
-    // Private constructor to enforce use of create() factory method
+  // Configuration directory path where editorconfig.jsonnet and editorconfig.json are stored
+  configDir!: string
+
+  constructor() {
+    // Public constructor
   }
 
-  // Async factory method for creating ConfigManager
-  static async create(): Promise<ConfigManager> {
-    const staticConfig = await ConfigManager.#readStaticConfig()
-    const dynamicConfig = await ConfigManager.#readDynamicConfig()
+  // Create ConfigManager for single repository mode
+  // repositoryPath: absolute path to the repository directory
+  static async createFromRepository(repositoryPath: string): Promise<ConfigManager> {
+    const configDir = path.join(repositoryPath, '.nt')
+    const configPath = path.join(configDir, 'editorconfig.jsonnet')
 
-    // Create instance manually to avoid calling constructor
-    const instance = Object.create(ConfigManager.prototype)
+    const instance = new ConfigManager()
+    instance.configDir = configDir
+
+    let staticConfig: EditorStaticConfig
+    if (fs.existsSync(configPath)) {
+      console.log(`Reading configuration from ${configPath}`)
+      staticConfig = await instance.#evaluateJsonnetConfig(configPath)
+    } else {
+      console.log(`No editorconfig.jsonnet found in repository, generating in-memory config`)
+      staticConfig = ConfigManager.#generateDefaultRepositoryConfig(repositoryPath)
+    }
+
+    const dynamicConfig = await instance.#readDynamicConfig()
+    
     instance.editorStaticConfig = staticConfig
     instance.editorDynamicConfig = dynamicConfig
     instance.repositoryConfigs = {}
 
     for (const repositoryConfig of instance.editorStaticConfig.repositories) {
       instance.repositoryConfigs[repositoryConfig.slug] =
-        await ConfigManager.#readRepositoryConfig(repositoryConfig)
+        await instance.#readRepositoryConfig(repositoryConfig)
     }
 
     return instance
   }
 
-  static async #readStaticConfig(): Promise<EditorStaticConfig> {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet')
+  // Create ConfigManager for multi repository mode
+  // configPath: absolute path to the directory containing editorconfig.jsonnet (typically $NT_HOME)
+  static async create(configPath: string): Promise<ConfigManager> {
+    const configFile = path.join(configPath, 'editorconfig.jsonnet')
 
-    if (!fs.existsSync(homeConfigPath)) {
-      throw new Error(`No configuration file found. Expected: ${homeConfigPath}`)
+    if (!fs.existsSync(configFile)) {
+      throw new Error(`No configuration file found. Expected: ${configFile}`)
     }
 
-    console.log(`Reading configuration from ${homeConfigPath}`)
+    console.log(`Reading configuration from ${configFile}`)
+    
+    const instance = new ConfigManager()
+    instance.configDir = configPath
 
+    const staticConfig = await instance.#evaluateJsonnetConfig(configFile)
+    const dynamicConfig = await instance.#readDynamicConfig()
+
+    instance.editorStaticConfig = staticConfig
+    instance.editorDynamicConfig = dynamicConfig
+    instance.repositoryConfigs = {}
+
+    for (const repositoryConfig of instance.editorStaticConfig.repositories) {
+      instance.repositoryConfigs[repositoryConfig.slug] =
+        await instance.#readRepositoryConfig(repositoryConfig)
+    }
+
+    return instance
+  }
+
+  // Evaluate a Jsonnet configuration file
+  async #evaluateJsonnetConfig(configPath: string): Promise<EditorStaticConfig> {
     // Several solutions exist to evaluate Jsonnet files in Node.js:
     // * Use a WebAssembly to run the Jsonnet VM in the browser (no popular library found)
     // * Use a native Node.js addon (ex: https://github.com/hanazuki/node-jsonnet but many issues after every upgrade of cmake)
@@ -84,7 +113,7 @@ export default class ConfigManager {
 
     try {
       // Execute jsonnet binary from PATH
-      const { stdout } = await execFileAsync('jsonnet', [homeConfigPath])
+      const { stdout } = await execFileAsync('jsonnet', [configPath])
       const config = JSON.parse(stdout) as EditorStaticConfig
       return ConfigManager.#applyDefaultStaticConfig(config)
     } catch (error: any) {
@@ -97,9 +126,24 @@ export default class ConfigManager {
     }
   }
 
-  static async #readDynamicConfig(): Promise<EditorDynamicConfig> {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
-    if (!fs.existsSync(homeConfigPath)) {
+  // Generate a default configuration for a single repository
+  static #generateDefaultRepositoryConfig(repositoryPath: string): EditorStaticConfig {
+    const config: EditorStaticConfig = {
+      repositories: [
+        {
+          name: 'Default',
+          slug: 'default',
+          path: repositoryPath,
+          selected: true
+        }
+      ]
+    }
+    return ConfigManager.#applyDefaultStaticConfig(config)
+  }
+
+  async #readDynamicConfig(): Promise<EditorDynamicConfig> {
+    const dynamicConfigPath = path.join(this.configDir, 'editorconfig.json')
+    if (!fs.existsSync(dynamicConfigPath)) {
       // Define default configuration
       return {
         desks: [],
@@ -109,16 +153,14 @@ export default class ConfigManager {
       } as EditorDynamicConfig
     }
 
-    const data = fs.readFileSync(homeConfigPath, 'utf8')
-    console.log(`Reading dynamic configuration from ${homeConfigPath}...`)
+    const data = fs.readFileSync(dynamicConfigPath, 'utf8')
+    console.log(`Reading dynamic configuration from ${dynamicConfigPath}...`)
     const config = JSON.parse(data) as EditorDynamicConfig
     console.log(data, config)
     return config
   }
 
-  static async #readRepositoryConfig(
-    repositoryRef: RepositoryRefConfig
-  ): Promise<RepositoryConfig> {
+  async #readRepositoryConfig(repositoryRef: RepositoryRefConfig): Promise<RepositoryConfig> {
     const repositoryPath = normalizePath(repositoryRef.path)
     const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json')
     if (!fs.existsSync(repositoryConfigPath)) {
@@ -188,11 +230,11 @@ export default class ConfigManager {
   }
 
   save(config: EditorDynamicConfig) {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
-    console.log(`Saving ${homeConfigPath}...`)
+    const configPath = path.join(this.configDir, 'editorconfig.json')
+    console.log(`Saving ${configPath}...`)
     const content = JSON.stringify(config)
     console.log(content)
-    fs.writeFile(homeConfigPath, content, (err) => {
+    fs.writeFile(configPath, content, (err) => {
       if (err) {
         console.error(err)
       }

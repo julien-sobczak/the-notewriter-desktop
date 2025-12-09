@@ -23,8 +23,8 @@ function extractQueries(zenMode: ZenConfig | undefined): Query[] {
     results.push({
       q: zenQuery.query,
       repositories: zenQuery.repositories ? zenQuery.repositories : [],
-      deskId: undefined,
-      blockId: undefined,
+      deskOid: undefined,
+      blockOid: undefined,
       limit: 1000, // 1000 notes must be enough
       shuffle: true // Important!
     })

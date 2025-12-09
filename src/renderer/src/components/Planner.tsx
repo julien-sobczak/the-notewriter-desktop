@@ -15,8 +15,8 @@ async function searchItems(repositorySlugs: string[], query: string): Promise<Ka
   const results: QueryResult = await window.api.search({
     q: query,
     repositories: repositorySlugs,
-    deskId: null,
-    blockId: null,
+    deskOid: null,
+    blockOid: null,
     limit: 0,
     shuffle: false
   })

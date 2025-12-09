@@ -32,8 +32,8 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
       const results: QueryResult = await window.api.search({
         q: '#bookmark',
         repositories: selectedRepositorySlugs,
-        deskId: null,
-        blockId: null,
+        deskOid: null,
+        blockOid: null,
         limit: 0,
         shuffle: false
       })
