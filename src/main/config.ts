@@ -17,60 +17,10 @@ import { normalizePath } from './util'
 
 const execFileAsync = promisify(execFile)
 
-// Module-level state to store the active config directory path.
-// This is initialized once during ConfigManager.create() and determines where
-// configuration files are read from and saved to. It enables the homeDir()
-// function to return the correct path based on the launch context without
-// requiring all callers to pass the ConfigManager instance.
-let activeConfigDirectory: string | null = null
-
-// Returns the configuration directory based on launch context.
-// This function's behavior is determined by activeConfigDirectory which is set
-// during ConfigManager.create() based on how the application was launched:
-// - If launched from within a repository or with a directory argument: <repo>/.nt
-// - Otherwise: $NT_HOME or ~/.nt (standard mode)
-export function homeDir() {
-  if (activeConfigDirectory) {
-    return activeConfigDirectory
-  }
-  console.log(`NT_HOME is set to ${process.env.NT_HOME}`)
-  if (process.env.NT_HOME) {
-    return process.env.NT_HOME
-  }
-  return path.join(os.homedir(), '.nt')
-}
-
 // Detect if a directory is a NoteWriter repository
-function isRepository(dirPath: string): boolean {
+export function isRepository(dirPath: string): boolean {
   const ntDir = path.join(dirPath, '.nt')
   return fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()
-}
-
-// Determine the launch context and return the appropriate config directory
-function determineLaunchContext(): { configDir: string; repositoryPath: string | null } {
-  // Check if a directory argument was provided
-  // process.argv[0] = node/electron executable
-  // process.argv[1] = script path (main.js)
-  // process.argv[2+] = user arguments
-  const args = process.argv.slice(2)
-  if (args.length > 0 && fs.existsSync(args[0])) {
-    const argPath = path.resolve(args[0])
-    if (fs.statSync(argPath).isDirectory() && isRepository(argPath)) {
-      console.log(`Launched with repository argument: ${argPath}`)
-      return { configDir: path.join(argPath, '.nt'), repositoryPath: argPath }
-    }
-  }
-
-  // Check if current working directory is a repository
-  const cwd = process.cwd()
-  if (isRepository(cwd)) {
-    console.log(`Launched from repository: ${cwd}`)
-    return { configDir: path.join(cwd, '.nt'), repositoryPath: cwd }
-  }
-
-  // Default: use NT_HOME or ~/.nt
-  console.log('Launched in standard mode')
-  return { configDir: homeDir(), repositoryPath: null }
 }
 
 export default class ConfigManager {
@@ -91,55 +41,71 @@ export default class ConfigManager {
 
   repositoryConfigs: { [key: string]: RepositoryConfig } = {}
 
+  // Configuration directory path where editorconfig.jsonnet and editorconfig.json are stored
+  configDir!: string
+
   private constructor() {
-    // Private constructor to enforce use of create() factory method
+    // Private constructor to enforce use of createMono() or createMulti() factory methods
   }
 
-  // Async factory method for creating ConfigManager
-  static async create(): Promise<ConfigManager> {
-    // Determine launch context
-    const { configDir, repositoryPath } = determineLaunchContext()
-    activeConfigDirectory = configDir
+  // Create ConfigManager for single repository mode
+  // repositoryPath: absolute path to the repository directory
+  static async createMono(repositoryPath: string): Promise<ConfigManager> {
+    const configDir = path.join(repositoryPath, '.nt')
+    const configPath = path.join(configDir, 'editorconfig.jsonnet')
 
-    const staticConfig = await ConfigManager.#readStaticConfig(repositoryPath)
-    const dynamicConfig = await ConfigManager.#readDynamicConfig()
+    let staticConfig: EditorStaticConfig
+    if (fs.existsSync(configPath)) {
+      console.log(`Reading configuration from ${configPath}`)
+      staticConfig = await ConfigManager.#evaluateJsonnetConfig(configPath)
+    } else {
+      console.log(`No editorconfig.jsonnet found in repository, generating in-memory config`)
+      staticConfig = ConfigManager.#generateDefaultRepositoryConfig(repositoryPath)
+    }
 
-    // Create instance manually to avoid calling constructor
+    const dynamicConfig = await ConfigManager.#readDynamicConfig(configDir)
+
+    // Create instance
     const instance = Object.create(ConfigManager.prototype)
+    instance.configDir = configDir
     instance.editorStaticConfig = staticConfig
     instance.editorDynamicConfig = dynamicConfig
     instance.repositoryConfigs = {}
 
     for (const repositoryConfig of instance.editorStaticConfig.repositories) {
       instance.repositoryConfigs[repositoryConfig.slug] =
-        await ConfigManager.#readRepositoryConfig(repositoryConfig)
+        await instance.#readRepositoryConfig(repositoryConfig)
     }
 
     return instance
   }
 
-  static async #readStaticConfig(repositoryPath: string | null): Promise<EditorStaticConfig> {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.jsonnet')
+  // Create ConfigManager for multi repository mode
+  // configPath: absolute path to the directory containing editorconfig.jsonnet (typically $NT_HOME)
+  static async createMulti(configPath: string): Promise<ConfigManager> {
+    const configFile = path.join(configPath, 'editorconfig.jsonnet')
 
-    // If launched from a repository, check for .nt/editorconfig.jsonnet
-    // If it doesn't exist, generate an in-memory config
-    if (repositoryPath) {
-      if (fs.existsSync(homeConfigPath)) {
-        console.log(`Reading configuration from ${homeConfigPath}`)
-        return await ConfigManager.#evaluateJsonnetConfig(homeConfigPath)
-      } else {
-        console.log(`No editorconfig.jsonnet found in repository, generating in-memory config`)
-        return ConfigManager.#generateDefaultRepositoryConfig(repositoryPath)
-      }
+    if (!fs.existsSync(configFile)) {
+      throw new Error(`No configuration file found. Expected: ${configFile}`)
     }
 
-    // Standard mode: read from NT_HOME or ~/.nt
-    if (!fs.existsSync(homeConfigPath)) {
-      throw new Error(`No configuration file found. Expected: ${homeConfigPath}`)
+    console.log(`Reading configuration from ${configFile}`)
+    const staticConfig = await ConfigManager.#evaluateJsonnetConfig(configFile)
+    const dynamicConfig = await ConfigManager.#readDynamicConfig(configPath)
+
+    // Create instance
+    const instance = Object.create(ConfigManager.prototype)
+    instance.configDir = configPath
+    instance.editorStaticConfig = staticConfig
+    instance.editorDynamicConfig = dynamicConfig
+    instance.repositoryConfigs = {}
+
+    for (const repositoryConfig of instance.editorStaticConfig.repositories) {
+      instance.repositoryConfigs[repositoryConfig.slug] =
+        await instance.#readRepositoryConfig(repositoryConfig)
     }
 
-    console.log(`Reading configuration from ${homeConfigPath}`)
-    return await ConfigManager.#evaluateJsonnetConfig(homeConfigPath)
+    return instance
   }
 
   // Evaluate a Jsonnet configuration file
@@ -180,9 +146,9 @@ export default class ConfigManager {
     return ConfigManager.#applyDefaultStaticConfig(config)
   }
 
-  static async #readDynamicConfig(): Promise<EditorDynamicConfig> {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
-    if (!fs.existsSync(homeConfigPath)) {
+  static async #readDynamicConfig(configDir: string): Promise<EditorDynamicConfig> {
+    const dynamicConfigPath = path.join(configDir, 'editorconfig.json')
+    if (!fs.existsSync(dynamicConfigPath)) {
       // Define default configuration
       return {
         desks: [],
@@ -192,16 +158,14 @@ export default class ConfigManager {
       } as EditorDynamicConfig
     }
 
-    const data = fs.readFileSync(homeConfigPath, 'utf8')
-    console.log(`Reading dynamic configuration from ${homeConfigPath}...`)
+    const data = fs.readFileSync(dynamicConfigPath, 'utf8')
+    console.log(`Reading dynamic configuration from ${dynamicConfigPath}...`)
     const config = JSON.parse(data) as EditorDynamicConfig
     console.log(data, config)
     return config
   }
 
-  static async #readRepositoryConfig(
-    repositoryRef: RepositoryRefConfig
-  ): Promise<RepositoryConfig> {
+  async #readRepositoryConfig(repositoryRef: RepositoryRefConfig): Promise<RepositoryConfig> {
     const repositoryPath = normalizePath(repositoryRef.path)
     const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json')
     if (!fs.existsSync(repositoryConfigPath)) {
@@ -271,11 +235,11 @@ export default class ConfigManager {
   }
 
   save(config: EditorDynamicConfig) {
-    const homeConfigPath = path.join(homeDir(), 'editorconfig.json')
-    console.log(`Saving ${homeConfigPath}...`)
+    const configPath = path.join(this.configDir, 'editorconfig.json')
+    console.log(`Saving ${configPath}...`)
     const content = JSON.stringify(config)
     console.log(content)
-    fs.writeFile(homeConfigPath, content, (err) => {
+    fs.writeFile(configPath, content, (err) => {
       if (err) {
         console.error(err)
       }

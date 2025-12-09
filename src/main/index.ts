@@ -1,9 +1,10 @@
 import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
 import path, { join } from 'path'
 import fs from 'fs'
+import os from 'os'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import ConfigManager from './config'
+import ConfigManager, { isRepository } from './config'
 import DatabaseManager from './database'
 import OperationsManager from './operations'
 import { normalizePath } from './util'
@@ -31,7 +32,42 @@ let configSaved = false // true after saving configuration back to file before c
 
 // Initialize configuration asynchronously
 async function initializeConfig() {
-  config = await ConfigManager.create()
+  // Determine launch context and create appropriate ConfigManager
+  // Check if a directory argument was provided
+  // process.argv[0] = node/electron executable
+  // process.argv[1] = script path (main.js)
+  // process.argv[2+] = user arguments
+  const args = process.argv.slice(2)
+  
+  if (args.length > 0 && fs.existsSync(args[0])) {
+    const argPath = path.resolve(args[0])
+    if (fs.statSync(argPath).isDirectory() && isRepository(argPath)) {
+      console.log(`Launched with repository argument: ${argPath}`)
+      config = await ConfigManager.createMono(argPath)
+      db = await DatabaseManager.create()
+      config.repositories().forEach((repository) => db.registerRepository(repository))
+      op = await OperationsManager.create()
+      config.repositories().forEach((repository) => op.registerRepository(repository))
+      return
+    }
+  }
+
+  // Check if current working directory is a repository
+  const cwd = process.cwd()
+  if (isRepository(cwd)) {
+    console.log(`Launched from repository: ${cwd}`)
+    config = await ConfigManager.createMono(cwd)
+    db = await DatabaseManager.create()
+    config.repositories().forEach((repository) => db.registerRepository(repository))
+    op = await OperationsManager.create()
+    config.repositories().forEach((repository) => op.registerRepository(repository))
+    return
+  }
+
+  // Default: use NT_HOME or ~/.nt (multi-repository mode)
+  console.log('Launched in standard mode')
+  const ntHome = process.env.NT_HOME || path.join(os.homedir(), '.nt')
+  config = await ConfigManager.createMulti(ntHome)
   db = await DatabaseManager.create()
   config.repositories().forEach((repository) => db.registerRepository(repository))
   op = await OperationsManager.create()

@@ -33,7 +33,7 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
       durationInMs: completionTime.getTime() - startTime.getTime(),
       completedAt: completionTime.toISOString(),
       dueAt: completionTime.toISOString(),
-      algorithm: 'default', // Default algorithm
+      algorithm: 'nt0',
       settings: flashcard.settings
     })
     setRevealed(false)
