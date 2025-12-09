@@ -1,6 +1,4 @@
 #!/bin/sh
-# Copyright The NoteWriter Desktop authors. All rights reserved.
-# TODO(everyone): Keep this script simple and easily auditable.
 
 set -e
 
