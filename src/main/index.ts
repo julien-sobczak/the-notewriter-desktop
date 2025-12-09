@@ -39,22 +39,22 @@ function insideRepository(): string {
   // Walk up the directory tree
   while (currentDir !== '/' && currentDir !== homeDir) {
     const ntDir = path.join(currentDir, '.nt')
-    const configFile = path.join(ntDir, 'editorconfig.jsonnet')
-    
+    const configFile = path.join(ntDir, 'config.jsonnet')
+
     // Check if .nt directory exists and contains editorconfig.jsonnet
-    if (fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()) {
-      // We found a .nt directory, return this as the repository root
+    if (fs.existsSync(ntDir) && fs.existsSync(configFile)) {
+      // We found a valid .nt directory, return this as the repository root
       return currentDir
     }
-    
+
     // Move to parent directory
     const parentDir = path.dirname(currentDir)
-    
+
     // Prevent infinite loop if dirname returns the same path
     if (parentDir === currentDir) {
       break
     }
-    
+
     currentDir = parentDir
   }
 
@@ -69,7 +69,7 @@ async function initializeConfig() {
   // process.argv[1] = script path (main.js)
   // process.argv[2+] = user arguments
   const args = process.argv.slice(2)
-  
+
   if (args.length > 0 && fs.existsSync(args[0])) {
     const argPath = path.resolve(args[0])
     if (fs.statSync(argPath).isDirectory()) {
