@@ -77,10 +77,6 @@ async function initializeConfig() {
       if (fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()) {
         console.log(`Launched with repository argument: ${argPath}`)
         config = await ConfigManager.createFromRepository(argPath)
-        db = await DatabaseManager.create()
-        config.repositories().forEach((repository) => db.registerRepository(repository))
-        op = await OperationsManager.create()
-        config.repositories().forEach((repository) => op.registerRepository(repository))
         return
       }
     }
@@ -91,10 +87,6 @@ async function initializeConfig() {
   if (repositoryPath) {
     console.log(`Launched from repository: ${repositoryPath}`)
     config = await ConfigManager.createFromRepository(repositoryPath)
-    db = await DatabaseManager.create()
-    config.repositories().forEach((repository) => db.registerRepository(repository))
-    op = await OperationsManager.create()
-    config.repositories().forEach((repository) => op.registerRepository(repository))
     return
   }
 
@@ -102,8 +94,16 @@ async function initializeConfig() {
   console.log('Launched in standard mode')
   const ntHome = process.env.NT_HOME || path.join(os.homedir(), '.nt')
   config = await ConfigManager.create(ntHome)
+}
+
+// Initialize database asynchronously
+async function initializeDatabase() {
   db = await DatabaseManager.create()
   config.repositories().forEach((repository) => db.registerRepository(repository))
+}
+
+// Initialize operations asynchronously
+async function initializeOperations() {
   op = await OperationsManager.create()
   config.repositories().forEach((repository) => op.registerRepository(repository))
 }
@@ -197,6 +197,8 @@ app.whenReady().then(async () => {
 
   // Initialize config first
   await initializeConfig()
+  await initializeDatabase()
+  await initializeOperations()
 
   // Global shortcut are activated even when the window has not the focus
   globalShortcut.register('Alt+Space', () => {
