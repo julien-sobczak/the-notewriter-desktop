@@ -4,7 +4,7 @@ import fs from 'fs'
 import os from 'os'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import ConfigManager, { isRepository } from './config'
+import ConfigManager from './config'
 import DatabaseManager from './database'
 import OperationsManager from './operations'
 import { normalizePath } from './util'
@@ -30,6 +30,37 @@ let db: DatabaseManager
 let op: OperationsManager
 let configSaved = false // true after saving configuration back to file before closing the application
 
+// Check if we are inside a repository by walking up the directory tree
+// Returns the repository root path if found, empty string otherwise
+function insideRepository(): string {
+  const homeDir = os.homedir()
+  let currentDir = process.cwd()
+
+  // Walk up the directory tree
+  while (currentDir !== '/' && currentDir !== homeDir) {
+    const ntDir = path.join(currentDir, '.nt')
+    const configFile = path.join(ntDir, 'editorconfig.jsonnet')
+    
+    // Check if .nt directory exists and contains editorconfig.jsonnet
+    if (fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()) {
+      // We found a .nt directory, return this as the repository root
+      return currentDir
+    }
+    
+    // Move to parent directory
+    const parentDir = path.dirname(currentDir)
+    
+    // Prevent infinite loop if dirname returns the same path
+    if (parentDir === currentDir) {
+      break
+    }
+    
+    currentDir = parentDir
+  }
+
+  return ''
+}
+
 // Initialize configuration asynchronously
 async function initializeConfig() {
   // Determine launch context and create appropriate ConfigManager
@@ -41,22 +72,25 @@ async function initializeConfig() {
   
   if (args.length > 0 && fs.existsSync(args[0])) {
     const argPath = path.resolve(args[0])
-    if (fs.statSync(argPath).isDirectory() && isRepository(argPath)) {
-      console.log(`Launched with repository argument: ${argPath}`)
-      config = await ConfigManager.createMono(argPath)
-      db = await DatabaseManager.create()
-      config.repositories().forEach((repository) => db.registerRepository(repository))
-      op = await OperationsManager.create()
-      config.repositories().forEach((repository) => op.registerRepository(repository))
-      return
+    if (fs.statSync(argPath).isDirectory()) {
+      const ntDir = path.join(argPath, '.nt')
+      if (fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()) {
+        console.log(`Launched with repository argument: ${argPath}`)
+        config = await ConfigManager.createFromRepository(argPath)
+        db = await DatabaseManager.create()
+        config.repositories().forEach((repository) => db.registerRepository(repository))
+        op = await OperationsManager.create()
+        config.repositories().forEach((repository) => op.registerRepository(repository))
+        return
+      }
     }
   }
 
-  // Check if current working directory is a repository
-  const cwd = process.cwd()
-  if (isRepository(cwd)) {
-    console.log(`Launched from repository: ${cwd}`)
-    config = await ConfigManager.createMono(cwd)
+  // Check if current working directory or parent is a repository
+  const repositoryPath = insideRepository()
+  if (repositoryPath) {
+    console.log(`Launched from repository: ${repositoryPath}`)
+    config = await ConfigManager.createFromRepository(repositoryPath)
     db = await DatabaseManager.create()
     config.repositories().forEach((repository) => db.registerRepository(repository))
     op = await OperationsManager.create()
@@ -67,7 +101,7 @@ async function initializeConfig() {
   // Default: use NT_HOME or ~/.nt (multi-repository mode)
   console.log('Launched in standard mode')
   const ntHome = process.env.NT_HOME || path.join(os.homedir(), '.nt')
-  config = await ConfigManager.createMulti(ntHome)
+  config = await ConfigManager.create(ntHome)
   db = await DatabaseManager.create()
   config.repositories().forEach((repository) => db.registerRepository(repository))
   op = await OperationsManager.create()

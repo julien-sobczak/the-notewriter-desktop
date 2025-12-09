@@ -17,12 +17,6 @@ import { normalizePath } from './util'
 
 const execFileAsync = promisify(execFile)
 
-// Detect if a directory is a NoteWriter repository
-export function isRepository(dirPath: string): boolean {
-  const ntDir = path.join(dirPath, '.nt')
-  return fs.existsSync(ntDir) && fs.statSync(ntDir).isDirectory()
-}
-
 export default class ConfigManager {
   // Static (~/.nt/editorconfig.jsonnet), Dynamic (~/.nt/editorconfig.json) or Collection (.nt/config)?
   //
@@ -44,30 +38,30 @@ export default class ConfigManager {
   // Configuration directory path where editorconfig.jsonnet and editorconfig.json are stored
   configDir!: string
 
-  private constructor() {
-    // Private constructor to enforce use of createMono() or createMulti() factory methods
+  constructor() {
+    // Public constructor
   }
 
   // Create ConfigManager for single repository mode
   // repositoryPath: absolute path to the repository directory
-  static async createMono(repositoryPath: string): Promise<ConfigManager> {
+  static async createFromRepository(repositoryPath: string): Promise<ConfigManager> {
     const configDir = path.join(repositoryPath, '.nt')
     const configPath = path.join(configDir, 'editorconfig.jsonnet')
+
+    const instance = new ConfigManager()
+    instance.configDir = configDir
 
     let staticConfig: EditorStaticConfig
     if (fs.existsSync(configPath)) {
       console.log(`Reading configuration from ${configPath}`)
-      staticConfig = await ConfigManager.#evaluateJsonnetConfig(configPath)
+      staticConfig = await instance.#evaluateJsonnetConfig(configPath)
     } else {
       console.log(`No editorconfig.jsonnet found in repository, generating in-memory config`)
       staticConfig = ConfigManager.#generateDefaultRepositoryConfig(repositoryPath)
     }
 
-    const dynamicConfig = await ConfigManager.#readDynamicConfig(configDir)
-
-    // Create instance
-    const instance = Object.create(ConfigManager.prototype)
-    instance.configDir = configDir
+    const dynamicConfig = await instance.#readDynamicConfig()
+    
     instance.editorStaticConfig = staticConfig
     instance.editorDynamicConfig = dynamicConfig
     instance.repositoryConfigs = {}
@@ -82,7 +76,7 @@ export default class ConfigManager {
 
   // Create ConfigManager for multi repository mode
   // configPath: absolute path to the directory containing editorconfig.jsonnet (typically $NT_HOME)
-  static async createMulti(configPath: string): Promise<ConfigManager> {
+  static async create(configPath: string): Promise<ConfigManager> {
     const configFile = path.join(configPath, 'editorconfig.jsonnet')
 
     if (!fs.existsSync(configFile)) {
@@ -90,12 +84,13 @@ export default class ConfigManager {
     }
 
     console.log(`Reading configuration from ${configFile}`)
-    const staticConfig = await ConfigManager.#evaluateJsonnetConfig(configFile)
-    const dynamicConfig = await ConfigManager.#readDynamicConfig(configPath)
-
-    // Create instance
-    const instance = Object.create(ConfigManager.prototype)
+    
+    const instance = new ConfigManager()
     instance.configDir = configPath
+
+    const staticConfig = await instance.#evaluateJsonnetConfig(configFile)
+    const dynamicConfig = await instance.#readDynamicConfig()
+
     instance.editorStaticConfig = staticConfig
     instance.editorDynamicConfig = dynamicConfig
     instance.repositoryConfigs = {}
@@ -109,7 +104,7 @@ export default class ConfigManager {
   }
 
   // Evaluate a Jsonnet configuration file
-  static async #evaluateJsonnetConfig(configPath: string): Promise<EditorStaticConfig> {
+  async #evaluateJsonnetConfig(configPath: string): Promise<EditorStaticConfig> {
     // Several solutions exist to evaluate Jsonnet files in Node.js:
     // * Use a WebAssembly to run the Jsonnet VM in the browser (no popular library found)
     // * Use a native Node.js addon (ex: https://github.com/hanazuki/node-jsonnet but many issues after every upgrade of cmake)
@@ -146,8 +141,8 @@ export default class ConfigManager {
     return ConfigManager.#applyDefaultStaticConfig(config)
   }
 
-  static async #readDynamicConfig(configDir: string): Promise<EditorDynamicConfig> {
-    const dynamicConfigPath = path.join(configDir, 'editorconfig.json')
+  async #readDynamicConfig(): Promise<EditorDynamicConfig> {
+    const dynamicConfigPath = path.join(this.configDir, 'editorconfig.json')
     if (!fs.existsSync(dynamicConfigPath)) {
       // Define default configuration
       return {
