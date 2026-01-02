@@ -62,7 +62,7 @@ function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
     // Reschedule the flashcard using the SRS algorithm
     const algorithm = new NoteWriterSRS()
     const scheduledFlashcard = algorithm.schedule(deckConfig, flashcard, review)
-    // Update SRS settings based on the feedback
+    // Update SRS settings based on the confidence
     review.dueAt = scheduledFlashcard.dueAt
     review.settings = scheduledFlashcard.settings
 
