@@ -521,9 +521,8 @@ app.whenReady().then(async () => {
     'review-flashcard',
     async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review): Promise<Flashcard> => {
       const deckConfig = config.mustGetDeckConfig(deckRef)
-      const algorithmName = deckConfig.algorithm || 'default'
-      // IMPROVEMENT use algorithmSettings to customize the algorithm
-      if (algorithmName !== 'default' && algorithmName !== 'Anki2') {
+      const algorithmName = deckConfig.algorithm || 'nt-0'
+      if (algorithmName !== 'nt-0') { // Only the default algorithm is implemented
         throw new Error(`Algorithm ${algorithmName} is not supported yet`)
       }
 
@@ -536,7 +535,7 @@ app.whenReady().then(async () => {
         extras: { review }
       })
       console.debug(
-        `Reviewing flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} with confidence ${review.confidence}` // TODO reword this message
+        `Reviewing flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} with confidence ${review.confidence}`
       )
 
       // Update the SQLite database immediately.
