@@ -536,7 +536,7 @@ app.whenReady().then(async () => {
         extras: { review }
       })
       console.debug(
-        `Reviewing flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} and review ${review.feedback}` // TODO reword this message
+        `Reviewing flashcard for repository ${deckRef.repositorySlug} and deck ${deckRef.name} with confidence ${review.confidence}` // TODO reword this message
       )
 
       // Update the SQLite database immediately.

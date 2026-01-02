@@ -27,9 +27,20 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
   const onAnswered = (feedback: string) => {
     if (!onReviewed) return
     const completionTime = new Date()
+    
+    // Map feedback strings to confidence numbers (0-100)
+    const confidenceMap: { [key: string]: number } = {
+      'too-hard': 0,
+      'hard': 10,
+      'again': 30,
+      'good': 60,
+      'easy': 80,
+      'too-easy': 100
+    }
+    
     onReviewed({
       flashcardOID: flashcard.oid,
-      feedback,
+      confidence: confidenceMap[feedback],
       durationInMs: completionTime.getTime() - startTime.getTime(),
       completedAt: completionTime.toISOString(),
       dueAt: completionTime.toISOString(),

@@ -560,7 +560,7 @@ export interface Study {
 export interface Review {
   // TODO update?
   flashcardOID: string
-  feedback: string // easy | good | again | hard | too-easy | too-hard
+  confidence: number // Numeric confidence level (0-100)
   durationInMs: number
   completedAt: string
   dueAt: string
