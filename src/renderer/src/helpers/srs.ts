@@ -19,13 +19,15 @@ export const FEEDBACK_TO_CONFIDENCE: { [key: string]: number } = {
 
 export class NoteWriterSRS implements SRSAlgorithm {
   // Helper function to map confidence (0-100) to feedback category
+  // The thresholds are centered around the mapped confidence values to ensure
+  // round-trip consistency between confidence and feedback
   private static confidenceToFeedback(confidence: number): string {
-    if (confidence <= 5) return 'too-hard'
-    if (confidence <= 20) return 'hard'
-    if (confidence <= 45) return 'again'
-    if (confidence <= 70) return 'good'
-    if (confidence <= 90) return 'easy'
-    return 'too-easy'
+    if (confidence < 5) return 'too-hard' // [0, 5)
+    if (confidence < 20) return 'hard' // [5, 20)
+    if (confidence < 45) return 'again' // [20, 45)
+    if (confidence < 70) return 'good' // [45, 70)
+    if (confidence < 90) return 'easy' // [70, 90)
+    return 'too-easy' // [90, 100]
   }
 
   // Update the settings based on the feedback and the current queue
