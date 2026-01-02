@@ -559,7 +559,7 @@ export interface Goto {
 
 export interface Review {
   flashcardOID: string
-  feedback: string // easy | good | again | hard | too-easy | too-hard
+  confidence: number // Numeric confidence level (0-100)
   durationInMs: number
   completedAt: string
   dueAt: string

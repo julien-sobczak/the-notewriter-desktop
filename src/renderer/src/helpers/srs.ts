@@ -7,7 +7,29 @@ export interface SRSAlgorithm {
 
 const defaultEasyFactor = 2.5 // Default easy factor for new cards graduating to learning queue
 
+// Map feedback strings to confidence numbers (0-100)
+export const feedbackToConfidence: { [key: string]: number } = {
+  'too-hard': 0,
+  'hard': 10,
+  'again': 30,
+  'good': 60,
+  'easy': 80,
+  'too-easy': 100
+}
+
 export class NoteWriterSRS implements SRSAlgorithm {
+  // Helper function to map confidence (0-100) to feedback category
+  // The thresholds are centered around the mapped confidence values to ensure
+  // round-trip consistency between confidence and feedback
+  private static confidenceToFeedback(confidence: number): string {
+    if (confidence < 5) return 'too-hard' // [0, 5)
+    if (confidence < 20) return 'hard' // [5, 20)
+    if (confidence < 45) return 'again' // [20, 45)
+    if (confidence < 70) return 'good' // [45, 70)
+    if (confidence < 90) return 'easy' // [70, 90)
+    return 'too-easy' // [90, 100]
+  }
+
   // Update the settings based on the feedback and the current queue
   newSettings(
     config: DeckConfig,
@@ -34,9 +56,12 @@ export class NoteWriterSRS implements SRSAlgorithm {
       newSettings.interval = steps[0]
     }
 
+    // Map confidence to feedback for compatibility with existing algorithm
+    const feedback = NoteWriterSRS.confidenceToFeedback(study.confidence)
+
     switch (newSettings.queue) {
       case 'learning':
-        switch (study.feedback) {
+        switch (feedback) {
           case 'too-hard':
             // Restart from scratch
             newSettings.step = 0
@@ -80,11 +105,11 @@ export class NoteWriterSRS implements SRSAlgorithm {
             newSettings.interval = NoteWriterSRS.nextInterval(maxStep, newSettings.easyFactor)
             break
           default:
-            throw new Error(`Unknown feedback type: ${study.feedback}`)
+            throw new Error(`Unknown feedback type: ${feedback}`)
         }
         break
       case 'reviewing':
-        switch (study.feedback) {
+        switch (feedback) {
           case 'too-hard':
             // Restart again from scratch
             break
@@ -127,7 +152,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
             )
             break
           default:
-            throw new Error(`Unknown feedback type: ${study.feedback}`)
+            throw new Error(`Unknown feedback type: ${feedback}`)
         }
         break
       default:
@@ -244,10 +269,15 @@ export class Interval {
 export function intervalFn(config: DeckConfig): (card: Flashcard, feedback: string) => string {
   const algorithm: SRSAlgorithm = new NoteWriterSRS()
   return (card: Flashcard, feedback: string): string => {
+    const confidence = feedbackToConfidence[feedback]
+    if (confidence === undefined) {
+      throw new Error(`Unknown feedback type: ${feedback}`)
+    }
+    
     const review: Review = {
       flashcardOID: card.oid,
       durationInMs: 0,
-      feedback,
+      confidence,
       completedAt: '',
       dueAt: card.dueAt,
       algorithm: 'nt0',

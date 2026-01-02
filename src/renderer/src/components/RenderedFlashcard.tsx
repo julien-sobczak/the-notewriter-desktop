@@ -9,6 +9,7 @@ import {
   IconProps
 } from '@phosphor-icons/react'
 import { Flashcard, Review } from '@renderer/Model'
+import { feedbackToConfidence } from '@renderer/helpers/srs'
 import Markdown from './Markdown'
 
 type RenderedFlashcardProps = {
@@ -27,9 +28,16 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
   const onAnswered = (feedback: string) => {
     if (!onReviewed) return
     const completionTime = new Date()
+    
+    // Map feedback strings to confidence numbers (0-100)
+    const confidence = feedbackToConfidence[feedback]
+    if (confidence === undefined) {
+      throw new Error(`Unknown feedback type: ${feedback}`)
+    }
+    
     onReviewed({
       flashcardOID: flashcard.oid,
-      feedback,
+      confidence,
       durationInMs: completionTime.getTime() - startTime.getTime(),
       completedAt: completionTime.toISOString(),
       dueAt: completionTime.toISOString(),
