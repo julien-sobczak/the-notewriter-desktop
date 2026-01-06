@@ -354,13 +354,43 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.handle('get-daily-quote', async () => {
-    const { dailyQuote } = config.editorStaticConfig
-    if (!dailyQuote) {
-      throw new Error('No daily quote found')
+    // Find all queries with the 'daily-quote' tag from selected repositories
+    const dailyQuoteQueries = config.selectedQueriesMatchingTag('daily-quote')
+
+    if (dailyQuoteQueries.length === 0) {
+      // Return a fake note with a Marcus Aurelius quote
+      const fakeNote: Note = {
+        oid: '0000000000000000000000000000000000000000',
+        oidFile: '0000000000000000000000000000000000000000',
+        slug: 'fake-daily-quote',
+        repositorySlug: '',
+        repositoryPath: '',
+        type: 'Quote',
+        title: 'Quote: Memento Mori',
+        longTitle: 'Memento Mori',
+        shortTitle: 'Memento Mori',
+        relativePath: '',
+        wikilink: '',
+        attributes: {},
+        tags: [],
+        line: 1,
+        content:
+          '> You could leave life right now. Let that determine what you do and say and think.\n> — Marcus Aurelius',
+        body: '> You could leave life right now. Let that determine what you do and say and think.\n> — Marcus Aurelius',
+        comment: '',
+        marked: false,
+        annotations: [],
+        medias: []
+      }
+      return fakeNote
     }
+
+    // If multiple queries have the tag, choose one randomly
+    const selectedQuery = dailyQuoteQueries[Math.floor(Math.random() * dailyQuoteQueries.length)]
+
     const query: Query = {
-      q: dailyQuote.query,
-      repositories: dailyQuote.repositories,
+      q: selectedQuery.q,
+      repositories: [selectedQuery.repositorySlug],
       blockOid: undefined,
       deskOid: undefined,
       limit: 0,
@@ -522,7 +552,8 @@ app.whenReady().then(async () => {
     async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review): Promise<Flashcard> => {
       const deckConfig = config.mustGetDeckConfig(deckRef)
       const algorithmName = deckConfig.algorithm || 'nt-0'
-      if (algorithmName !== 'nt-0') { // Only the default algorithm is implemented
+      if (algorithmName !== 'nt-0') {
+        // Only the default algorithm is implemented
         throw new Error(`Algorithm ${algorithmName} is not supported yet`)
       }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from 'react'
 import { ArrowLeftIcon as BackIcon } from '@phosphor-icons/react'
 import { ConfigContext } from '@renderer/ConfigContext'
-import { JournalConfig, RoutineConfig } from '@renderer/Model'
+import { JournalConfigWithContext, RoutineConfig } from '@renderer/Model'
 import Question from './Question'
 import RenderedRoutine from './RenderedRoutine'
 import { Actions, Action } from './Actions'
@@ -12,28 +12,22 @@ type ViewState = 'loading' | 'journal-selection' | 'routine-selection' | 'routin
 function Hi() {
   const { config } = useContext(ConfigContext)
   const [viewState, setViewState] = useState<ViewState>('loading')
-  const [journals, setJournals] = useState<JournalConfig[]>([])
-  const [selectedJournal, setSelectedJournal] = useState<JournalConfig | null>(null)
+  const [journals, setJournals] = useState<JournalConfigWithContext[]>([])
+  const [selectedJournal, setSelectedJournal] = useState<JournalConfigWithContext | null>(null)
   const [selectedRoutine, setSelectedRoutine] = useState<RoutineConfig | null>(null)
 
   useEffect(() => {
     // Load journal configuration
     const loadJournals = () => {
-      if (!config?.static?.journal) {
-        setJournals([])
-        setViewState('loading')
-        return
-      }
+      const allJournals = selectedJournals(config)
+      setJournals(allJournals)
 
-      const journalConfigs = config.static.journal
-      setJournals(journalConfigs)
-
-      if (journalConfigs.length === 0) {
+      if (allJournals.length === 0) {
         // No journals configured
         setViewState('loading')
-      } else if (journalConfigs.length === 1) {
+      } else if (allJournals.length === 1) {
         // Only one journal, skip selection
-        setSelectedJournal(journalConfigs[0])
+        setSelectedJournal(allJournals[0])
         setViewState('routine-selection')
       } else {
         // Multiple journals, need to select
@@ -44,7 +38,7 @@ function Hi() {
     loadJournals()
   }, [config])
 
-  const handleJournalSelected = (journal: JournalConfig) => {
+  const handleJournalSelected = (journal: JournalConfigWithContext) => {
     setSelectedJournal(journal)
     setViewState('routine-selection')
   }

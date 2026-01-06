@@ -263,7 +263,8 @@ svg {
 
 .RenderedNote {
   border: 1px solid var(--color-separator-dark);
-  border-radius: var(--desktop-layout-radius) var(--desktop-layout-radius) 0 var(--desktop-layout-radius);
+  border-radius: var(--desktop-layout-radius) var(--desktop-layout-radius) 0
+    var(--desktop-layout-radius);
   background: white;
   margin: 0.5rem;
 }

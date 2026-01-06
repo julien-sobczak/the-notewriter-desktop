@@ -44,14 +44,14 @@ abstract class CustomTag {
    * The input ID must be unique and can be generated using generateInputId().
    * The data-throw-away attribute indicates that the input value should not be saved.
    */
-  abstract process(journal: JournalConfig, attributes: TagAttributes): Promise<string>
+  abstract process(journal: JournalConfigWithContext, attributes: TagAttributes): Promise<string>
 }
 
 class AffirmationTag extends CustomTag {
   readonly tagName = 'Affirmation'
 
   // eslint-disable-next-line class-methods-use-this
-  async process(journal: JournalConfig, attributes: TagAttributes): Promise<string> {
+  async process(journal: JournalConfigWithContext, attributes: TagAttributes): Promise<string> {
     const wikilink = attributes.wikilink
     if (!wikilink) {
       return '(Missing wikilink attribute)'
@@ -77,7 +77,7 @@ class PromptTag extends CustomTag {
   readonly tagName = 'Prompt'
 
   // eslint-disable-next-line class-methods-use-this
-  async process(journal: JournalConfig, attributes: TagAttributes): Promise<string> {
+  async process(journal: JournalConfigWithContext, attributes: TagAttributes): Promise<string> {
     const wikilink = attributes.wikilink
     if (!wikilink) {
       return '(Missing wikilink attribute)'
@@ -143,7 +143,7 @@ class CustomTagRegistry {
     this.processors.set(processor.tagName, processor)
   }
 
-  async processTemplate(template: string, journal: JournalConfig): Promise<string> {
+  async processTemplate(template: string, journal: JournalConfigWithContext): Promise<string> {
     let processedTemplate = template
 
     // Parse custom tags (tags starting with uppercase letter)
@@ -282,7 +282,7 @@ export default function RenderedRoutine({ journal, routine, onComplete }: Render
       let finalContent = `\n\n## Routine: ${routine.name}\n\n${evaluatedTemplate}`
 
       // Check if journal file is new
-      const content = await window.api.readNoteFile(journal.repository, journalPath)
+      const content = await window.api.readNoteFile(journal.repositorySlug, journalPath)
       // If content is empty, we must prepend the template with the journal title
       const isNewFile = content.trim().length === 0
       if (isNewFile && journal.defaultContent) {
@@ -292,7 +292,7 @@ export default function RenderedRoutine({ journal, routine, onComplete }: Render
       }
 
       // Call the appendToFile function
-      await window.api.appendToFile(journal.repository, journalPath, finalContent)
+      await window.api.appendToFile(journal.repositorySlug, journalPath, finalContent)
 
       if (onComplete) {
         onComplete()
@@ -330,13 +330,13 @@ export default function RenderedRoutine({ journal, routine, onComplete }: Render
  * @returns the selected ListItem or null if none found
  */
 async function findRandomItemByWikilink(
-  journal: JournalConfig,
+  journal: JournalConfigWithContext,
   wikilink: string,
   tags?: string[]
 ): Promise<ListItem | null> {
   if (!wikilink) return null
 
-  const note: Note = await window.api.findByWikilink(journal.repository, wikilink)
+  const note: Note = await window.api.findByWikilink(journal.repositorySlug, wikilink)
 
   if (
     !note ||

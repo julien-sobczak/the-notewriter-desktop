@@ -10,10 +10,10 @@ const defaultEasyFactor = 2.5 // Default easy factor for new cards graduating to
 // Map feedback strings to confidence numbers (0-100)
 export const feedbackToConfidence: { [key: string]: number } = {
   'too-hard': 0,
-  'hard': 10,
-  'again': 30,
-  'good': 60,
-  'easy': 80,
+  hard: 10,
+  again: 30,
+  good: 60,
+  easy: 80,
   'too-easy': 100
 }
 
@@ -273,7 +273,7 @@ export function intervalFn(config: DeckConfig): (card: Flashcard, feedback: stri
     if (confidence === undefined) {
       throw new Error(`Unknown feedback type: ${feedback}`)
     }
-    
+
     const review: Review = {
       flashcardOID: card.oid,
       durationInMs: 0,

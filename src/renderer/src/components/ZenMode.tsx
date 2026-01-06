@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import {
   PauseIcon,
@@ -8,30 +7,11 @@ import {
   SmileyXEyesIcon,
   StopIcon
 } from '@phosphor-icons/react'
-import { Note, ZenConfig, Query, QueryResult } from '@renderer/Model'
+import { Note, Query, QueryResult } from '@renderer/Model'
 import FullScreenNote from './FullScreenNote'
 import { Action, Actions, Indicator } from './Actions'
 import { ConfigContext } from '@renderer/ConfigContext'
 import useKeyDown from '@renderer/helpers/useKeyDown'
-
-function extractQueries(zenMode: ZenConfig | undefined): Query[] {
-  if (!zenMode) return []
-
-  // Convert all queries configured into valid Query
-  const results: Query[] = []
-  for (const zenQuery of zenMode.queries) {
-    results.push({
-      q: zenQuery.query,
-      repositories: zenQuery.repositories ? zenQuery.repositories : [],
-      deskOid: undefined,
-      blockOid: undefined,
-      limit: 1000, // 1000 notes must be enough
-      shuffle: true // Important!
-    })
-  }
-
-  return results
-}
 
 function getRandomInt() {
   return Math.floor(Math.random() * Number.MAX_VALUE)
@@ -75,14 +55,35 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
 
   // Load notes based on configuration
   useEffect(() => {
-    const queries = extractQueries(config.static.zenMode)
+    // Get zen queries from repository configs
+    const zenQueries: Query[] = []
+    const selectedRepos = config.static.repositories.filter((repo) => repo.selected)
 
-    if (queries.length === 0) {
+    for (const repo of selectedRepos) {
+      const repoConfig = config.repositories[repo.slug]
+      if (repoConfig?.queries) {
+        for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
+          if (queryConfig.tags && queryConfig.tags.includes('zen')) {
+            zenQueries.push({
+              q: queryConfig.q,
+              repositories: [repo.slug],
+              deskOid: undefined,
+              blockOid: undefined,
+              limit: 1000,
+              shuffle: true
+            })
+          }
+        }
+      }
+    }
+
+    if (zenQueries.length === 0) {
       setQueriesLoaded(true)
+      return
     }
 
     const msearch = async () => {
-      const results: QueryResult[] = await window.api.msearch(queries)
+      const results: QueryResult[] = await window.api.msearch(zenQueries)
       setQueriesLoaded(true)
       const foundNotes: Note[] = []
       for (const result of results) {
@@ -91,7 +92,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
       setNotes(foundNotes)
     }
     msearch()
-  }, [config.static.zenMode])
+  }, [config])
 
   // Exit Zen Mode on pressing ESC
   useKeyDown(() => {

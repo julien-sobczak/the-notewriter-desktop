@@ -1,5 +1,4 @@
 import path from 'path'
-import os from 'os'
 import fs from 'fs'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
@@ -8,10 +7,18 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   RepositoryRefConfig,
-  DailyQuoteConfig,
   RepositoryConfig,
   DeckRef,
-  DeckConfig
+  DeckConfig,
+  StatConfig,
+  StatConfigWithContext,
+  JournalConfig,
+  JournalConfigWithContext,
+  Desk,
+  DeskWithContext,
+  QueryConfig,
+  QueryConfigWithContext,
+  RepositoryQuery
 } from './Model'
 import { normalizePath } from './util'
 
@@ -61,7 +68,7 @@ export default class ConfigManager {
     }
 
     const dynamicConfig = await instance.#readDynamicConfig()
-    
+
     instance.editorStaticConfig = staticConfig
     instance.editorDynamicConfig = dynamicConfig
     instance.repositoryConfigs = {}
@@ -84,7 +91,7 @@ export default class ConfigManager {
     }
 
     console.log(`Reading configuration from ${configFile}`)
-    
+
     const instance = new ConfigManager()
     instance.configDir = configPath
 
@@ -173,8 +180,6 @@ export default class ConfigManager {
 
   // Traverse the static configuration to apply default values.
   static #applyDefaultStaticConfig(config: EditorStaticConfig): EditorStaticConfig {
-    const selectedRepositorySlugs: string[] = []
-
     // Select repositories by default
     if (config.repositories) {
       for (let i = 0; i < config.repositories.length; i++) {
@@ -182,36 +187,6 @@ export default class ConfigManager {
         if (repository.selected === undefined) {
           // Repositories are selected by default
           repository.selected = true
-        }
-        if (repository.selected) {
-          selectedRepositorySlugs.push(repository.slug)
-        }
-      }
-    }
-
-    // Define default daily quote
-    const defaultDailyQuote: DailyQuoteConfig = {
-      query: `@type:quote`, // any quote
-      repositories: selectedRepositorySlugs // default repositories
-    }
-    if (!config.dailyQuote) {
-      config.dailyQuote = defaultDailyQuote
-    }
-
-    // Use default selected repositories when none are specified
-    if (config.zenMode) {
-      for (let i = 0; i < config.zenMode.queries.length; i++) {
-        const query = config.zenMode.queries[i]
-        if (!query.repositories) {
-          query.repositories = selectedRepositorySlugs
-        }
-      }
-    }
-    if (config.inspirations) {
-      for (let i = 0; i < config.inspirations.length; i++) {
-        const inspiration = config.inspirations[i]
-        if (!inspiration.repositories) {
-          inspiration.repositories = selectedRepositorySlugs
         }
       }
     }
@@ -283,5 +258,76 @@ export default class ConfigManager {
       }
     }
     throw new Error(`No deck with name ${deckRef.name} in repository ${deckRef.repositorySlug}`)
+  }
+
+  // Returns all stats from selected repositories
+  selectedStats(): StatConfigWithContext[] {
+    const stats: StatConfigWithContext[] = []
+    const selectedRepos = this.selectedRepositories()
+
+    for (const repo of selectedRepos) {
+      const repoConfig = this.repositoryConfigs[repo.slug]
+      if (repoConfig?.stats) {
+        stats.push(...repoConfig.stats.map((stat) => ({ ...stat, repositorySlug: repo.slug })))
+      }
+    }
+
+    return stats
+  }
+
+  // Returns all journals from selected repositories
+  selectedJournals(): JournalConfigWithContext[] {
+    const journals: JournalConfigWithContext[] = []
+    const selectedRepos = this.selectedRepositories()
+
+    for (const repo of selectedRepos) {
+      const repoConfig = this.repositoryConfigs[repo.slug]
+      if (repoConfig?.journals) {
+        journals.push(
+          ...repoConfig.journals.map((journal) => ({ ...journal, repositorySlug: repo.slug }))
+        )
+      }
+    }
+
+    return journals
+  }
+
+  // Returns all desks from selected repositories
+  selectedDesks(): DeskWithContext[] {
+    const desks: DeskWithContext[] = []
+    const selectedRepos = this.selectedRepositories()
+
+    for (const repo of selectedRepos) {
+      const repoConfig = this.repositoryConfigs[repo.slug]
+      if (repoConfig?.desks) {
+        desks.push(...repoConfig.desks.map((desk) => ({ ...desk, repositorySlug: repo.slug })))
+      }
+    }
+
+    return desks
+  }
+
+  // Returns all queries matching a specific tag from selected repositories
+  selectedQueriesMatchingTag(tag: string): QueryConfigWithContext[] {
+    const queries: QueryConfigWithContext[] = []
+    const selectedRepos = this.selectedRepositories()
+
+    for (const repo of selectedRepos) {
+      const repoConfig = this.repositoryConfigs[repo.slug]
+      if (repoConfig?.queries) {
+        for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
+          if (queryConfig.tags && queryConfig.tags.includes(tag)) {
+            queries.push({ ...queryConfig, repositorySlug: repo.slug })
+          }
+        }
+      }
+    }
+
+    return queries
+  }
+
+  // Returns all queries with 'inspiration' tag from selected repositories
+  selectedInspirations(): QueryConfigWithContext[] {
+    return this.selectedQueriesMatchingTag('inspiration')
   }
 }

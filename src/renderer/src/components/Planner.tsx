@@ -1,20 +1,19 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { XIcon as CloseIcon } from '@phosphor-icons/react'
-import { QueryResult } from '@renderer/Model'
+import { QueryResult, QueryConfigWithContext } from '@renderer/Model'
 import KanbanBoard, { KanbanItem } from './KanbanBoard'
 import Markdown from './Markdown'
 import { Action, Actions } from './Actions'
 import Question from './Question'
-import { ConfigContext, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
+import { ConfigContext, selectedQueriesMatchingTag, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
 
 type PlannerMode = 'question' | 'project' | 'task'
 
-async function searchItems(repositorySlugs: string[], query: string): Promise<KanbanItem[]> {
+async function searchItems(repositorySlug: string, query: string): Promise<KanbanItem[]> {
   // Perform search
   const results: QueryResult = await window.api.search({
     q: query,
-    repositories: repositorySlugs,
+    repositories: [repositorySlug],
     deskOid: null,
     blockOid: null,
     limit: 0,
@@ -60,6 +59,32 @@ function Planner() {
 
   const selectedRepositorySlugs = getSelectedRepositorySlugs(staticConfig)
 
+  // Get project queries from repositories
+  const projectQueries: PlannerQuery[] = []
+  const taskQueries: PlannerQuery[] = []
+
+  for (const repoSlug of selectedRepositorySlugs) {
+    const repoConfig = config.repositories[repoSlug]
+    if (repoConfig?.queries) {
+      for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
+        if (queryConfig.tags?.includes('project')) {
+          projectQueries.push({
+            title: queryConfig.title,
+            query: queryConfig.q,
+            repositorySlug: repoSlug
+          })
+        }
+        if (queryConfig.tags?.includes('task')) {
+          taskQueries.push({
+            title: queryConfig.title,
+            query: queryConfig.q,
+            repositorySlug: repoSlug
+          })
+        }
+      }
+    }
+  }
+
   // Refresh projectItems when staticConfig changes and mode is 'project'
   useEffect(() => {
     if (mode === 'project') {
@@ -84,21 +109,14 @@ function Planner() {
 
   // Handle finding projects
   const handleFindProject = async () => {
-    if (!staticConfig.planner?.projects || !window.electron) return
+    if (!window.electron) return
 
     const items: KanbanItem[] = []
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const projectConfig of staticConfig.planner.projects) {
-      // Only query repositories that are both selected and in the project config
-      const repositoriesToQuery = projectConfig.repositories.filter((slug) =>
-        selectedRepositorySlugs.includes(slug)
-      )
-
-      if (repositoriesToQuery.length === 0) continue
-
+    for (const projectQuery of projectQueries) {
       // eslint-disable-next-line no-await-in-loop
-      const results: KanbanItem[] = await searchItems(repositoriesToQuery, projectConfig.query)
+      const results: KanbanItem[] = await searchItems(projectQuery.repositorySlug, projectQuery.q)
       items.push(...results)
     }
 
@@ -108,18 +126,11 @@ function Planner() {
 
   // Handle finding tasks
   const handleFindTask = async () => {
-    if (!staticConfig.planner?.tasks || !window.electron) return
+    if (!window.electron) return
 
     const items: KanbanItem[] = []
-    for (const taskConfig of staticConfig.planner.tasks) {
-      // Only query repositories that are both selected and in the task config
-      const repositoriesToQuery = taskConfig.repositories.filter((slug) =>
-        selectedRepositorySlugs.includes(slug)
-      )
-
-      if (repositoriesToQuery.length === 0) continue
-
-      const results: KanbanItem[] = await searchItems(repositoriesToQuery, taskConfig.query)
+    for (const taskQuery of taskQueries) {
+      const results: KanbanItem[] = await searchItems(taskQuery.repositorySlug, taskQuery.q)
       items.push(...results)
     }
 

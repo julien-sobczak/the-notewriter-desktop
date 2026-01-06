@@ -7,7 +7,11 @@ import {
   NoteRef,
   File,
   Query,
-  Review
+  Review,
+  JournalConfigWithContext,
+  StatConfigWithContext,
+  DeskWithContext,
+  RepositoryQuery
 } from '../main/Model'
 import { CommandExecution, JournalActivity, QueryResult } from '@renderer/Model'
 

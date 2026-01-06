@@ -22,8 +22,7 @@ type ConfigContextType = {
 
 const initialState: ConfigContextType = {
   static: {
-    repositories: [],
-    inspirations: []
+    repositories: []
   },
   dynamic: {
     desks: []
@@ -126,4 +125,82 @@ export function determineAttributeShorthand(
   }
 
   return undefined
+}
+
+// Helper functions to access configuration from selected repositories
+
+export function selectedRepositories(config: ConfigContextType): RepositoryRefConfig[] {
+  return config.static.repositories.filter((repo) => repo.selected)
+}
+
+export function selectedStats(config: ConfigContextType) {
+  const stats: any[] = []
+  const repos = selectedRepositories(config)
+
+  for (const repo of repos) {
+    const repoConfig = config.repositories[repo.slug]
+    if (repoConfig?.stats) {
+      stats.push(...repoConfig.stats.map((stat) => ({ ...stat, repositorySlug: repo.slug })))
+    }
+  }
+
+  return stats
+}
+
+export function selectedJournals(config: ConfigContextType) {
+  const journals: any[] = []
+  const repos = selectedRepositories(config)
+
+  for (const repo of repos) {
+    const repoConfig = config.repositories[repo.slug]
+    if (repoConfig?.journals) {
+      journals.push(
+        ...repoConfig.journals.map((journal) => ({ ...journal, repositorySlug: repo.slug }))
+      )
+    }
+  }
+
+  return journals
+}
+
+export function selectedDesks(config: ConfigContextType) {
+  const desks: any[] = []
+
+  // Add dynamic desks
+  if (config.dynamic.desks) {
+    desks.push(...config.dynamic.desks.map((desk) => ({ ...desk, repositorySlug: '' })))
+  }
+
+  // Add desks from selected repositories
+  const repos = selectedRepositories(config)
+  for (const repo of repos) {
+    const repoConfig = config.repositories[repo.slug]
+    if (repoConfig?.desks) {
+      desks.push(...repoConfig.desks.map((desk) => ({ ...desk, repositorySlug: repo.slug })))
+    }
+  }
+
+  return desks
+}
+
+export function selectedQueriesMatchingTag(config: ConfigContextType, tag: string) {
+  const queries: any[] = []
+  const repos = selectedRepositories(config)
+
+  for (const repo of repos) {
+    const repoConfig = config.repositories[repo.slug]
+    if (repoConfig?.queries) {
+      for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
+        if (queryConfig.tags && queryConfig.tags.includes(tag)) {
+          queries.push({ ...queryConfig, repositorySlug: repo.slug })
+        }
+      }
+    }
+  }
+
+  return queries
+}
+
+export function selectedInspirations(config: ConfigContextType) {
+  return selectedQueriesMatchingTag(config, 'inspiration')
 }

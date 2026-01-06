@@ -33,12 +33,12 @@ You can download the latest prebuilt binaries for Linux, macOS, and Windows from
 
 You can always fetch the latest version directly using GitHub's `/releases/latest` endpoint:
 
-| Platform | Download link |
-|-----------|----------------|
+| Platform            | Download link                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Linux (amd64)**   | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-linux-amd64.AppImage) |
-| **macOS (amd64)**   | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-darwin-amd64.dmg) |
-| **macOS (arm64)**   | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-darwin-arm64.dmg) |
-| **Windows (amd64)** | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-windows-amd64.exe) |
+| **macOS (amd64)**   | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-darwin-amd64.dmg)     |
+| **macOS (arm64)**   | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-darwin-arm64.dmg)     |
+| **Windows (amd64)** | [Download](https://github.com/julien-sobczak/the-notewriter-desktop/releases/latest/download/the-notewriter-desktop-windows-amd64.exe)    |
 
 #### Example (Linux)
 

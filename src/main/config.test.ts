@@ -76,7 +76,7 @@ describe('ConfigManager', () => {
 `
     )
 
-    const configManager = await ConfigManager.create()
+    const configManager = await ConfigManager.create(ntHomeDir)
     expect(Object.keys(configManager.repositoryConfigs).length).toBe(2)
   })
 

@@ -7,13 +7,6 @@
 
 export interface EditorStaticConfig {
   repositories: RepositoryRefConfig[]
-  dailyQuote?: DailyQuoteConfig
-  inspirations?: InspirationConfig[]
-  zenMode?: ZenConfig
-  planner?: PlannerConfig
-  journal?: JournalConfig[]
-  desks?: Desk[]
-  stats?: StatConfig[]
 }
 
 export interface RepositoryRefConfig {
@@ -56,10 +49,13 @@ export interface PlannerQueryConfig {
 
 export interface JournalConfig {
   name: string
-  repository: string
   path: string
   defaultContent?: string
   routines: RoutineConfig[]
+}
+
+export interface JournalConfigWithContext extends JournalConfig {
+  repositorySlug: string
 }
 
 export interface RoutineConfig {
@@ -70,11 +66,14 @@ export interface RoutineConfig {
 export interface StatConfig {
   name: string
   query: string
-  repositories: string[]
   groupBy: string
   visualization: 'pie' | 'map' | 'timeline' | 'calendar'
   value?: string
   mapping?: { [key: string]: string }
+}
+
+export interface StatConfigWithContext extends StatConfig {
+  repositorySlug: string
 }
 
 export type CountStat = [string, number]
@@ -131,12 +130,15 @@ export interface Desk {
   template?: boolean
 }
 
+export interface DeskWithContext extends Desk {
+  repositorySlug: string
+}
+
 export interface Block {
   // Unique identifier inside a single desk
   oid?: string
   name: string | null
   layout: string // container | horizontal | vertical
-  repositorySlugs: string[] // Repositories to use by default on queries (recursively)
   view: string | null // single | grid | list | free
   // Percentage of this block on parent size (height for vertical, width for horizontal)
   size: string | null
@@ -159,7 +161,10 @@ export interface RepositoryConfig {
   attributes: { [key: string]: AttributeConfig }
   types: { [key: string]: TypeConfig }
   decks: DeckConfig[]
-  searches: { [key: string]: SearchConfig }
+  queries: { [key: string]: QueryConfig }
+  desks?: Desk[]
+  journals?: JournalConfig[]
+  stats?: StatConfig[]
   // Ignore linter and references sections
 }
 export interface CoreConfig {
@@ -201,9 +206,20 @@ export interface DeckConfig {
   algorithm: string
   algorithmSettings: { [key: string]: any }
 }
-export interface SearchConfig {
+export interface QueryConfig {
   title: string
   q: string
+  tags?: string[]
+}
+
+export interface QueryConfigWithContext extends QueryConfig {
+  repositorySlug: string
+}
+
+export interface RepositoryQuery {
+  key: string
+  config: QueryConfig
+  repositorySlug: string
 }
 
 /* API */
