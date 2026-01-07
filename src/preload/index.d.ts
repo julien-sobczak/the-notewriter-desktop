@@ -31,7 +31,6 @@ interface API {
   browseUrl: (url: string) => void
 
   // 2-way renderer to main
-  getDailyQuote: () => Promise<Note>
   find: (noteRef: NoteRef) => Promise<Note>
   mfind: (noteRefs: NoteRef[]) => Promise<Note[]>
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>

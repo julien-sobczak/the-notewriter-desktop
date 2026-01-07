@@ -204,3 +204,7 @@ export function selectedQueriesMatchingTag(config: ConfigContextType, tag: strin
 export function selectedInspirations(config: ConfigContextType) {
   return selectedQueriesMatchingTag(config, 'inspiration')
 }
+
+export function selectedDailyQuotes(config: ConfigContextType) {
+  return selectedQueriesMatchingTag(config, 'daily-quote')
+}

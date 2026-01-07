@@ -353,53 +353,6 @@ app.whenReady().then(async () => {
     return results
   })
 
-  ipcMain.handle('get-daily-quote', async () => {
-    // Find all queries with the 'daily-quote' tag from selected repositories
-    const dailyQuoteQueries = config.selectedQueriesMatchingTag('daily-quote')
-
-    if (dailyQuoteQueries.length === 0) {
-      // Return a fake note with a Marcus Aurelius quote
-      const fakeNote: Note = {
-        oid: '0000000000000000000000000000000000000000',
-        oidFile: '0000000000000000000000000000000000000000',
-        slug: 'fake-daily-quote',
-        repositorySlug: '',
-        repositoryPath: '',
-        type: 'Quote',
-        title: 'Quote: Memento Mori',
-        longTitle: 'Memento Mori',
-        shortTitle: 'Memento Mori',
-        relativePath: '',
-        wikilink: '',
-        attributes: {},
-        tags: [],
-        line: 1,
-        content:
-          '> You could leave life right now. Let that determine what you do and say and think.\n> — Marcus Aurelius',
-        body: '> You could leave life right now. Let that determine what you do and say and think.\n> — Marcus Aurelius',
-        comment: '',
-        marked: false,
-        annotations: [],
-        medias: []
-      }
-      return fakeNote
-    }
-
-    // If multiple queries have the tag, choose one randomly
-    const selectedQuery = dailyQuoteQueries[Math.floor(Math.random() * dailyQuoteQueries.length)]
-
-    const query: Query = {
-      q: selectedQuery.q,
-      repositories: [selectedQuery.repositorySlug],
-      blockOid: undefined,
-      deskOid: undefined,
-      limit: 0,
-      shuffle: false
-    }
-    const note = await db.searchDailyQuote(query)
-    return note
-  })
-
   ipcMain.handle(
     'get-note-statistics',
     async (_event, repositorySlugs: string[], query: string, groupBy: string, value?: string) => {

@@ -9,16 +9,7 @@ import {
   RepositoryRefConfig,
   RepositoryConfig,
   DeckRef,
-  DeckConfig,
-  StatConfig,
-  StatConfigWithContext,
-  JournalConfig,
-  JournalConfigWithContext,
-  Desk,
-  DeskWithContext,
-  QueryConfig,
-  QueryConfigWithContext,
-  RepositoryQuery
+  DeckConfig
 } from './Model'
 import { normalizePath } from './util'
 
@@ -258,76 +249,5 @@ export default class ConfigManager {
       }
     }
     throw new Error(`No deck with name ${deckRef.name} in repository ${deckRef.repositorySlug}`)
-  }
-
-  // Returns all stats from selected repositories
-  selectedStats(): StatConfigWithContext[] {
-    const stats: StatConfigWithContext[] = []
-    const selectedRepos = this.selectedRepositories()
-
-    for (const repo of selectedRepos) {
-      const repoConfig = this.repositoryConfigs[repo.slug]
-      if (repoConfig?.stats) {
-        stats.push(...repoConfig.stats.map((stat) => ({ ...stat, repositorySlug: repo.slug })))
-      }
-    }
-
-    return stats
-  }
-
-  // Returns all journals from selected repositories
-  selectedJournals(): JournalConfigWithContext[] {
-    const journals: JournalConfigWithContext[] = []
-    const selectedRepos = this.selectedRepositories()
-
-    for (const repo of selectedRepos) {
-      const repoConfig = this.repositoryConfigs[repo.slug]
-      if (repoConfig?.journals) {
-        journals.push(
-          ...repoConfig.journals.map((journal) => ({ ...journal, repositorySlug: repo.slug }))
-        )
-      }
-    }
-
-    return journals
-  }
-
-  // Returns all desks from selected repositories
-  selectedDesks(): DeskWithContext[] {
-    const desks: DeskWithContext[] = []
-    const selectedRepos = this.selectedRepositories()
-
-    for (const repo of selectedRepos) {
-      const repoConfig = this.repositoryConfigs[repo.slug]
-      if (repoConfig?.desks) {
-        desks.push(...repoConfig.desks.map((desk) => ({ ...desk, repositorySlug: repo.slug })))
-      }
-    }
-
-    return desks
-  }
-
-  // Returns all queries matching a specific tag from selected repositories
-  selectedQueriesMatchingTag(tag: string): QueryConfigWithContext[] {
-    const queries: QueryConfigWithContext[] = []
-    const selectedRepos = this.selectedRepositories()
-
-    for (const repo of selectedRepos) {
-      const repoConfig = this.repositoryConfigs[repo.slug]
-      if (repoConfig?.queries) {
-        for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
-          if (queryConfig.tags && queryConfig.tags.includes(tag)) {
-            queries.push({ ...queryConfig, repositorySlug: repo.slug })
-          }
-        }
-      }
-    }
-
-    return queries
-  }
-
-  // Returns all queries with 'inspiration' tag from selected repositories
-  selectedInspirations(): QueryConfigWithContext[] {
-    return this.selectedQueriesMatchingTag('inspiration')
   }
 }

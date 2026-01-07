@@ -1,11 +1,12 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, useState } from 'react'
 import { XIcon as CloseIcon } from '@phosphor-icons/react'
-import { QueryResult, QueryConfigWithContext } from '@renderer/Model'
+import { QueryConfigWithContext, QueryResult } from '@renderer/Model'
 import KanbanBoard, { KanbanItem } from './KanbanBoard'
 import Markdown from './Markdown'
 import { Action, Actions } from './Actions'
 import Question from './Question'
-import { ConfigContext, selectedQueriesMatchingTag, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
+import { ConfigContext, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
 
 type PlannerMode = 'question' | 'project' | 'task'
 
@@ -60,8 +61,8 @@ function Planner() {
   const selectedRepositorySlugs = getSelectedRepositorySlugs(staticConfig)
 
   // Get project queries from repositories
-  const projectQueries: PlannerQuery[] = []
-  const taskQueries: PlannerQuery[] = []
+  const projectQueries: QueryConfigWithContext[] = []
+  const taskQueries: QueryConfigWithContext[] = []
 
   for (const repoSlug of selectedRepositorySlugs) {
     const repoConfig = config.repositories[repoSlug]
@@ -70,14 +71,14 @@ function Planner() {
         if (queryConfig.tags?.includes('project')) {
           projectQueries.push({
             title: queryConfig.title,
-            query: queryConfig.q,
+            q: queryConfig.q,
             repositorySlug: repoSlug
           })
         }
         if (queryConfig.tags?.includes('task')) {
           taskQueries.push({
             title: queryConfig.title,
-            query: queryConfig.q,
+            q: queryConfig.q,
             repositorySlug: repoSlug
           })
         }
@@ -113,9 +114,7 @@ function Planner() {
 
     const items: KanbanItem[] = []
 
-    // eslint-disable-next-line no-restricted-syntax
     for (const projectQuery of projectQueries) {
-      // eslint-disable-next-line no-await-in-loop
       const results: KanbanItem[] = await searchItems(projectQuery.repositorySlug, projectQuery.q)
       items.push(...results)
     }

@@ -202,14 +202,14 @@ local srsAlgorithmSettings = {
     {
       name: "Steps by day",
       query: "@type:Journal",
-      groupBy: ['date'],
+      groupBy: 'date',
       value: 'steps',
       visualization: 'calendar',
     },
     {
       name: "Steps by day",
       query: "@type:Journal",
-      groupBy: ['date'],
+      groupBy: 'date',
       value: 'steps',
       visualization: 'timeline',
     },
