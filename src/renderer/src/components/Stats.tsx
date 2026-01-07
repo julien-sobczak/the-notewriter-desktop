@@ -8,7 +8,7 @@ import { Sunburst } from '@nivo/sunburst'
 import worldFeatures from '../assets/world_countries.json'
 import { RepositoryRefConfig, StatConfig, MediaDirStat, CountStat } from '@renderer/Model'
 import Loader from './Loader'
-import { ConfigContext } from '@renderer/ConfigContext'
+import { ConfigContext, selectedStats } from '@renderer/ConfigContext'
 import {
   format,
   parseISO,
@@ -430,27 +430,25 @@ function Stats() {
           await window.api.getMediasDiskUsage(selectedRepositorySlugs)
         setMediaDiskUsageData(mediaDirStats)
 
-        // Load custom stats from config
-        let customStatsData: Array<{ config: StatConfig; data: CountStat[] }> = []
-        if (staticConfig.stats) {
-          const statPromises = staticConfig.stats.map(async (statConfig) => {
-            const repositories =
-              statConfig.repositories.length > 0 ? statConfig.repositories : selectedRepositorySlugs
+        // Load custom stats from repository configs
+        const customStatsData: Array<{ config: StatConfig; data: CountStat[] }> = []
 
-            const data = await window.api.getNoteStatistics(
-              repositories,
-              statConfig.query,
-              statConfig.groupBy,
-              statConfig.value
-            )
-            return {
-              config: statConfig,
-              data: data
-            }
-          })
+        const allStats = selectedStats(config)
+        const statPromises = allStats.map(async (statWithContext) => {
+          const data = await window.api.getNoteStatistics(
+            [statWithContext.repositorySlug],
+            statWithContext.query,
+            statWithContext.groupBy,
+            statWithContext.value
+          )
+          return {
+            config: statWithContext,
+            data: data
+          }
+        })
 
-          customStatsData = await Promise.all(statPromises)
-        }
+        const repoStats = await Promise.all(statPromises)
+        customStatsData.push(...repoStats)
 
         setCustomStats(customStatsData)
 

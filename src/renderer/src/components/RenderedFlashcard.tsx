@@ -28,13 +28,13 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
   const onAnswered = (feedback: string) => {
     if (!onReviewed) return
     const completionTime = new Date()
-    
+
     // Map feedback strings to confidence numbers (0-100)
     const confidence = feedbackToConfidence[feedback]
     if (confidence === undefined) {
       throw new Error(`Unknown feedback type: ${feedback}`)
     }
-    
+
     onReviewed({
       flashcardOID: flashcard.oid,
       confidence,

@@ -1,24 +1,22 @@
 import { Block, Desk } from '@renderer/Model'
 import RenderedDesk from './RenderedDesk'
 import { useState, useEffect, useContext } from 'react'
-import { ConfigContext } from '@renderer/ConfigContext'
+import { ConfigContext, selectedDesks } from '@renderer/ConfigContext'
 import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 
-// Static desks declared in editorconfig.jsonnet relies a lot on implicit properties.
-// This function edits a desk to ensure all blocks have OIDs and repositorySlugs populated.
+// Static desks declared in config.jsonnet may omit OIDs.
+// This function edits a desk to ensure all blocks have OIDs populated.
 // NB: Dynamic desks created by users in the app should already have these properties set.
 async function editDesk(desk: Desk): Promise<Desk> {
-  const editBlock = (currentBlock: Block, parentRepositories: string[]): Block => {
-    const editedRepositories = currentBlock.repositorySlugs ?? parentRepositories
+  const editBlock = (currentBlock: Block): Block => {
     const editedElements: Block[] = []
     for (const child of currentBlock.elements ?? []) {
-      editedElements.push(editBlock(child, editedRepositories))
+      editedElements.push(editBlock(child))
     }
     return {
       ...currentBlock,
       oid: currentBlock.oid ? currentBlock.oid : generateOid(),
       layout: currentBlock.layout ? currentBlock.layout : 'container',
-      repositorySlugs: editedRepositories,
       elements: editedElements
     }
   }
@@ -31,7 +29,7 @@ async function editDesk(desk: Desk): Promise<Desk> {
   return {
     ...desk,
     oid: deskOid,
-    root: editBlock(desk.root, [])
+    root: editBlock(desk.root)
   }
 }
 
@@ -44,19 +42,32 @@ function RenderedDeskTab({ oid }: RenderedDeskTabProps) {
   const [desk, setDesk] = useState<Desk | null>(null)
 
   const { config } = useContext(ConfigContext)
-  const staticDecks = config.static.desks
   const dynamicDecks = config.dynamic.desks
 
   useEffect(() => {
-    const foundDesk =
-      // Search for a desk with OID in dynamic, then static config.
-      dynamicDecks?.find((d) => d.oid === oid) ||
-      // Ignore templates and generate the OIDs from the names for static desks.
-      staticDecks?.find(async (d) => (await generateOidFromString(d.name)) === oid && !d.template)
+    const findDesk = async () => {
+      // First check dynamic desks
+      let foundDesk = dynamicDecks?.find((d) => d.oid === oid)
 
-    if (!foundDesk) return
+      // If not found in dynamic desks, search in repository configs
+      if (!foundDesk) {
+        const repoDesks = selectedDesks(config)
+        for (const desk of repoDesks) {
+          if (desk.oid !== oid || foundDesk) continue
+          const deskOid = await generateOidFromString(desk.name)
+          if (deskOid === oid && !desk.template) {
+            foundDesk = desk
+            break
+          }
+        }
+      }
 
-    editDesk(foundDesk).then((editedDesk) => setDesk(editedDesk))
+      if (!foundDesk) return
+
+      editDesk(foundDesk).then((editedDesk) => setDesk(editedDesk))
+    }
+
+    findDesk()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

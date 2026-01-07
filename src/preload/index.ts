@@ -30,7 +30,6 @@ const api = {
   browseUrl: (url: string) => ipcRenderer.send('browse-url', url),
 
   // 2-way renderer to main
-  getDailyQuote: () => ipcRenderer.invoke('get-daily-quote'),
   // Viewer
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),

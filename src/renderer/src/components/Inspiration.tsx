@@ -1,32 +1,29 @@
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { EraserIcon, SkipBackIcon, SkipForwardIcon, SmileyXEyesIcon } from '@phosphor-icons/react'
-import { InspirationConfig, Note, Query, QueryResult } from '@renderer/Model'
-import { ConfigContext } from '@renderer/ConfigContext'
+import { Note, Query, QueryResult, QueryConfigWithContext } from '@renderer/Model'
+import { ConfigContext, selectedInspirations } from '@renderer/ConfigContext'
 import useKeyDown from '@renderer/helpers/useKeyDown'
 import FullScreenNote from './FullScreenNote'
 import { Action, Actions } from './Actions'
 import Question from './Question'
 
-function extractQuery(inspiration: InspirationConfig): Query {
-  // Convert all queries configured into valid Query
-  const result: Query = {
-    q: inspiration.query,
-    repositories: inspiration.repositories ? inspiration.repositories : [],
-    deskOid: undefined,
-    blockOid: undefined,
-    limit: 1000, // 1000 notes must be enough
-    shuffle: true // Important!
-  }
-  return result
-}
-
 function Inspiration() {
   const { config } = useContext(ConfigContext)
-  const { inspirations } = config.static
 
+  const [inspirations, setInspirations] = useState<QueryConfigWithContext[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>()
   const [notes, setNotes] = useState<Note[]>([])
   const [index, setIndex] = useState<number>(0) // 0 <= index < note.length
+
+  // Load inspirations from repository configs
+  useEffect(() => {
+    const loadInspirations = () => {
+      const inspirationQueries = selectedInspirations(config)
+      setInspirations(inspirationQueries)
+    }
+
+    loadInspirations()
+  }, [config])
 
   // Support navigation using keys
   useKeyDown(() => {
@@ -37,17 +34,24 @@ function Inspiration() {
   }, ['ArrowRight'])
 
   // Not defined in configuration
-  if (!inspirations) {
+  if (inspirations.length === 0) {
     return <SmileyXEyesIcon size={48} />
   }
 
   // Triggered when a user select a category among the configured ones
-  const handleCategorySelected = (inspiration: InspirationConfig) => {
-    setSelectedCategory(inspiration.name)
+  const loadNotes = (inspiration: QueryConfigWithContext) => {
+    setSelectedCategory(inspiration.title)
 
     // Load random notes
-    const query = extractQuery(inspiration)
-    console.info(`Searching for ${inspiration.name}...`)
+    const query: Query = {
+      q: inspiration.q,
+      repositories: [inspiration.repositorySlug],
+      deskOid: undefined,
+      blockOid: undefined,
+      limit: 1000,
+      shuffle: true
+    }
+    console.info(`Searching for ${inspiration.title}...`)
 
     const search = async () => {
       const results: QueryResult = await window.api.search(query)
@@ -75,8 +79,8 @@ function Inspiration() {
           <Question
             question="Choose a category"
             choices={inspirations}
-            renderChoice={(inspiration: InspirationConfig) => inspiration.name}
-            onChoiceSelected={handleCategorySelected}
+            renderChoice={(inspiration: QueryConfigWithContext) => inspiration.title}
+            onChoiceSelected={loadNotes}
           />
         </div>
       )}

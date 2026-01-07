@@ -9,6 +9,14 @@ local srsAlgorithmSettings = {
     noteTypes: nt.DefaultNoteTypes,
     fileTypes: nt.DefaultFileTypes,
 
+    queries: {
+        sideProjects: {
+            title: 'Side Projects',
+            q: 'path:projects @title:Synopsis',
+            tags: ['project'],
+        },
+    },
+
     decks: [
         {
             name: "Work",

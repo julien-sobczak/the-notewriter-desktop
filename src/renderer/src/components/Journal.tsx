@@ -11,8 +11,8 @@ import {
   ArrowElbowLeftDownIcon as UnexpandIcon,
   PlusCircleIcon as PlusIcon
 } from '@phosphor-icons/react'
-import { ConfigContext } from '@renderer/ConfigContext'
-import { JournalConfig, Note, RoutineConfig, JournalActivity, ParentNote } from '@renderer/Model'
+import { ConfigContext, selectedJournals } from '@renderer/ConfigContext'
+import { JournalConfigWithContext, Note, RoutineConfig, JournalActivity, ParentNote } from '@renderer/Model'
 import Question from './Question'
 import TimelineRangePicker from './TimelineRangePicker'
 import RenderedNote from './RenderedNote'
@@ -38,8 +38,8 @@ type ViewState = 'loading' | 'journal-selection' | 'viewing'
 function Journal() {
   const { config } = useContext(ConfigContext)
   const [viewState, setViewState] = useState<ViewState>('loading')
-  const [journals, setJournals] = useState<JournalConfig[]>([])
-  const [selectedJournal, setSelectedJournal] = useState<JournalConfig | null>(null)
+  const [journals, setJournals] = useState<JournalConfigWithContext[]>([])
+  const [selectedJournal, setSelectedJournal] = useState<JournalConfigWithContext | null>(null)
   const [activity, setActivity] = useState<JournalActivity | null>(null)
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
@@ -65,21 +65,15 @@ function Journal() {
   useEffect(() => {
     // Load journal configuration
     const loadJournals = () => {
-      if (!config?.static?.journal) {
-        setJournals([])
-        setViewState('loading')
-        return
-      }
+      const allJournals = selectedJournals(config)
+      setJournals(allJournals)
 
-      const journalConfigs = config.static.journal
-      setJournals(journalConfigs)
-
-      if (journalConfigs.length === 0) {
+      if (allJournals.length === 0) {
         setViewState('loading')
-      } else if (journalConfigs.length === 1) {
+      } else if (allJournals.length === 1) {
         // Only one journal, skip selection
-        setSelectedJournal(journalConfigs[0])
-        loadJournalActivity(journalConfigs[0])
+        setSelectedJournal(allJournals[0])
+        loadJournalActivity(allJournals[0])
       } else {
         setViewState('journal-selection')
       }
@@ -88,13 +82,13 @@ function Journal() {
     loadJournals()
   }, [config])
 
-  const loadJournalActivity = async (journal: JournalConfig) => {
+  const loadJournalActivity = async (journal: JournalConfigWithContext) => {
     if (!window.electron) return
 
     try {
       const pathPrefix = extractPathPrefix(journal.path)
       const journalActivity = await window.api.determineJournalActivity(
-        journal.repository,
+        journal.repositorySlug,
         pathPrefix
       )
       setActivity(journalActivity)
@@ -120,7 +114,7 @@ function Journal() {
     }
   }
 
-  const handleJournalSelected = (journal: JournalConfig) => {
+  const handleJournalSelected = (journal: JournalConfigWithContext) => {
     setSelectedJournal(journal)
     loadJournalActivity(journal)
   }
@@ -134,14 +128,14 @@ function Journal() {
     try {
       const pathPrefix = extractPathPrefix(selectedJournal.path)
       const entries = await window.api.findJournalEntries(
-        selectedJournal.repository,
+        selectedJournal.repositorySlug,
         pathPrefix,
         dateRange.start,
         dateRange.end
       )
 
       console.info(
-        `Loaded ${entries.length} journal entries from ${selectedJournal.repository} between ${dateRange.start} and ${dateRange.end}`
+        `Loaded ${entries.length} journal entries from ${selectedJournal.repositorySlug} between ${dateRange.start} and ${dateRange.end}`
       )
       setNotes(entries)
 
@@ -221,13 +215,13 @@ function Journal() {
         setSelectedRoutine(null)
         console.log('Forcing adding today note...')
         const todayPath = evaluateTemplateVariables(selectedJournal.path)
-        await window.api.forceAdd(selectedJournal.repository, todayPath)
+        await window.api.forceAdd(selectedJournal.repositorySlug, todayPath)
         // Refresh the journal entries
         await loadJournalEntries()
       } catch (error) {
         console.error('Error forcing add:', error)
       } finally {
-        console.log(`Added today note in repository ${selectedJournal.repository}`)
+        console.log(`Added today note in repository ${selectedJournal.repositorySlug}`)
       }
     }
   }
@@ -420,7 +414,7 @@ function Journal() {
 }
 
 type JournalEntryProps = {
-  journal: JournalConfig
+  journal: JournalConfigWithContext
   note?: ParentNote
   filterTags?: string[]
   filterAttributes?: string[]

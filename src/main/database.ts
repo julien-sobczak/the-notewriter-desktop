@@ -1693,7 +1693,6 @@ function queryPart2sql(qParent: string): string {
       if (i === -1) {
         return `note.tags LIKE '%${query.substring(1)}%'`
       }
-      // eslint-disable-next-line prettier/prettier
       return `note.tags LIKE '%${query.substring(1, i)}%' AND ${queryPart2sqlInner(query.substring(i + 1))}`
     }
 

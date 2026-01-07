@@ -1,5 +1,4 @@
 import path from 'path'
-import os from 'os'
 import fs from 'fs'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
@@ -8,7 +7,6 @@ import {
   EditorStaticConfig,
   EditorDynamicConfig,
   RepositoryRefConfig,
-  DailyQuoteConfig,
   RepositoryConfig,
   DeckRef,
   DeckConfig
@@ -61,7 +59,7 @@ export default class ConfigManager {
     }
 
     const dynamicConfig = await instance.#readDynamicConfig()
-    
+
     instance.editorStaticConfig = staticConfig
     instance.editorDynamicConfig = dynamicConfig
     instance.repositoryConfigs = {}
@@ -84,7 +82,7 @@ export default class ConfigManager {
     }
 
     console.log(`Reading configuration from ${configFile}`)
-    
+
     const instance = new ConfigManager()
     instance.configDir = configPath
 
@@ -173,8 +171,6 @@ export default class ConfigManager {
 
   // Traverse the static configuration to apply default values.
   static #applyDefaultStaticConfig(config: EditorStaticConfig): EditorStaticConfig {
-    const selectedRepositorySlugs: string[] = []
-
     // Select repositories by default
     if (config.repositories) {
       for (let i = 0; i < config.repositories.length; i++) {
@@ -182,36 +178,6 @@ export default class ConfigManager {
         if (repository.selected === undefined) {
           // Repositories are selected by default
           repository.selected = true
-        }
-        if (repository.selected) {
-          selectedRepositorySlugs.push(repository.slug)
-        }
-      }
-    }
-
-    // Define default daily quote
-    const defaultDailyQuote: DailyQuoteConfig = {
-      query: `@type:quote`, // any quote
-      repositories: selectedRepositorySlugs // default repositories
-    }
-    if (!config.dailyQuote) {
-      config.dailyQuote = defaultDailyQuote
-    }
-
-    // Use default selected repositories when none are specified
-    if (config.zenMode) {
-      for (let i = 0; i < config.zenMode.queries.length; i++) {
-        const query = config.zenMode.queries[i]
-        if (!query.repositories) {
-          query.repositories = selectedRepositorySlugs
-        }
-      }
-    }
-    if (config.inspirations) {
-      for (let i = 0; i < config.inspirations.length; i++) {
-        const inspiration = config.inspirations[i]
-        if (!inspiration.repositories) {
-          inspiration.repositories = selectedRepositorySlugs
         }
       }
     }

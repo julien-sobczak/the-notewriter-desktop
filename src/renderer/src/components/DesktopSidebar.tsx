@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react'
 import { XIcon as CloseIcon, DesktopIcon as DeskIcon } from '@phosphor-icons/react'
 import { Desk } from '@renderer/Model'
-import { ConfigContext } from '@renderer/ConfigContext'
+import { ConfigContext, selectedDesks } from '@renderer/ConfigContext'
 import { Action, Actions } from './Actions'
 
 type DesktopSidebarProps = {
@@ -12,16 +12,14 @@ type DesktopSidebarProps = {
 function DesktopSidebar({ onDeskSelected, onClose }: DesktopSidebarProps) {
   const { config } = useContext(ConfigContext)
 
-  // Read configured repositories (useful to populate the dropdown)
-  const staticConfig = config.static
-
   // Desks in selected repositories
   const [desks, setDesks] = useState<Desk[]>([])
 
   // Load files when switching to a new repository
   useEffect(() => {
-    setDesks(staticConfig.desks || []) // TODO load dynamic desks too
-  }, [staticConfig])
+    const allDesks = selectedDesks(config)
+    setDesks(allDesks)
+  }, [config])
 
   return (
     <div className="DesktopSidebar">

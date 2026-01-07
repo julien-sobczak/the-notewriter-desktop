@@ -353,23 +353,6 @@ app.whenReady().then(async () => {
     return results
   })
 
-  ipcMain.handle('get-daily-quote', async () => {
-    const { dailyQuote } = config.editorStaticConfig
-    if (!dailyQuote) {
-      throw new Error('No daily quote found')
-    }
-    const query: Query = {
-      q: dailyQuote.query,
-      repositories: dailyQuote.repositories,
-      blockOid: undefined,
-      deskOid: undefined,
-      limit: 0,
-      shuffle: false
-    }
-    const note = await db.searchDailyQuote(query)
-    return note
-  })
-
   ipcMain.handle(
     'get-note-statistics',
     async (_event, repositorySlugs: string[], query: string, groupBy: string, value?: string) => {
@@ -522,7 +505,8 @@ app.whenReady().then(async () => {
     async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review): Promise<Flashcard> => {
       const deckConfig = config.mustGetDeckConfig(deckRef)
       const algorithmName = deckConfig.algorithm || 'nt-0'
-      if (algorithmName !== 'nt-0') { // Only the default algorithm is implemented
+      if (algorithmName !== 'nt-0') {
+        // Only the default algorithm is implemented
         throw new Error(`Algorithm ${algorithmName} is not supported yet`)
       }
 
