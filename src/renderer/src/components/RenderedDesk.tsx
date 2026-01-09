@@ -41,7 +41,7 @@ type RenderedDeskProps = {
 
 export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   const [desk, setDesk] = useState(initialDesk)
   const [queriesLoaded, setQueriesLoaded] = useState(false)

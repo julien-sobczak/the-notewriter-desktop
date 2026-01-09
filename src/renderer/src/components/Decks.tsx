@@ -15,7 +15,7 @@ function Decks({ deck }: DecksProps) {
   const { config } = useContext(ConfigContext)
 
   // Read configured repositories (useful to populate the dropdown)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   const [decks, setDecks] = useState<Deck[]>()
   const [selectedDeck, setSelectedDeck] = useState<DeckRef | undefined>(deck)
@@ -23,7 +23,7 @@ function Decks({ deck }: DecksProps) {
 
   // Download decks
   useEffect(() => {
-    const repositorySlugs = getSelectedRepositorySlugs(staticConfig)
+    const repositorySlugs = getSelectedRepositorySlugs(editorConfig)
     setSelectedRepositorySlugs(repositorySlugs)
 
     const listDecks = async () => {
@@ -31,7 +31,7 @@ function Decks({ deck }: DecksProps) {
       setDecks(results)
     }
     listDecks()
-  }, [staticConfig])
+  }, [editorConfig])
 
   // Called when the user selects a deck to study
   const onStudy = (clickedDeck: Deck) => {

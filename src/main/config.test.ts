@@ -16,22 +16,22 @@ describe('ConfigManager', () => {
 
   test('read configuration files', async () => {
     fs.writeFileSync(
-      path.join(ntHomeDir, 'editorconfig.jsonnet'),
+      path.join(ntHomeDir, 'editorconfig.json'),
       `
 {
-  repositories: [
+  "repositories": [
     {
-      name: 'Main',
-      slug: 'main',
-      path: '${ntHomeDir}/main',
+      "name": "Main",
+      "slug": "main",
+      "path": "${ntHomeDir}/main"
     },
     {
-      name: 'My Company',
-      slug: 'my-company',
-      path: '${ntHomeDir}/work',
-      selected: false,
-    },
-  ],
+      "name": "My Company",
+      "slug": "my-company",
+      "path": "${ntHomeDir}/work",
+      "selected": false
+    }
+  ]
 }
 `
     )
