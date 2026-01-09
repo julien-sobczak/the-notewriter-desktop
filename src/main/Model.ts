@@ -1,8 +1,4 @@
 // duplicate file
-export interface EditorStaticConfig {
-  repositories: RepositoryRefConfig[]
-}
-
 export interface RepositoryRefConfig {
   name: string
   slug: string
@@ -70,10 +66,11 @@ export interface StatConfigWithContext extends StatConfig {
   repositorySlug: string
 }
 
-/* Dynamic Config */
+/* Editor Config */
 /* editorconfig.json */
 
-export interface EditorDynamicConfig {
+export interface EditorConfig {
+  repositories: RepositoryRefConfig[]
   bookmarks?: Bookmark[]
   desks?: Desk[]
   tabs?: TabRef[]
