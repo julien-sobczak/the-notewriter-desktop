@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut, dialog } from 'electron'
 import path, { join } from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -292,6 +292,16 @@ app.whenReady().then(async () => {
     configSaved = true
     mainWindow?.close()
     mainWindow = null
+  })
+  ipcMain.handle('select-directory', async () => {
+    if (!mainWindow) return null
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    })
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    return result.filePaths[0]
   })
   ipcMain.handle('list-files', async (_event, repositorySlug: string) => {
     console.debug(`Listing files in repository ${repositorySlug}`)

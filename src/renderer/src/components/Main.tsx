@@ -53,6 +53,7 @@ import NotificationsStatus from './Notifications'
 import { ConfigContext } from '@renderer/ConfigContext'
 import BrowserSidebar from './BrowserSidebar'
 import DesktopSidebar from './DesktopSidebar'
+import Welcome from './Welcome'
 
 const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g
 
@@ -848,6 +849,54 @@ function Main() {
     addTab('desk', 'New Desk', deskTab)
   }
 
+  const handleAddRepository = async () => {
+    const repositoryPath = await window.api.selectDirectory()
+    if (!repositoryPath) return
+
+    // Check if .nt/config.jsonnet exists
+    const fs = await import('fs')
+    const path = await import('path')
+    const configPath = path.default.join(repositoryPath, '.nt', 'config.jsonnet')
+    
+    // For now, we'll dispatch the add-repository action
+    // In a real implementation, you'd want to validate the path on the main process
+    const repositoryName = path.default.basename(repositoryPath)
+    const repositorySlug = repositoryName.toLowerCase().replace(/\s+/g, '-')
+    
+    dispatch({
+      type: 'add-repository',
+      payload: {
+        name: repositoryName,
+        slug: repositorySlug,
+        path: repositoryPath,
+        selected: true
+      }
+    })
+  }
+
+  const handleRepositorySelected = (repositoryPath: string) => {
+    // Add the repository to the config
+    const repositoryName = repositoryPath.split('/').pop() || 'Repository'
+    const repositorySlug = repositoryName.toLowerCase().replace(/\s+/g, '-')
+    
+    dispatch({
+      type: 'add-repository',
+      payload: {
+        name: repositoryName,
+        slug: repositorySlug,
+        path: repositoryPath,
+        selected: true
+      }
+    })
+  }
+
+  // Check if there are no repositories
+  const hasNoRepositories = editorConfig.repositories.length === 0
+
+  if (hasNoRepositories) {
+    return <Welcome onRepositorySelected={handleRepositorySelected} />
+  }
+
   const activities: Activity[] = [
     {
       slug: 'hi',
@@ -932,6 +981,14 @@ function Main() {
                 {repository.name}
               </button>
             ))}
+          <button
+            type="button"
+            className="AddRepositoryButton"
+            onClick={handleAddRepository}
+            title="Add repository"
+          >
+            <PlusIcon size={16} />
+          </button>
         </nav>
         <NotificationsStatus />
       </header>
