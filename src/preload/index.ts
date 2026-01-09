@@ -1,14 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import {
-  DeckRef,
-  EditorDynamicConfig,
-  Flashcard,
-  Note,
-  NoteRef,
-  Query,
-  Review
-} from '../main/Model'
+import { DeckRef, EditorConfig, Flashcard, Note, NoteRef, Query, Review } from '../main/Model'
 
 // Custom APIs for renderer
 const api = {
@@ -30,6 +22,8 @@ const api = {
   browseUrl: (url: string) => ipcRenderer.send('browse-url', url),
 
   // 2-way renderer to main
+  // File selection
+  selectDirectory: () => ipcRenderer.invoke('select-directory'),
   // Viewer
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
@@ -55,8 +49,8 @@ const api = {
   completeReminders: (reminderOids: string[]) =>
     ipcRenderer.invoke('complete-reminders', reminderOids),
   // Settings
-  saveDynamicConfig: (dynamicConfig: EditorDynamicConfig) =>
-    ipcRenderer.invoke('save-dynamic-config', dynamicConfig),
+  saveDynamicConfig: (editorConfig: EditorConfig) =>
+    ipcRenderer.invoke('save-dynamic-config', editorConfig),
   // Flashcards
   listDecks: (repositorySlugs: string[]) => ipcRenderer.invoke('list-decks', repositorySlugs),
   listTodayFlashcards: (deckRef: DeckRef) => ipcRenderer.invoke('list-today-flashcards', deckRef),
