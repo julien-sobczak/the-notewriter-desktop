@@ -853,15 +853,12 @@ function Main() {
     const repositoryPath = await window.api.selectDirectory()
     if (!repositoryPath) return
 
-    // Check if .nt/config.jsonnet exists
-    const fs = await import('fs')
-    const path = await import('path')
-    const configPath = path.default.join(repositoryPath, '.nt', 'config.jsonnet')
-    
-    // For now, we'll dispatch the add-repository action
-    // In a real implementation, you'd want to validate the path on the main process
-    const repositoryName = path.default.basename(repositoryPath)
+    // Extract repository name from path
+    const repositoryName = repositoryPath.split('/').pop() || 'Repository'
     const repositorySlug = repositoryName.toLowerCase().replace(/\s+/g, '-')
+    
+    // TODO: Validate that .nt/config.jsonnet exists in the selected directory
+    // This should be done on the main process for security
     
     dispatch({
       type: 'add-repository',

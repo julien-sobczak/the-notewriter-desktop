@@ -41,7 +41,7 @@ function insideRepository(): string {
     const ntDir = path.join(currentDir, '.nt')
     const configFile = path.join(ntDir, 'config.jsonnet')
 
-    // Check if .nt directory exists and contains editorconfig.jsonnet
+    // Check if .nt directory exists and contains config.jsonnet
     if (fs.existsSync(ntDir) && fs.existsSync(configFile)) {
       // We found a valid .nt directory, return this as the repository root
       return currentDir
