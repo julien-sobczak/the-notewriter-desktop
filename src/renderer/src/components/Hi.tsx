@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from 'react'
 import { ArrowLeftIcon as BackIcon } from '@phosphor-icons/react'
-import { ConfigContext } from '@renderer/ConfigContext'
+import { ConfigContext, selectedJournals } from '@renderer/ConfigContext'
 import { JournalConfigWithContext, RoutineConfig } from '@renderer/Model'
 import Question from './Question'
 import RenderedRoutine from './RenderedRoutine'
