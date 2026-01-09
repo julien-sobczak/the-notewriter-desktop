@@ -381,7 +381,7 @@ function SunburstMediaChart({ name, data }: { name: string; data: MediaDirStat[]
 
 function Stats() {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   const [loading, setLoading] = useState<boolean>(true)
   const [objectCountData, setObjectCountData] = useState<CountStat[]>([])

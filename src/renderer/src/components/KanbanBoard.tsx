@@ -61,7 +61,7 @@ function KanbanRenderedColumn({ column, items, renderItem }: KanbanRenderedColum
   const filteredItems = items.filter((item) => item.status && selectedStatuses.has(item.status))
 
   // The attribute 'status' is standard. Use the definition from the first repository found.
-  const selectedRepositorySlugs = getSelectedRepositorySlugs(config.static)
+  const selectedRepositorySlugs = getSelectedRepositorySlugs(config.config)
   if (selectedRepositorySlugs.length === 0) return null
 
   const defaultRepositoryConfig = repositoryConfigs[selectedRepositorySlugs[0]]

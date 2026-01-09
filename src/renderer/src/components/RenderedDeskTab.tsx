@@ -42,7 +42,7 @@ function RenderedDeskTab({ oid }: RenderedDeskTabProps) {
   const [desk, setDesk] = useState<Desk | null>(null)
 
   const { config } = useContext(ConfigContext)
-  const dynamicDecks = config.dynamic.desks
+  const dynamicDecks = config.config.desks
 
   useEffect(() => {
     const findDesk = async () => {

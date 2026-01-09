@@ -485,9 +485,9 @@ export default function RenderedNote({
   }
 
   let bookmarked = false
-  if (config.dynamic && config.dynamic.bookmarks) {
+  if (config.config && config.config.bookmarks) {
     bookmarked =
-      config.dynamic.bookmarks.filter((bookmark: Bookmark) => bookmark.noteOID === note.oid)
+      config.config.bookmarks.filter((bookmark: Bookmark) => bookmark.noteOID === note.oid)
         .length > 0
   }
 
