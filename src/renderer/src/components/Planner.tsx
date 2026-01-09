@@ -53,12 +53,12 @@ async function searchItems(repositorySlug: string, query: string): Promise<Kanba
 
 function Planner() {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
   const [mode, setMode] = useState<PlannerMode>('question')
   const [projectItems, setProjectItems] = useState<KanbanItem[]>([])
   const [taskItems, setTaskItems] = useState<KanbanItem[]>([])
 
-  const selectedRepositorySlugs = getSelectedRepositorySlugs(staticConfig)
+  const selectedRepositorySlugs = getSelectedRepositorySlugs(editorConfig)
 
   // Get project queries from repositories
   const projectQueries: QueryConfigWithContext[] = []

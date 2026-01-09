@@ -57,7 +57,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
   useEffect(() => {
     // Get zen queries from repository configs
     const zenQueries: Query[] = []
-    const selectedRepos = config.static.repositories.filter((repo) => repo.selected)
+    const selectedRepos = config.config.repositories.filter((repo) => repo.selected)
 
     for (const repo of selectedRepos) {
       const repoConfig = config.repositories[repo.slug]

@@ -12,10 +12,10 @@ type BookmarkerProps = {
 
 function Bookmarker({ bookmark }: BookmarkerProps) {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   // Read saved bookmarks in the dynamic configuration
-  const { bookmarks } = config.dynamic
+  const { bookmarks } = editorConfig
   // Read bookmarks statically defined in notes
   const [notes, setNotes] = useState<Note[]>([])
 
@@ -25,7 +25,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
 
   // Retrieve static bookmarks from the database
   useEffect(() => {
-    const selectedRepositorySlugs = getSelectedRepositorySlugs(staticConfig)
+    const selectedRepositorySlugs = getSelectedRepositorySlugs(editorConfig)
 
     const search = async () => {
       console.log(`Searching for bookmarks in database...`)
@@ -41,7 +41,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
       setNotes(results.notes)
     }
     search()
-  }, [staticConfig])
+  }, [editorConfig])
 
   // Download the note corresponding to the selected bookmark
   useEffect(() => {

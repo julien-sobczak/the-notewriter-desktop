@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut, dialog } from 'electron'
 import path, { join } from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -14,7 +14,7 @@ import {
   DeckConfig,
   DeckRef,
   determineNextReminder,
-  EditorDynamicConfig,
+  EditorConfig,
   Flashcard,
   Note,
   NoteRef,
@@ -41,7 +41,7 @@ function insideRepository(): string {
     const ntDir = path.join(currentDir, '.nt')
     const configFile = path.join(ntDir, 'config.jsonnet')
 
-    // Check if .nt directory exists and contains editorconfig.jsonnet
+    // Check if .nt directory exists and contains config.jsonnet
     if (fs.existsSync(ntDir) && fs.existsSync(configFile)) {
       // We found a valid .nt directory, return this as the repository root
       return currentDir
@@ -137,8 +137,7 @@ function createWindow(): void {
 
     // Forward configuration state
     mainWindow.webContents.send('configuration-loaded', {
-      static: config.editorStaticConfig,
-      dynamic: config.editorDynamicConfig,
+      config: config.editorConfig,
       repositories: config.repositoryConfigs
     })
 
@@ -158,8 +157,7 @@ function createWindow(): void {
 
     // Forward configuration state after page refresh
     mainWindow.webContents.send('configuration-loaded', {
-      static: config.editorStaticConfig,
-      dynamic: config.editorDynamicConfig,
+      config: config.editorConfig,
       repositories: config.repositoryConfigs
     })
   })
@@ -287,13 +285,23 @@ app.whenReady().then(async () => {
   })
 
   /* Two-way communication with the renderer process */
-  ipcMain.handle('save-dynamic-config', (_event, dynamicConfig: EditorDynamicConfig) => {
+  ipcMain.handle('save-dynamic-config', (_event, editorConfig: EditorConfig) => {
     console.log('received save-dynamic-config')
-    console.log('Saving...', dynamicConfig)
-    config.save(dynamicConfig)
+    console.log('Saving...', editorConfig)
+    config.save(editorConfig)
     configSaved = true
     mainWindow?.close()
     mainWindow = null
+  })
+  ipcMain.handle('select-directory', async () => {
+    if (!mainWindow) return null
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    })
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    return result.filePaths[0]
   })
   ipcMain.handle('list-files', async (_event, repositorySlug: string) => {
     console.debug(`Listing files in repository ${repositorySlug}`)

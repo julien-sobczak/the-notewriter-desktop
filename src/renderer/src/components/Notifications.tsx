@@ -198,13 +198,13 @@ function NotificationsStatus() {
   const [loading, setLoading] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
 
-  const staticConfig = config.static
+  const editorConfig = config.config
   const selectedRepositorySlugs = useMemo(
     () =>
-      staticConfig.repositories
+      editorConfig.repositories
         .filter((repository) => repository.selected)
         .map((repository) => repository.slug),
-    [staticConfig.repositories] // Only recreate when repositories change
+    [editorConfig.repositories] // Only recreate when repositories change
   )
 
   const loadRemindersAndMemories = useCallback(async () => {
