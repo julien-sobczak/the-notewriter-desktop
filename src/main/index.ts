@@ -14,7 +14,7 @@ import {
   DeckConfig,
   DeckRef,
   determineNextReminder,
-  EditorDynamicConfig,
+  EditorConfig,
   Flashcard,
   Note,
   NoteRef,
@@ -137,8 +137,7 @@ function createWindow(): void {
 
     // Forward configuration state
     mainWindow.webContents.send('configuration-loaded', {
-      static: config.editorStaticConfig,
-      dynamic: config.editorDynamicConfig,
+      config: config.editorConfig,
       repositories: config.repositoryConfigs
     })
 
@@ -158,8 +157,7 @@ function createWindow(): void {
 
     // Forward configuration state after page refresh
     mainWindow.webContents.send('configuration-loaded', {
-      static: config.editorStaticConfig,
-      dynamic: config.editorDynamicConfig,
+      config: config.editorConfig,
       repositories: config.repositoryConfigs
     })
   })
@@ -287,10 +285,10 @@ app.whenReady().then(async () => {
   })
 
   /* Two-way communication with the renderer process */
-  ipcMain.handle('save-dynamic-config', (_event, dynamicConfig: EditorDynamicConfig) => {
+  ipcMain.handle('save-dynamic-config', (_event, editorConfig: EditorConfig) => {
     console.log('received save-dynamic-config')
-    console.log('Saving...', dynamicConfig)
-    config.save(dynamicConfig)
+    console.log('Saving...', editorConfig)
+    config.save(editorConfig)
     configSaved = true
     mainWindow?.close()
     mainWindow = null

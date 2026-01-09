@@ -258,7 +258,7 @@ function CommandMenu({
   onFileSelected = () => {}
 }: CommandMenuProps) {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   /*
    * Implementation based on project https://cmdk.paco.me/ (https://github.com/pacocoursey/cmdk)
@@ -275,7 +275,7 @@ function CommandMenu({
 
   useEffect(() => {
     // Retrieve the statistics based on currently selected repositories
-    const selectedRepositorySlugs = staticConfig.repositories
+    const selectedRepositorySlugs = editorConfig.repositories
       .filter((repository: RepositoryRefConfig) => repository.selected)
       .map((repository: RepositoryRefConfig) => repository.slug)
 
@@ -285,7 +285,7 @@ function CommandMenu({
     }
 
     listGotos()
-  }, [staticConfig.repositories])
+  }, [editorConfig.repositories])
 
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
@@ -584,8 +584,7 @@ export interface Activity {
 function Main() {
   const { config, dispatch } = useContext(ConfigContext)
 
-  const staticConfig = config.static
-  const dynamicConfig = config.dynamic
+  const editorConfig = config.config
   const repositoryConfigs = config.repositories
   const deckRefs = Object.keys(repositoryConfigs || {})
     .map((repositorySlug: string): DeckRef[] => {
@@ -624,9 +623,9 @@ function Main() {
   const [files, setFiles] = useState<File[]>([])
 
   // Tabs - Initialize from dynamic config
-  const [openedTabs, setOpenedTabs] = useState<TabRef[]>(dynamicConfig.tabs || [])
+  const [openedTabs, setOpenedTabs] = useState<TabRef[]>(editorConfig.tabs || [])
   const [activeTabIndex, setActiveTabIndex] = useState<number>(
-    dynamicConfig.tabs && dynamicConfig.tabs.length > 0 ? 0 : -1
+    editorConfig.tabs && editorConfig.tabs.length > 0 ? 0 : -1
   )
 
   // Function to add a new tab
@@ -657,7 +656,7 @@ function Main() {
 
   useEffect(() => {
     // Load all files to provide them in cmd+k
-    const repositorySlugs: string[] = staticConfig.repositories.map(
+    const repositorySlugs: string[] = editorConfig.repositories.map(
       (w: RepositoryRefConfig) => w.slug
     )
 
@@ -668,14 +667,14 @@ function Main() {
       setFiles(results)
     }
     listFiles()
-  }, [staticConfig.repositories])
+  }, [editorConfig.repositories])
 
   useEffect(() => {
-    // Update opened tabs when staticConfig.tabs changes
-    if (!dynamicConfig.tabs) return
-    setOpenedTabs(dynamicConfig.tabs)
+    // Update opened tabs when editorConfig.tabs changes
+    if (!editorConfig.tabs) return
+    setOpenedTabs(editorConfig.tabs)
     if (activeTabIndex === -1) setActiveTabIndex(0) // Force the first tab by default
-  }, [dynamicConfig.tabs]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editorConfig.tabs]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -688,7 +687,7 @@ function Main() {
     event.preventDefault()
   }
 
-  const selectedRepositorySlugs = staticConfig.repositories
+  const selectedRepositorySlugs = editorConfig.repositories
     .filter((repository: RepositoryRefConfig) => repository.selected)
     .map((repository: RepositoryRefConfig) => repository.slug)
 
@@ -922,8 +921,8 @@ function Main() {
           />
         </form>
         <nav className="RepositoryButtonGroup">
-          {staticConfig.repositories.length > 1 &&
-            staticConfig.repositories.map((repository: RepositoryRefConfig) => (
+          {editorConfig.repositories.length > 1 &&
+            editorConfig.repositories.map((repository: RepositoryRefConfig) => (
               <button
                 type="button"
                 key={repository.name}
@@ -939,10 +938,10 @@ function Main() {
 
       <CommandMenu
         // Data
-        repositories={staticConfig.repositories}
-        desks={dynamicConfig.desks}
+        repositories={editorConfig.repositories}
+        desks={editorConfig.desks}
         decks={deckRefs}
-        bookmarks={dynamicConfig.bookmarks}
+        bookmarks={editorConfig.bookmarks}
         files={files}
         // Events
         onActivitySelected={(activitySlug) => switchActivity(activitySlug)}
