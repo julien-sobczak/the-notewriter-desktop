@@ -54,41 +54,41 @@ local srsAlgorithmSettings = {
   queries: {
     favoriteQuotes: {
       title: 'Favorite Quotes',
-      q: '-#ignore @type:quote',
+      query: '-#ignore @type:quote',
     },
     dailyQuote: {
       title: 'Daily Quote',
-      q: 'path:references @type:Quote',
+      query: 'path:references @type:Quote',
       tags: ['daily-quote'],
     },
     inspirationLife: {
       title: 'Life',
-      q: 'path:references/quotes (#life or #life-changing) @type:Quote',
+      query: 'path:references/quotes (#life or #life-changing) @type:Quote',
       tags: ['inspiration'],
     },
     inspirationArt: {
       title: 'Art',
-      q: 'path:references/art @type:Artwork',
+      query: 'path:references/art @type:Artwork',
       tags: ['inspiration'],
     },
     sideProjects: {
       title: 'Side Projects',
-      q: 'path:projects @title:Synopsis',
+      query: 'path:projects @title:Synopsis',
       tags: ['project'],
     },
     personalBacklog: {
       title: 'Personal Backlog',
-      q: 'path:projects/ @type:Todo',
+      query: 'path:projects/ @type:Todo',
       tags: ['task'],
     },
     zenQuotes: {
       title: 'Zen Quotes',
-      q: 'path:references @type:Quote',
+      query: 'path:references @type:Quote',
       tags: ['zen'],
     },
     zenThoughts: {
       title: 'Zen Thoughts',
-      q: 'path:thoughts',
+      query: 'path:thoughts',
       tags: ['zen'],
     },
   },

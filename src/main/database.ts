@@ -282,7 +282,7 @@ export default class DatabaseManager {
   }
 
   async searchNotes(
-    q: string,
+    query: string,
     datasourceName: string,
     limit: number,
     shuffle: boolean
@@ -292,7 +292,7 @@ export default class DatabaseManager {
       throw new Error(`No datasource ${datasourceName} found`)
     }
     return new Promise<Note[]>((resolve, reject) => {
-      const sqlQuery = query2sql(q, limit, shuffle)
+      const sqlQuery = query2sql(query, limit, shuffle)
       console.debug(`[${datasourceName}] ${sqlQuery}`)
       db.all(sqlQuery, async (err: any, rows: any) => {
         if (err) {
@@ -986,7 +986,7 @@ export default class DatabaseManager {
         query.repositories.length === 0 ||
         query.repositories.includes(datasourceName)
       ) {
-        results.push(this.searchNotes(query.q, datasourceName, query.limit, query.shuffle))
+        results.push(this.searchNotes(query.query, datasourceName, query.limit, query.shuffle))
       }
     }
 
@@ -1620,48 +1620,48 @@ export default class DatabaseManager {
 
 /* Parsing */
 
-export function readStringValue(q: string): [string, string] {
-  const firstCharacter = q.charAt(0)
+export function readStringValue(query: string): [string, string] {
+  const firstCharacter = query.charAt(0)
 
   if (firstCharacter === "'") {
-    const closingQuoteIndex = q.indexOf("'", 1)
+    const closingQuoteIndex = query.indexOf("'", 1)
     if (closingQuoteIndex === -1) {
       throw new Error(`missing "'" in query`)
     }
-    const value = q.substring(1, closingQuoteIndex)
-    if (closingQuoteIndex === q.length - 1) {
+    const value = query.substring(1, closingQuoteIndex)
+    if (closingQuoteIndex === query.length - 1) {
       return [value, '']
     }
-    return [value, q.substring(closingQuoteIndex + 1).trim()]
+    return [value, query.substring(closingQuoteIndex + 1).trim()]
   }
 
   if (firstCharacter === '"') {
-    const closingQuoteIndex = q.indexOf('"', 1)
+    const closingQuoteIndex = query.indexOf('"', 1)
     if (closingQuoteIndex === -1) {
       throw new Error(`missing '"' in query`)
     }
-    const value = q.substring(1, closingQuoteIndex)
-    if (closingQuoteIndex === q.length - 1) {
+    const value = query.substring(1, closingQuoteIndex)
+    if (closingQuoteIndex === query.length - 1) {
       return [value, '']
     }
-    return [value, q.substring(closingQuoteIndex + 1).trim()]
+    return [value, query.substring(closingQuoteIndex + 1).trim()]
   }
 
   // just read until next blank
-  const nextSpaceIndex = q.indexOf(' ')
+  const nextSpaceIndex = query.indexOf(' ')
   if (nextSpaceIndex === -1) {
-    return [q, '']
+    return [query, '']
   }
-  const value = q.substring(0, nextSpaceIndex)
-  if (nextSpaceIndex === q.length - 1) {
+  const value = query.substring(0, nextSpaceIndex)
+  if (nextSpaceIndex === query.length - 1) {
     return [value, '']
   }
-  return [value, q.substring(nextSpaceIndex + 1).trim()]
+  return [value, query.substring(nextSpaceIndex + 1).trim()]
 }
 
-function queryPart2sql(qParent: string): string {
-  const queryPart2sqlInner = (q: string): string => {
-    const query = q.trim()
+function queryPart2sql(queryParent: string): string {
+  const queryPart2sqlInner = (queryRaw: string): string => {
+    const query = queryRaw.trim()
 
     if (query === '') {
       // Match all records with a "dummy" condition
@@ -1754,15 +1754,15 @@ function queryPart2sql(qParent: string): string {
     return sql
   }
 
-  let result = queryPart2sqlInner(qParent)
+  let result = queryPart2sqlInner(queryParent)
   // Fix a bug in logic as we systematically append 'AND' when the query is not
   // completely parsed even if the following keyword is 'OR'
   result = result.replace('AND OR', 'OR')
   return result
 }
 
-export function query2sql(q: string, limit: number, shuffle: boolean): string {
-  const whereContent = queryPart2sql(q)
+export function query2sql(query: string, limit: number, shuffle: boolean): string {
+  const whereContent = queryPart2sql(query)
   const fields =
     'note.oid, note.file_oid, note.note_type, note.slug, note.relative_path, note.wikilink, note.attributes, note.tags, note.line, note.title, note.short_title, note.long_title, note.content, note.body, note.comment, note.items, note.marked, note.annotations'
   let sql = `SELECT ${fields} FROM note_fts JOIN note on note.oid = note_fts.oid`

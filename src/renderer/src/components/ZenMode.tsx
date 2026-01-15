@@ -65,7 +65,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
         for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
           if (queryConfig.tags && queryConfig.tags.includes('zen')) {
             zenQueries.push({
-              q: queryConfig.q,
+              query: queryConfig.query,
               repositories: [repo.slug],
               deskOid: undefined,
               blockOid: undefined,

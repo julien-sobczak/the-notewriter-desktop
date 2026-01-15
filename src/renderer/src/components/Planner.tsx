@@ -13,7 +13,7 @@ type PlannerMode = 'question' | 'project' | 'task'
 async function searchItems(repositorySlug: string, query: string): Promise<KanbanItem[]> {
   // Perform search
   const results: QueryResult = await window.api.search({
-    q: query,
+    query: query,
     repositories: [repositorySlug],
     deskOid: null,
     blockOid: null,
@@ -71,14 +71,14 @@ function Planner() {
         if (queryConfig.tags?.includes('project')) {
           projectQueries.push({
             title: queryConfig.title,
-            q: queryConfig.q,
+            query: queryConfig.query,
             repositorySlug: repoSlug
           })
         }
         if (queryConfig.tags?.includes('task')) {
           taskQueries.push({
             title: queryConfig.title,
-            q: queryConfig.q,
+            query: queryConfig.query,
             repositorySlug: repoSlug
           })
         }
@@ -115,7 +115,10 @@ function Planner() {
     const items: KanbanItem[] = []
 
     for (const projectQuery of projectQueries) {
-      const results: KanbanItem[] = await searchItems(projectQuery.repositorySlug, projectQuery.q)
+      const results: KanbanItem[] = await searchItems(
+        projectQuery.repositorySlug,
+        projectQuery.query
+      )
       items.push(...results)
     }
 
@@ -129,7 +132,7 @@ function Planner() {
 
     const items: KanbanItem[] = []
     for (const taskQuery of taskQueries) {
-      const results: KanbanItem[] = await searchItems(taskQuery.repositorySlug, taskQuery.q)
+      const results: KanbanItem[] = await searchItems(taskQuery.repositorySlug, taskQuery.query)
       items.push(...results)
     }
 

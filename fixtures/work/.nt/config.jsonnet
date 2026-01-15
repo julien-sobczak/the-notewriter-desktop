@@ -12,7 +12,7 @@ local srsAlgorithmSettings = {
     queries: {
         sideProjects: {
             title: 'Side Projects',
-            q: 'path:projects @title:Synopsis',
+            query: 'path:projects @title:Synopsis',
             tags: ['project'],
         },
     },

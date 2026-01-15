@@ -200,7 +200,7 @@ export interface DeckConfig {
 }
 export interface QueryConfig {
   title: string
-  q: string
+  query: string
   tags?: string[]
 }
 
@@ -240,7 +240,7 @@ export interface FileRef {
 
 export interface Query {
   // The raw query string
-  q: string
+  query: string
   // The selected repositories
   repositories: string[]
   // The desk where the query originated

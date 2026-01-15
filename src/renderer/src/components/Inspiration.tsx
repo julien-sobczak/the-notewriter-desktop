@@ -44,7 +44,7 @@ function Inspiration() {
 
     // Load random notes
     const query: Query = {
-      q: inspiration.q,
+      query: inspiration.query,
       repositories: [inspiration.repositorySlug],
       deskOid: undefined,
       blockOid: undefined,

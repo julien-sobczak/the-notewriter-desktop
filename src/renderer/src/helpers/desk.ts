@@ -3,19 +3,11 @@ import { generateOid } from './oid'
 
 // Return all note refs present in a desk recursively.
 export function extractNoteRefs(desk: Desk): NoteRef[] {
-  return extractNoteRefsFromBlock(desk, desk.root, desk.root.repositorySlugs)
+  return extractNoteRefsFromBlock(desk, desk.root)
 }
 
 // Same as extractNoteRefs but from a given Block instead.
-function extractNoteRefsFromBlock(desk: Desk, block: Block, repositories: string[]): NoteRef[] {
-  // Determine on which repository we are working
-  let selectedRepositories: string[] = []
-  if (!block.repositorySlugs || block.repositorySlugs.length === 0) {
-    selectedRepositories = block.repositorySlugs
-  } else {
-    selectedRepositories = repositories
-  }
-
+function extractNoteRefsFromBlock(desk: Desk, block: Block): NoteRef[] {
   const results: NoteRef[] = []
   if (block.layout === 'container') {
     if (!block.noteRefs) return results
@@ -23,7 +15,7 @@ function extractNoteRefsFromBlock(desk: Desk, block: Block, repositories: string
   } else if (block.layout === 'horizontal' || block.layout === 'vertical') {
     if (!block.elements) return results
     for (const element of block.elements) {
-      results.push(...extractNoteRefsFromBlock(desk, element, selectedRepositories))
+      results.push(...extractNoteRefsFromBlock(desk, element))
     }
   }
 
@@ -43,8 +35,8 @@ function extractQueriesFromBlock(desk: Desk, block: Block): Query[] {
     results.push({
       deskOid: desk.oid,
       blockOid: block.oid,
-      q: block.query,
-      repositories: block.repositorySlugs ?? [],
+      query: block.query,
+      repositories: block.repositories,
       limit: 0,
       shuffle: false
     })
@@ -110,10 +102,10 @@ export function splitBlock(block: Block, oid: string, direction: 'horizontal' | 
           layout: 'container',
           name: '',
           query: '',
+          repositories: block.repositories,
           noteRefs: [],
           size: newSize,
           view: 'list',
-          repositorySlugs: block.repositorySlugs ?? [],
           elements: []
         }
       ]
@@ -123,10 +115,10 @@ export function splitBlock(block: Block, oid: string, direction: 'horizontal' | 
       oid: generateOid(),
       name: '',
       noteRefs: [],
+      repositories: block.repositories,
       query: '',
       size: '50%',
       view: 'list',
-      repositorySlugs: block.repositorySlugs ?? [],
       layout: direction,
       elements: [
         {
@@ -138,10 +130,10 @@ export function splitBlock(block: Block, oid: string, direction: 'horizontal' | 
           layout: 'container',
           name: '',
           noteRefs: [],
+          repositories: block.repositories,
           query: '',
           size: '50%',
           view: 'list',
-          repositorySlugs: block.repositorySlugs ?? [],
           elements: []
         }
       ]

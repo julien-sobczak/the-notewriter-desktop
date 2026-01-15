@@ -142,6 +142,8 @@ export interface Block {
   view: string | null // single | grid | list | free
   // Percentage of this block on parent size (height for vertical, width for horizontal)
   size: string | null
+  // The used repositories by this block
+  repositories: string[]
 
   // Layout-specific attributes
 
@@ -208,7 +210,7 @@ export interface DeckConfig {
 }
 export interface QueryConfig {
   title: string
-  q: string
+  query: string
   tags?: string[]
 }
 
@@ -254,7 +256,7 @@ export interface FileRef {
 
 export interface Query {
   // The raw query string
-  q: string
+  query: string
   // The selected repositories
   repositories: string[]
   // The desk where the query originated

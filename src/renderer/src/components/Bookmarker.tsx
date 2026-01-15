@@ -30,7 +30,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
     const search = async () => {
       console.log(`Searching for bookmarks in database...`)
       const results: QueryResult = await window.api.search({
-        q: '#bookmark',
+        query: '#bookmark',
         repositories: selectedRepositorySlugs,
         deskOid: null,
         blockOid: null,

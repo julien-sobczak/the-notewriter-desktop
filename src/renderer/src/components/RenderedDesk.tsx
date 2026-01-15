@@ -100,9 +100,9 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
           layout: 'container',
           name: '',
           query: '',
+          repositories: getSelectedRepositorySlugs(staticConfig),
           noteRefs: [],
           view: 'list',
-          repositorySlugs: getSelectedRepositorySlugs(staticConfig),
           elements: [],
           size: null
         }
@@ -116,21 +116,21 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
   }
 
   // Handler to submit a query for a container block
-  const handleSubmitQuery = async (blockOid: string, query: string) => {
+  const handleSubmitQuery = async (blockOid: string, queryRaw: string) => {
     const block = findBlock(desk.root, blockOid)
     if (!block) return
-    block.query = query
+    block.query = queryRaw
     updateDesk({ ...desk })
     // Fetch notes for this query
-    const q: Query = {
+    const query: Query = {
       deskOid: desk.oid,
       blockOid: blockOid,
-      q: query,
-      repositories: block.repositorySlugs ?? [],
+      query: queryRaw,
+      repositories: getSelectedRepositorySlugs(staticConfig),
       limit: 0,
       shuffle: false
     }
-    const results: QueryResult[] = await window.api.msearch([q])
+    const results: QueryResult[] = await window.api.msearch([query])
     for (const result of results) {
       if (!result.query.blockOid) continue
       notesCache.current.set(result.query.blockOid, result.notes)

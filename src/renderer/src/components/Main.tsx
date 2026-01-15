@@ -698,7 +698,7 @@ function Main() {
     }
     console.debug(`Searching ${searchQuery}...`)
     const query: Query = {
-      q: searchQuery,
+      query: searchQuery,
       repositories: selectedRepositorySlugs,
       blockOid: null,
       deskOid: null,
@@ -708,7 +708,7 @@ function Main() {
 
     const search = async () => {
       const result: QueryResult = await window.api.search(query)
-      console.debug(`Found ${result.notes.length} results for ${result.query.q}`)
+      console.debug(`Found ${result.notes.length} results for ${result.query.query}`)
       if (!result.query.blockOid) {
         // global search
         setSearchResults(result)
