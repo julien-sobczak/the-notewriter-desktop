@@ -1,13 +1,13 @@
 import { FolderOpenIcon } from '@phosphor-icons/react'
-import './Welcome.css'
+import { RepositoryRefConfig } from '@renderer/Model'
 
 type WelcomeProps = {
-  onRepositorySelected: (path: string) => void
+  onRepositorySelected: (ref: RepositoryRefConfig) => void
 }
 
 function Welcome({ onRepositorySelected }: WelcomeProps) {
   const handleBrowse = async () => {
-    const result = await window.api.selectDirectory()
+    const result = await window.api.selectRepository()
     if (result) {
       onRepositorySelected(result)
     }
@@ -15,14 +15,10 @@ function Welcome({ onRepositorySelected }: WelcomeProps) {
 
   return (
     <div className="Welcome">
-      <div className="WelcomeContent">
-        <h1>Welcome to The NoteWriter</h1>
-        <p>Choose a repository to get started</p>
-        <button className="WelcomeBrowseButton" onClick={handleBrowse}>
-          <FolderOpenIcon size={24} />
-          <span>Browse</span>
-        </button>
-      </div>
+      <p>Choose a repository to get started</p>
+      <button onClick={handleBrowse}>
+        <FolderOpenIcon size={24} />
+      </button>
     </div>
   )
 }

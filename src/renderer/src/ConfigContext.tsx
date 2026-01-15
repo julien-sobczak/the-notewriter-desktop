@@ -43,12 +43,10 @@ export function ConfigContextProvider({ children }: any) {
     })
     window.api.onWindowIsClosing(() => {
       console.log('window-is-closing')
-      window.api.saveDynamicConfig(config.config)
+      window.api.saveConfig(config.config)
+      // See https://dougschallmoser.medium.com/context-api-usereducer-in-react-2691c137f5f
     })
-  }, [])
-
-  // TODO Add more user-friendly method to every dispath action
-  // See https://dougschallmoser.medium.com/context-api-usereducer-in-react-2691c137f5f
+  }, [config])
 
   const value = { config, dispatch }
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>

@@ -14,7 +14,7 @@ function Bookmarker({ bookmark }: BookmarkerProps) {
   const { config } = useContext(ConfigContext)
   const editorConfig = config.config
 
-  // Read saved bookmarks in the dynamic configuration
+  // Read saved bookmarks in the editor configuration
   const { bookmarks } = editorConfig
   // Read bookmarks statically defined in notes
   const [notes, setNotes] = useState<Note[]>([])

@@ -31,7 +31,7 @@ interface API {
   browseUrl: (url: string) => void
 
   // 2-way renderer to main
-  selectDirectory: () => Promise<string | null>
+  selectRepository: () => Promise<RepositoryRefConfig | null>
   find: (noteRef: NoteRef) => Promise<Note>
   mfind: (noteRefs: NoteRef[]) => Promise<Note[]>
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>
@@ -51,7 +51,7 @@ interface API {
   getPendingReminders: (repositorySlugs: string[]) => Promise<Reminder[]>
   getPastMemories: (repositorySlugs: string[]) => Promise<Memory[]>
   completeReminders: (reminderOids: string[]) => Promise<void>
-  saveDynamicConfig: (editorConfig: EditorConfig) => Promise<void>
+  saveConfig: (editorConfig: EditorConfig) => Promise<void>
   listDecks: (repositorySlugs: string[]) => Promise<Deck[]>
   listTodayFlashcards: (deckRef: DeckRef) => Promise<Flashcard[]>
   flushOperations: (repositorySlugs: string[]) => Promise<void>

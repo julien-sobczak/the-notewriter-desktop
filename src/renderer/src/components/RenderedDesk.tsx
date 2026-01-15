@@ -100,7 +100,7 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
           layout: 'container',
           name: '',
           query: '',
-          repositories: getSelectedRepositorySlugs(staticConfig),
+          repositories: getSelectedRepositorySlugs(editorConfig),
           noteRefs: [],
           view: 'list',
           elements: [],
@@ -126,7 +126,7 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
       deskOid: desk.oid,
       blockOid: blockOid,
       query: queryRaw,
-      repositories: getSelectedRepositorySlugs(staticConfig),
+      repositories: getSelectedRepositorySlugs(editorConfig),
       limit: 0,
       shuffle: false
     }

@@ -22,8 +22,8 @@ const api = {
   browseUrl: (url: string) => ipcRenderer.send('browse-url', url),
 
   // 2-way renderer to main
-  // File selection
-  selectDirectory: () => ipcRenderer.invoke('select-directory'),
+  // File repository on disk
+  selectRepository: () => ipcRenderer.invoke('select-repository'),
   // Viewer
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),
@@ -49,8 +49,7 @@ const api = {
   completeReminders: (reminderOids: string[]) =>
     ipcRenderer.invoke('complete-reminders', reminderOids),
   // Settings
-  saveDynamicConfig: (editorConfig: EditorConfig) =>
-    ipcRenderer.invoke('save-dynamic-config', editorConfig),
+  saveConfig: (editorConfig: EditorConfig) => ipcRenderer.invoke('save-config', editorConfig),
   // Flashcards
   listDecks: (repositorySlugs: string[]) => ipcRenderer.invoke('list-decks', repositorySlugs),
   listTodayFlashcards: (deckRef: DeckRef) => ipcRenderer.invoke('list-today-flashcards', deckRef),

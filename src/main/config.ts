@@ -1,13 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 
-import {
-  EditorConfig,
-  RepositoryRefConfig,
-  RepositoryConfig,
-  DeckRef,
-  DeckConfig
-} from './Model'
+import { EditorConfig, RepositoryRefConfig, RepositoryConfig, DeckRef, DeckConfig } from './Model'
 import { normalizePath } from './util'
 
 export default class ConfigManager {
@@ -62,10 +56,8 @@ export default class ConfigManager {
       path: repositoryPath,
       selected: true
     }
-    
-    const existingRepoIndex = editorConfig.repositories.findIndex(
-      (r) => r.path === repositoryPath
-    )
+
+    const existingRepoIndex = editorConfig.repositories.findIndex((r) => r.path === repositoryPath)
     if (existingRepoIndex >= 0) {
       // Update existing repository
       editorConfig.repositories[existingRepoIndex] = {
@@ -187,13 +179,9 @@ export default class ConfigManager {
   save(config: EditorConfig) {
     const configPath = path.join(this.configDir, 'editorconfig.json')
     console.log(`Saving ${configPath}...`)
-    const content = JSON.stringify(config)
+    const content = JSON.stringify(config, null, 2) // Pretty-print JSON with 2-space indentation
     console.log(content)
-    fs.writeFile(configPath, content, (err) => {
-      if (err) {
-        console.error(err)
-      }
-    })
+    fs.writeFileSync(configPath, content)
   }
 
   // Returns the path .nt/objects for a given repository

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useContext } from 'react'
 import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 import {
@@ -623,7 +624,7 @@ function Main() {
   // Files
   const [files, setFiles] = useState<File[]>([])
 
-  // Tabs - Initialize from dynamic config
+  // Tabs - Initialize from editor config
   const [openedTabs, setOpenedTabs] = useState<TabRef[]>(editorConfig.tabs || [])
   const [activeTabIndex, setActiveTabIndex] = useState<number>(
     editorConfig.tabs && editorConfig.tabs.length > 0 ? 0 : -1
@@ -662,10 +663,10 @@ function Main() {
     )
 
     const listFiles = async () => {
-      const results: File[] = await window.api.listFiles(
-        repositorySlugs[0] // FIXME use all repositories?
-      )
-      setFiles(results)
+      for (const slug of repositorySlugs) {
+        const results: File[] = await window.api.listFiles(slug)
+        setFiles([...files, ...results])
+      }
     }
     listFiles()
   }, [editorConfig.repositories])
@@ -675,7 +676,7 @@ function Main() {
     if (!editorConfig.tabs) return
     setOpenedTabs(editorConfig.tabs)
     if (activeTabIndex === -1) setActiveTabIndex(0) // Force the first tab by default
-  }, [editorConfig.tabs]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editorConfig.tabs])
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -716,7 +717,6 @@ function Main() {
       }
     }
     search()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery])
 
   useEffect(() => {
@@ -725,7 +725,7 @@ function Main() {
 
   const handleRepositoryToggle = (slug: string) => {
     dispatch({
-      type: 'toggleRepositorySelected',
+      type: 'toggle-repository',
       payload: slug
     })
   }
@@ -850,44 +850,30 @@ function Main() {
   }
 
   const handleAddRepository = async () => {
-    const repositoryPath = await window.api.selectDirectory()
-    if (!repositoryPath) return
+    const repositoryConfig = await window.api.selectRepository()
+    if (!repositoryConfig) return
 
-    // Extract repository name from path
-    const repositoryName = repositoryPath.split('/').pop() || 'Repository'
-    const repositorySlug = repositoryName.toLowerCase().replace(/\s+/g, '-')
-    
-    // TODO: Validate that .nt/config.jsonnet exists in the selected directory
-    // This should be done on the main process for security
-    
     dispatch({
       type: 'add-repository',
       payload: {
-        name: repositoryName,
-        slug: repositorySlug,
-        path: repositoryPath,
+        ...repositoryConfig,
         selected: true
       }
     })
   }
 
-  const handleRepositorySelected = (repositoryPath: string) => {
-    // Add the repository to the config
-    const repositoryName = repositoryPath.split('/').pop() || 'Repository'
-    const repositorySlug = repositoryName.toLowerCase().replace(/\s+/g, '-')
-    
+  const handleRepositorySelected = (ref: RepositoryRefConfig) => {
     dispatch({
       type: 'add-repository',
       payload: {
-        name: repositoryName,
-        slug: repositorySlug,
-        path: repositoryPath,
+        ...ref,
         selected: true
       }
     })
   }
 
   // Check if there are no repositories
+  console.log('editorConfig.repositories:', editorConfig.repositories) // FIXME
   const hasNoRepositories = editorConfig.repositories.length === 0
 
   if (hasNoRepositories) {

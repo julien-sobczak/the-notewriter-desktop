@@ -86,19 +86,13 @@ function Planner() {
     }
   }
 
-  // Refresh projectItems when staticConfig changes and mode is 'project'
   useEffect(() => {
     if (mode === 'project') {
       handleFindProject()
-    }
-  }, [staticConfig, mode])
-
-  // Refresh taskItems when staticConfig changes and mode is 'task'
-  useEffect(() => {
-    if (mode === 'task') {
+    } else if (mode === 'task') {
       handleFindTask()
     }
-  }, [staticConfig, mode])
+  }, [mode])
 
   const handleChoiceSelected = (choice: string) => {
     if (choice === 'Find a project') {

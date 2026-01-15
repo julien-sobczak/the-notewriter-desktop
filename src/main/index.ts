@@ -19,6 +19,7 @@ import {
   Note,
   NoteRef,
   Query,
+  RepositoryRefConfig,
   Review
 } from './Model'
 import { exec, spawn } from 'child_process'
@@ -285,15 +286,14 @@ app.whenReady().then(async () => {
   })
 
   /* Two-way communication with the renderer process */
-  ipcMain.handle('save-dynamic-config', (_event, editorConfig: EditorConfig) => {
-    console.log('received save-dynamic-config')
-    console.log('Saving...', editorConfig)
+  ipcMain.handle('save-config', (_event, editorConfig: EditorConfig) => {
+    console.log('Saving configuration...')
     config.save(editorConfig)
     configSaved = true
     mainWindow?.close()
     mainWindow = null
   })
-  ipcMain.handle('select-directory', async () => {
+  ipcMain.handle('select-repository', async () => {
     if (!mainWindow) return null
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
@@ -301,7 +301,22 @@ app.whenReady().then(async () => {
     if (result.canceled || result.filePaths.length === 0) {
       return null
     }
-    return result.filePaths[0]
+    const repositoryPath = result.filePaths[0]
+    // Check .nt directory exists in the selected directory
+    const ntDir = path.join(repositoryPath, '.nt')
+    if (!fs.existsSync(ntDir) || !fs.statSync(ntDir).isDirectory()) {
+      console.error(`The directory is not a valid repository: ${repositoryPath}`)
+      return null
+    }
+    console.debug(`Selected repository: ${repositoryPath}`)
+    const ref: RepositoryRefConfig = {
+      // IMPROVEMENT require a name/slug in config.jsonnet instead of deriving from path
+      name: path.basename(repositoryPath),
+      slug: path.basename(repositoryPath).toLowerCase().replace(/\s+/g, '-'),
+      path: repositoryPath,
+      selected: true
+    }
+    return ref
   })
   ipcMain.handle('list-files', async (_event, repositorySlug: string) => {
     console.debug(`Listing files in repository ${repositorySlug}`)
@@ -347,7 +362,7 @@ app.whenReady().then(async () => {
   })
 
   async function doSearch(query: Query) {
-    console.debug(`Searching for "${query.q}" in repositories ${query.repositories}`)
+    console.debug(`Searching for "${query.query}" in repositories ${query.repositories}`)
     const result = await db.search(query)
     console.debug(`Found ${result.notes.length} notes`)
     return result
