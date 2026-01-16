@@ -1,19 +1,22 @@
 /* Config */
 
-/* Static Config */
-/* editorconfig.yml */
+/* Editor Config */
+/* editorconfig.json */
 
 // TODO use repositorySlugs instead of repositories to be consistent
-
-export interface EditorStaticConfig {
-  repositories: RepositoryRefConfig[]
-}
 
 export interface RepositoryRefConfig {
   name: string
   slug: string
   path: string
   selected?: boolean
+}
+
+export interface EditorConfig {
+  repositories: RepositoryRefConfig[]
+  bookmarks?: Bookmark[]
+  desks?: Desk[]
+  tabs?: TabRef[]
 }
 
 export interface DailyQuoteConfig {
@@ -77,15 +80,6 @@ export interface StatConfigWithContext extends StatConfig {
 }
 
 export type CountStat = [string, number]
-
-/* Dynamic Config */
-/* editorconfig.json */
-
-export interface EditorDynamicConfig {
-  bookmarks?: Bookmark[]
-  desks?: Desk[]
-  tabs?: TabRef[]
-}
 
 export interface TabRef {
   kind: 'file' | 'notes' | 'desk'

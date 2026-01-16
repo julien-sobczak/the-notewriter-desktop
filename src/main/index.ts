@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut, dialog } from 'electron'
 import path, { join } from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -14,11 +14,12 @@ import {
   DeckConfig,
   DeckRef,
   determineNextReminder,
-  EditorDynamicConfig,
+  EditorConfig,
   Flashcard,
   Note,
   NoteRef,
   Query,
+  RepositoryRefConfig,
   Review
 } from './Model'
 import { exec, spawn } from 'child_process'
@@ -41,7 +42,7 @@ function insideRepository(): string {
     const ntDir = path.join(currentDir, '.nt')
     const configFile = path.join(ntDir, 'config.jsonnet')
 
-    // Check if .nt directory exists and contains editorconfig.jsonnet
+    // Check if .nt directory exists and contains config.jsonnet
     if (fs.existsSync(ntDir) && fs.existsSync(configFile)) {
       // We found a valid .nt directory, return this as the repository root
       return currentDir
@@ -137,8 +138,7 @@ function createWindow(): void {
 
     // Forward configuration state
     mainWindow.webContents.send('configuration-loaded', {
-      static: config.editorStaticConfig,
-      dynamic: config.editorDynamicConfig,
+      config: config.editorConfig,
       repositories: config.repositoryConfigs
     })
 
@@ -158,8 +158,7 @@ function createWindow(): void {
 
     // Forward configuration state after page refresh
     mainWindow.webContents.send('configuration-loaded', {
-      static: config.editorStaticConfig,
-      dynamic: config.editorDynamicConfig,
+      config: config.editorConfig,
       repositories: config.repositoryConfigs
     })
   })
@@ -287,13 +286,37 @@ app.whenReady().then(async () => {
   })
 
   /* Two-way communication with the renderer process */
-  ipcMain.handle('save-dynamic-config', (_event, dynamicConfig: EditorDynamicConfig) => {
-    console.log('received save-dynamic-config')
-    console.log('Saving...', dynamicConfig)
-    config.save(dynamicConfig)
+  ipcMain.handle('save-config', (_event, editorConfig: EditorConfig) => {
+    console.log('Saving configuration...')
+    config.save(editorConfig)
     configSaved = true
     mainWindow?.close()
     mainWindow = null
+  })
+  ipcMain.handle('select-repository', async () => {
+    if (!mainWindow) return null
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    })
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    const repositoryPath = result.filePaths[0]
+    // Check .nt directory exists in the selected directory
+    const ntDir = path.join(repositoryPath, '.nt')
+    if (!fs.existsSync(ntDir) || !fs.statSync(ntDir).isDirectory()) {
+      console.error(`The directory is not a valid repository: ${repositoryPath}`)
+      return null
+    }
+    console.debug(`Selected repository: ${repositoryPath}`)
+    const ref: RepositoryRefConfig = {
+      // IMPROVEMENT require a name/slug in config.jsonnet instead of deriving from path
+      name: path.basename(repositoryPath),
+      slug: path.basename(repositoryPath).toLowerCase().replace(/\s+/g, '-'),
+      path: repositoryPath,
+      selected: true
+    }
+    return ref
   })
   ipcMain.handle('list-files', async (_event, repositorySlug: string) => {
     console.debug(`Listing files in repository ${repositorySlug}`)
@@ -339,7 +362,7 @@ app.whenReady().then(async () => {
   })
 
   async function doSearch(query: Query) {
-    console.debug(`Searching for "${query.q}" in repositories ${query.repositories}`)
+    console.debug(`Searching for "${query.query}" in repositories ${query.repositories}`)
     const result = await db.search(query)
     console.debug(`Found ${result.notes.length} notes`)
     return result

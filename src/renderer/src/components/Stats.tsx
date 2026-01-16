@@ -6,9 +6,9 @@ import { Calendar } from '@nivo/calendar'
 import { Choropleth } from '@nivo/geo'
 import { Sunburst } from '@nivo/sunburst'
 import worldFeatures from '../assets/world_countries.json'
-import { RepositoryRefConfig, StatConfig, MediaDirStat, CountStat } from '@renderer/Model'
+import { StatConfig, MediaDirStat, CountStat } from '@renderer/Model'
 import Loader from './Loader'
-import { ConfigContext, selectedStats } from '@renderer/ConfigContext'
+import { ConfigContext, getSelectedRepositorySlugs, selectedStats } from '@renderer/ConfigContext'
 import {
   format,
   parseISO,
@@ -381,7 +381,7 @@ function SunburstMediaChart({ name, data }: { name: string; data: MediaDirStat[]
 
 function Stats() {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   const [loading, setLoading] = useState<boolean>(true)
   const [objectCountData, setObjectCountData] = useState<CountStat[]>([])
@@ -406,9 +406,7 @@ function Stats() {
       setLoading(true)
 
       // Get selected repository slugs
-      const selectedRepositorySlugs = staticConfig.repositories
-        .filter((repository: RepositoryRefConfig) => repository.selected)
-        .map((repository: RepositoryRefConfig) => repository.slug)
+      const selectedRepositorySlugs = getSelectedRepositorySlugs(editorConfig)
 
       try {
         // Load default graphs

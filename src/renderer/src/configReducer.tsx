@@ -1,15 +1,14 @@
 import {
-  EditorDynamicConfig,
-  EditorStaticConfig,
+  EditorConfig,
   RepositoryConfig,
   Desk,
   Bookmark,
-  TabRef
+  TabRef,
+  RepositoryRefConfig
 } from '@renderer/Model'
 
 export type Config = {
-  static: EditorStaticConfig
-  dynamic: EditorDynamicConfig
+  config: EditorConfig
   repositories: { [key: string]: RepositoryConfig }
 }
 
@@ -22,13 +21,12 @@ export default function configReducer(draft: Config, action: Action): any {
   console.log('dispatch', action)
   switch (action.type) {
     case 'init': {
-      draft.static = action.payload.static
-      draft.dynamic = action.payload.dynamic
+      draft.config = action.payload.config
       draft.repositories = action.payload.repositories
       break
     }
-    case 'toggleRepositorySelected': {
-      for (const repository of draft.static.repositories) {
+    case 'toggle-repository': {
+      for (const repository of draft.config.repositories) {
         if (repository.slug === action.payload) {
           repository.selected = !repository.selected
         }
@@ -36,27 +34,34 @@ export default function configReducer(draft: Config, action: Action): any {
       break
     }
     case 'add-desk': {
-      if (!draft.dynamic.desks) draft.dynamic.desks = []
-      draft.dynamic.desks.push(action.payload as Desk)
+      if (!draft.config.desks) draft.config.desks = []
+      draft.config.desks.push(action.payload as Desk)
       break
     }
     case 'edit-desk': {
-      if (!draft.dynamic.desks) draft.dynamic.desks = []
-      const index = draft.dynamic.desks.findIndex((d: Desk) => d.oid === action.payload.oid)
-      draft.dynamic.desks[index] = action.payload
+      if (!draft.config.desks) draft.config.desks = []
+      const index = draft.config.desks.findIndex((d: Desk) => d.oid === action.payload.oid)
+      draft.config.desks[index] = action.payload
       break
     }
     case 'delete-desk': {
-      if (!draft.dynamic.desks) draft.dynamic.desks = []
-      return draft.dynamic.desks.filter((d: Desk) => d.oid !== action.payload.oid)
+      if (!draft.config.desks) draft.config.desks = []
+      draft.config.desks = draft.config.desks.filter((d: Desk) => d.oid !== action.payload.oid)
+      break
     }
     case 'add-bookmark': {
-      if (!draft.dynamic.bookmarks) draft.dynamic.bookmarks = []
-      draft.dynamic.bookmarks.push(action.payload as Bookmark)
+      if (!draft.config.bookmarks) draft.config.bookmarks = []
+      draft.config.bookmarks.push(action.payload as Bookmark)
       break
     }
     case 'updateTabs': {
-      draft.dynamic.tabs = action.payload as TabRef[]
+      draft.config.tabs = action.payload as TabRef[]
+      break
+    }
+    case 'add-repository': {
+      const repositoryRefConfig = action.payload as RepositoryRefConfig
+      if (!draft.config.repositories) draft.config.repositories = []
+      draft.config.repositories.push(repositoryRefConfig)
       break
     }
     default: {

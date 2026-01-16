@@ -2,12 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect } from 'react'
 import { useImmerReducer } from 'use-immer'
-import {
-  EditorStaticConfig,
-  EditorDynamicConfig,
-  RepositoryConfig,
-  RepositoryRefConfig
-} from '@renderer/Model'
+import { EditorConfig, RepositoryConfig, RepositoryRefConfig } from '@renderer/Model'
 import configReducer from './configReducer'
 
 // Useful Resources:
@@ -15,17 +10,13 @@ import configReducer from './configReducer'
 // - https://dev.to/elisealcala/react-context-with-usereducer-and-typescript-4obm
 
 type ConfigContextType = {
-  static: EditorStaticConfig
-  dynamic: EditorDynamicConfig
+  config: EditorConfig
   repositories: { [key: string]: RepositoryConfig }
 }
 
 const initialState: ConfigContextType = {
-  static: {
+  config: {
     repositories: []
-  },
-  dynamic: {
-    desks: []
   },
   repositories: {}
 }
@@ -52,12 +43,10 @@ export function ConfigContextProvider({ children }: any) {
     })
     window.api.onWindowIsClosing(() => {
       console.log('window-is-closing')
-      window.api.saveDynamicConfig(config.dynamic)
+      window.api.saveConfig(config.config)
+      // See https://dougschallmoser.medium.com/context-api-usereducer-in-react-2691c137f5f
     })
-  }, [])
-
-  // TODO Add more user-friendly method to every dispath action
-  // See https://dougschallmoser.medium.com/context-api-usereducer-in-react-2691c137f5f
+  }, [config])
 
   const value = { config, dispatch }
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
@@ -66,8 +55,8 @@ export function ConfigContextProvider({ children }: any) {
 /* Helpers */
 
 // Utility function to get selected repository slugs
-export function getSelectedRepositorySlugs(staticConfig: EditorStaticConfig): string[] {
-  return staticConfig.repositories
+export function getSelectedRepositorySlugs(config: EditorConfig): string[] {
+  return config.repositories
     .filter((repository: RepositoryRefConfig) => repository.selected)
     .map((repository: RepositoryRefConfig) => repository.slug)
 }
@@ -129,16 +118,16 @@ export function determineAttributeShorthand(
 
 // Helper functions to access configuration from selected repositories
 
-export function selectedRepositories(config: ConfigContextType): RepositoryRefConfig[] {
-  return config.static.repositories.filter((repo) => repo.selected)
+export function selectedRepositories(configContext: ConfigContextType): RepositoryRefConfig[] {
+  return configContext.config.repositories.filter((repo) => repo.selected)
 }
 
-export function selectedStats(config: ConfigContextType) {
+export function selectedStats(configContext: ConfigContextType) {
   const stats: any[] = []
-  const repos = selectedRepositories(config)
+  const repos = selectedRepositories(configContext)
 
   for (const repo of repos) {
-    const repoConfig = config.repositories[repo.slug]
+    const repoConfig = configContext.repositories[repo.slug]
     if (repoConfig?.stats) {
       stats.push(...repoConfig.stats.map((stat) => ({ ...stat, repositorySlug: repo.slug })))
     }
@@ -147,12 +136,12 @@ export function selectedStats(config: ConfigContextType) {
   return stats
 }
 
-export function selectedJournals(config: ConfigContextType) {
+export function selectedJournals(configContext: ConfigContextType) {
   const journals: any[] = []
-  const repos = selectedRepositories(config)
+  const repos = selectedRepositories(configContext)
 
   for (const repo of repos) {
-    const repoConfig = config.repositories[repo.slug]
+    const repoConfig = configContext.repositories[repo.slug]
     if (repoConfig?.journals) {
       journals.push(
         ...repoConfig.journals.map((journal) => ({ ...journal, repositorySlug: repo.slug }))
@@ -163,18 +152,18 @@ export function selectedJournals(config: ConfigContextType) {
   return journals
 }
 
-export function selectedDesks(config: ConfigContextType) {
+export function selectedDesks(configContext: ConfigContextType) {
   const desks: any[] = []
 
   // Add dynamic desks
-  if (config.dynamic.desks) {
-    desks.push(...config.dynamic.desks.map((desk) => ({ ...desk, repositorySlug: '' })))
+  if (configContext.config.desks) {
+    desks.push(...configContext.config.desks.map((desk) => ({ ...desk, repositorySlug: '' })))
   }
 
   // Add desks from selected repositories
-  const repos = selectedRepositories(config)
+  const repos = selectedRepositories(configContext)
   for (const repo of repos) {
-    const repoConfig = config.repositories[repo.slug]
+    const repoConfig = configContext.repositories[repo.slug]
     if (repoConfig?.desks) {
       desks.push(...repoConfig.desks.map((desk) => ({ ...desk, repositorySlug: repo.slug })))
     }
@@ -183,12 +172,12 @@ export function selectedDesks(config: ConfigContextType) {
   return desks
 }
 
-export function selectedQueriesMatchingTag(config: ConfigContextType, tag: string) {
+export function selectedQueriesMatchingTag(configContext: ConfigContextType, tag: string) {
   const queries: any[] = []
-  const repos = selectedRepositories(config)
+  const repos = selectedRepositories(configContext)
 
   for (const repo of repos) {
-    const repoConfig = config.repositories[repo.slug]
+    const repoConfig = configContext.repositories[repo.slug]
     if (repoConfig?.queries) {
       for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
         if (queryConfig.tags && queryConfig.tags.includes(tag)) {
@@ -201,10 +190,10 @@ export function selectedQueriesMatchingTag(config: ConfigContextType, tag: strin
   return queries
 }
 
-export function selectedInspirations(config: ConfigContextType) {
-  return selectedQueriesMatchingTag(config, 'inspiration')
+export function selectedInspirations(configContext: ConfigContextType) {
+  return selectedQueriesMatchingTag(configContext, 'inspiration')
 }
 
-export function selectedDailyQuotes(config: ConfigContextType) {
-  return selectedQueriesMatchingTag(config, 'daily-quote')
+export function selectedDailyQuotes(configContext: ConfigContextType) {
+  return selectedQueriesMatchingTag(configContext, 'daily-quote')
 }

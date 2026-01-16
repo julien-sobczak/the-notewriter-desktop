@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useContext } from 'react'
 import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 import {
@@ -53,6 +54,7 @@ import NotificationsStatus from './Notifications'
 import { ConfigContext } from '@renderer/ConfigContext'
 import BrowserSidebar from './BrowserSidebar'
 import DesktopSidebar from './DesktopSidebar'
+import Welcome from './Welcome'
 
 const gotoRegex = /\$\{([a-zA-Z0-9_]+)(?::\[((?:[^\]]+))\])?\}/g
 
@@ -258,7 +260,7 @@ function CommandMenu({
   onFileSelected = () => {}
 }: CommandMenuProps) {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   /*
    * Implementation based on project https://cmdk.paco.me/ (https://github.com/pacocoursey/cmdk)
@@ -275,7 +277,7 @@ function CommandMenu({
 
   useEffect(() => {
     // Retrieve the statistics based on currently selected repositories
-    const selectedRepositorySlugs = staticConfig.repositories
+    const selectedRepositorySlugs = editorConfig.repositories
       .filter((repository: RepositoryRefConfig) => repository.selected)
       .map((repository: RepositoryRefConfig) => repository.slug)
 
@@ -285,7 +287,7 @@ function CommandMenu({
     }
 
     listGotos()
-  }, [staticConfig.repositories])
+  }, [editorConfig.repositories])
 
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
@@ -584,8 +586,7 @@ export interface Activity {
 function Main() {
   const { config, dispatch } = useContext(ConfigContext)
 
-  const staticConfig = config.static
-  const dynamicConfig = config.dynamic
+  const editorConfig = config.config
   const repositoryConfigs = config.repositories
   const deckRefs = Object.keys(repositoryConfigs || {})
     .map((repositorySlug: string): DeckRef[] => {
@@ -623,10 +624,10 @@ function Main() {
   // Files
   const [files, setFiles] = useState<File[]>([])
 
-  // Tabs - Initialize from dynamic config
-  const [openedTabs, setOpenedTabs] = useState<TabRef[]>(dynamicConfig.tabs || [])
+  // Tabs - Initialize from editor config
+  const [openedTabs, setOpenedTabs] = useState<TabRef[]>(editorConfig.tabs || [])
   const [activeTabIndex, setActiveTabIndex] = useState<number>(
-    dynamicConfig.tabs && dynamicConfig.tabs.length > 0 ? 0 : -1
+    editorConfig.tabs && editorConfig.tabs.length > 0 ? 0 : -1
   )
 
   // Function to add a new tab
@@ -657,25 +658,25 @@ function Main() {
 
   useEffect(() => {
     // Load all files to provide them in cmd+k
-    const repositorySlugs: string[] = staticConfig.repositories.map(
+    const repositorySlugs: string[] = editorConfig.repositories.map(
       (w: RepositoryRefConfig) => w.slug
     )
 
     const listFiles = async () => {
-      const results: File[] = await window.api.listFiles(
-        repositorySlugs[0] // FIXME use all repositories?
-      )
-      setFiles(results)
+      for (const slug of repositorySlugs) {
+        const results: File[] = await window.api.listFiles(slug)
+        setFiles([...files, ...results])
+      }
     }
     listFiles()
-  }, [staticConfig.repositories])
+  }, [editorConfig.repositories])
 
   useEffect(() => {
-    // Update opened tabs when staticConfig.tabs changes
-    if (!dynamicConfig.tabs) return
-    setOpenedTabs(dynamicConfig.tabs)
+    // Update opened tabs when editorConfig.tabs changes
+    if (!editorConfig.tabs) return
+    setOpenedTabs(editorConfig.tabs)
     if (activeTabIndex === -1) setActiveTabIndex(0) // Force the first tab by default
-  }, [dynamicConfig.tabs]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editorConfig.tabs])
 
   const handleSearch = (event: any) => {
     if (inputQuery === searchQuery) {
@@ -688,7 +689,7 @@ function Main() {
     event.preventDefault()
   }
 
-  const selectedRepositorySlugs = staticConfig.repositories
+  const selectedRepositorySlugs = editorConfig.repositories
     .filter((repository: RepositoryRefConfig) => repository.selected)
     .map((repository: RepositoryRefConfig) => repository.slug)
 
@@ -716,7 +717,6 @@ function Main() {
       }
     }
     search()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery])
 
   useEffect(() => {
@@ -725,7 +725,7 @@ function Main() {
 
   const handleRepositoryToggle = (slug: string) => {
     dispatch({
-      type: 'toggleRepositorySelected',
+      type: 'toggle-repository',
       payload: slug
     })
   }
@@ -849,6 +849,37 @@ function Main() {
     addTab('desk', 'New Desk', deskTab)
   }
 
+  const handleAddRepository = async () => {
+    const repositoryConfig = await window.api.selectRepository()
+    if (!repositoryConfig) return
+
+    dispatch({
+      type: 'add-repository',
+      payload: {
+        ...repositoryConfig,
+        selected: true
+      }
+    })
+  }
+
+  const handleRepositorySelected = (ref: RepositoryRefConfig) => {
+    dispatch({
+      type: 'add-repository',
+      payload: {
+        ...ref,
+        selected: true
+      }
+    })
+  }
+
+  // Check if there are no repositories
+  console.log('editorConfig.repositories:', editorConfig.repositories) // FIXME
+  const hasNoRepositories = editorConfig.repositories.length === 0
+
+  if (hasNoRepositories) {
+    return <Welcome onRepositorySelected={handleRepositorySelected} />
+  }
+
   const activities: Activity[] = [
     {
       slug: 'hi',
@@ -922,8 +953,8 @@ function Main() {
           />
         </form>
         <nav className="RepositoryButtonGroup">
-          {staticConfig.repositories.length > 1 &&
-            staticConfig.repositories.map((repository: RepositoryRefConfig) => (
+          {editorConfig.repositories.length > 1 &&
+            editorConfig.repositories.map((repository: RepositoryRefConfig) => (
               <button
                 type="button"
                 key={repository.name}
@@ -933,16 +964,24 @@ function Main() {
                 {repository.name}
               </button>
             ))}
+          <button
+            type="button"
+            className="AddRepositoryButton"
+            onClick={handleAddRepository}
+            title="Add repository"
+          >
+            <PlusIcon size={16} />
+          </button>
         </nav>
         <NotificationsStatus />
       </header>
 
       <CommandMenu
         // Data
-        repositories={staticConfig.repositories}
-        desks={dynamicConfig.desks}
+        repositories={editorConfig.repositories}
+        desks={editorConfig.desks}
         decks={deckRefs}
-        bookmarks={dynamicConfig.bookmarks}
+        bookmarks={editorConfig.bookmarks}
         files={files}
         // Events
         onActivitySelected={(activitySlug) => switchActivity(activitySlug)}

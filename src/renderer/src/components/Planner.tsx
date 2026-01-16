@@ -53,12 +53,12 @@ async function searchItems(repositorySlug: string, query: string): Promise<Kanba
 
 function Planner() {
   const { config } = useContext(ConfigContext)
-  const staticConfig = config.static
+  const editorConfig = config.config
   const [mode, setMode] = useState<PlannerMode>('question')
   const [projectItems, setProjectItems] = useState<KanbanItem[]>([])
   const [taskItems, setTaskItems] = useState<KanbanItem[]>([])
 
-  const selectedRepositorySlugs = getSelectedRepositorySlugs(staticConfig)
+  const selectedRepositorySlugs = getSelectedRepositorySlugs(editorConfig)
 
   // Get project queries from repositories
   const projectQueries: QueryConfigWithContext[] = []
@@ -86,19 +86,13 @@ function Planner() {
     }
   }
 
-  // Refresh projectItems when staticConfig changes and mode is 'project'
   useEffect(() => {
     if (mode === 'project') {
       handleFindProject()
-    }
-  }, [staticConfig, mode])
-
-  // Refresh taskItems when staticConfig changes and mode is 'task'
-  useEffect(() => {
-    if (mode === 'task') {
+    } else if (mode === 'task') {
       handleFindTask()
     }
-  }, [staticConfig, mode])
+  }, [mode])
 
   const handleChoiceSelected = (choice: string) => {
     if (choice === 'Find a project') {

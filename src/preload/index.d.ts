@@ -1,7 +1,7 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import {
   DeckRef,
-  EditorDynamicConfig,
+  EditorConfig,
   Flashcard,
   Note,
   NoteRef,
@@ -31,6 +31,7 @@ interface API {
   browseUrl: (url: string) => void
 
   // 2-way renderer to main
+  selectRepository: () => Promise<RepositoryRefConfig | null>
   find: (noteRef: NoteRef) => Promise<Note>
   mfind: (noteRefs: NoteRef[]) => Promise<Note[]>
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>
@@ -50,7 +51,7 @@ interface API {
   getPendingReminders: (repositorySlugs: string[]) => Promise<Reminder[]>
   getPastMemories: (repositorySlugs: string[]) => Promise<Memory[]>
   completeReminders: (reminderOids: string[]) => Promise<void>
-  saveDynamicConfig: (dynamicConfig: EditorDynamicConfig) => Promise<void>
+  saveConfig: (editorConfig: EditorConfig) => Promise<void>
   listDecks: (repositorySlugs: string[]) => Promise<Deck[]>
   listTodayFlashcards: (deckRef: DeckRef) => Promise<Flashcard[]>
   flushOperations: (repositorySlugs: string[]) => Promise<void>

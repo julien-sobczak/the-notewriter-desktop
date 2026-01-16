@@ -19,7 +19,7 @@ function BrowserSidebar({ onFileSelected, onClose }: BrowserSidebarProps) {
   const { config } = useContext(ConfigContext)
 
   // Read configured repositories (useful to populate the dropdown)
-  const staticConfig = config.static
+  const editorConfig = config.config
 
   // Files in selected repositories
   // Convert to a map of repositorySlug -> files
@@ -27,7 +27,7 @@ function BrowserSidebar({ onFileSelected, onClose }: BrowserSidebarProps) {
 
   // Load files when switching to a new repository
   useEffect(() => {
-    const repositorySlugs = getSelectedRepositorySlugs(staticConfig)
+    const repositorySlugs = getSelectedRepositorySlugs(editorConfig)
 
     if (!repositorySlugs) return
 
@@ -37,7 +37,7 @@ function BrowserSidebar({ onFileSelected, onClose }: BrowserSidebarProps) {
     }
     // Call loadFiles for all selected repositories
     repositorySlugs.forEach(loadFiles)
-  }, [staticConfig])
+  }, [editorConfig])
 
   // Build the tree representation.
   // Check https://dgreene1.github.io/react-accessible-treeview/docs/examples-DirectoryTree
