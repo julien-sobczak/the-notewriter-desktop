@@ -5,7 +5,8 @@ export interface SRSAlgorithm {
   interval(config: DeckConfig, card: Flashcard, review: Review): string
 }
 
-const defaultEasyFactor = 2.5 // Default easy factor for new cards graduating to learning queue
+const defaultEaseFactor = 2.5 // Default ease factor for new cards graduating to learning queue
+const defaultInterestFactor = 1.0 // Default interest factor for cards without the attribute
 
 // Map feedback strings to confidence numbers (0-100)
 export const feedbackToConfidence: { [key: string]: number } = {
@@ -30,29 +31,47 @@ export class NoteWriterSRS implements SRSAlgorithm {
     return 'too-easy' // [90, 100]
   }
 
+  // Helper to get the effective ease factor from card attributes, settings, or default
+  private static getEaseFactor(config: DeckConfig, card: Flashcard): number {
+    if (card.attributes && typeof card.attributes.ease_factor === 'number') {
+      return card.attributes.ease_factor
+    }
+    return config.algorithmSettings?.easeFactor || defaultEaseFactor
+  }
+
+  // Helper to get the interest factor from card attributes, or 1 if not present
+  private static getInterestFactor(card: Flashcard): number {
+    if (card.attributes && typeof card.attributes.interest_factor === 'number') {
+      return card.attributes.interest_factor
+    }
+    return defaultInterestFactor
+  }
+
   // Update the settings based on the feedback and the current queue
-  newSettings(
-    config: DeckConfig,
-    settings: { [name: string]: any },
-    study: Review
-  ): { [name: string]: any } {
+  newSettings(config: DeckConfig, card: Flashcard, study: Review): { [name: string]: any } {
     // The implementation is heavily inspired by Anki SM-2
     // See https://faqs.ankiweb.net/what-spaced-repetition-algorithm
-    // The implementation is keep minimal. The core logic is preserved
+    // The implementation is minimal. The core logic is preserved
     // but many parts (relapses, delay bonus) were ommitted
     // to make the algorithm understandable at a glance.
+
+    // Use card attributes for ease_factor if card is provided
+    const effectiveEaseFactor = NoteWriterSRS.getEaseFactor(config, card)
+    // Apply optional interest_factor if provided
+    const effectiveInterestFactor = NoteWriterSRS.getInterestFactor(card)
 
     const steps = config.algorithmSettings?.steps || ['1m', '10m', '1d'] // Default steps
     const maxStep = steps[steps.length - 1]
 
     const newSettings = {
-      ...settings
+      ...card.settings
     }
-    if (!newSettings.repetitions) {
+    if (!newSettings.repetitions) { // Never studied before
       newSettings.repetitions = 0 // Initialize repetitions if not set
       newSettings.queue = 'learning' // Default to learning queue
       newSettings.step = 0
-      newSettings.easyFactor = defaultEasyFactor
+      newSettings.easeFactor = effectiveEaseFactor
+      newSettings.interestFactor = effectiveInterestFactor
       newSettings.interval = steps[0]
     }
 
@@ -65,7 +84,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
           case 'too-hard':
             // Restart from scratch
             newSettings.step = 0
-            newSettings.easyFactor = 0
+            newSettings.easeFactor = 0
             newSettings.interval = steps[0]
             break
           case 'hard':
@@ -88,21 +107,33 @@ export class NoteWriterSRS implements SRSAlgorithm {
             } else {
               // No more steps, same as 'easy'
               newSettings.queue = 'reviewing'
-              newSettings.easyFactor = newSettings.easyFactor || defaultEasyFactor
-              newSettings.interval = NoteWriterSRS.nextInterval(maxStep, newSettings.easyFactor)
+              newSettings.easeFactor = effectiveEaseFactor
+              newSettings.interval = NoteWriterSRS.nextInterval(
+                maxStep,
+                newSettings.easeFactor,
+                effectiveInterestFactor
+              )
             }
             break
           case 'easy':
             // Graduating to reviewing queue
             newSettings.queue = 'reviewing'
-            newSettings.easyFactor = newSettings.easyFactor || defaultEasyFactor
-            newSettings.interval = NoteWriterSRS.nextInterval(maxStep, newSettings.easyFactor)
+            newSettings.easeFactor = effectiveEaseFactor
+            newSettings.interval = NoteWriterSRS.nextInterval(
+              maxStep,
+              newSettings.easeFactor,
+              effectiveInterestFactor
+            )
             break
           case 'too-easy':
             // Graduating to reviewing queue with a bonus ease factor
             newSettings.queue = 'reviewing'
-            newSettings.easyFactor = (newSettings.easyFactor || defaultEasyFactor) * 1.3
-            newSettings.interval = NoteWriterSRS.nextInterval(maxStep, newSettings.easyFactor)
+            newSettings.easeFactor = effectiveEaseFactor * 1.3
+            newSettings.interval = NoteWriterSRS.nextInterval(
+              maxStep,
+              newSettings.easeFactor,
+              effectiveInterestFactor
+            )
             break
           default:
             throw new Error(`Unknown feedback type: ${feedback}`)
@@ -117,38 +148,40 @@ export class NoteWriterSRS implements SRSAlgorithm {
             // Restart learning again but keep a ease factor
             // to speed up the revisions when graduating to reviewing again
             newSettings.queue = 'learning'
-            newSettings.easyFactor = 0.8 * (newSettings.easyFactor || defaultEasyFactor)
+            newSettings.easeFactor = 0.8 * effectiveEaseFactor
             newSettings.interval = steps[0]
             break
           case 'again':
-            // Decrease the ease factor by 15 percentage points
-            newSettings.easyFactor = (newSettings.easyFactor || defaultEasyFactor) * 0.85
+            newSettings.easeFactor = effectiveEaseFactor * 0.85
             newSettings.interval = NoteWriterSRS.nextInterval(
               newSettings.interval,
-              newSettings.easyFactor
+              newSettings.easeFactor,
+              effectiveInterestFactor
             )
             break
           case 'good':
             // Continue with the same ease factor
             newSettings.interval = NoteWriterSRS.nextInterval(
               newSettings.interval,
-              newSettings.easyFactor
+              effectiveEaseFactor,
+              effectiveInterestFactor
             )
             break
           case 'easy':
             // Increase the ease factor by 15 percentage points
-            newSettings.easyFactor = (newSettings.easyFactor || defaultEasyFactor) * 1.15
+            newSettings.easeFactor = (newSettings.easeFactor || defaultEaseFactor) * 1.15
             newSettings.interval = NoteWriterSRS.nextInterval(
               newSettings.interval,
-              newSettings.easyFactor
+              newSettings.easeFactor,
+              effectiveInterestFactor
             )
             break
           case 'too-easy':
-            // Boost the ease factor by 50 percentage points
-            newSettings.easyFactor = (newSettings.easyFactor || defaultEasyFactor) * 1.5
+            newSettings.easeFactor = effectiveEaseFactor * 1.5
             newSettings.interval = NoteWriterSRS.nextInterval(
               newSettings.interval,
-              newSettings.easyFactor
+              newSettings.easeFactor,
+              effectiveInterestFactor
             )
             break
           default:
@@ -167,7 +200,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
   }
 
   schedule(config: DeckConfig, card: Flashcard, study: Review): Flashcard {
-    const newSettings = this.newSettings(config, card.settings, study)
+    const newSettings = this.newSettings(config, card, study)
     newSettings.repetitions = (newSettings.repetitions || 0) + 1
 
     return {
@@ -179,15 +212,23 @@ export class NoteWriterSRS implements SRSAlgorithm {
   }
 
   interval(config: DeckConfig, card: Flashcard, study: Review): string {
-    const newSettings = this.newSettings(config, card.settings, study)
-    return newSettings.interval
+    // Pass card to newSettings for attribute support
+    const newSettings = this.newSettings(config, card, study)
+    // Apply interest_factor to interval if present
+    let intervalStr = newSettings.interval
+    const interestFactor = NoteWriterSRS.getInterestFactor(card)
+    if (interestFactor !== 1) {
+      const intervalObj = Interval.parse(intervalStr)
+      intervalStr = intervalObj.multiply(interestFactor).toString()
+    }
+    return intervalStr
   }
 
-  static nextInterval(interval: string, easeFactor: number): string {
+  static nextInterval(interval: string, easeFactor: number, interestFactor: number): string {
     // Ex: "1d" * 2.5 => "2.5d"
     // Ex: "10m" * 2.5 => "25m"
     const i1 = Interval.parse(interval)
-    return i1.multiply(easeFactor).toString()
+    return i1.multiply(easeFactor * interestFactor).toString()
   }
 
   static nextDue(interval: string): string {
