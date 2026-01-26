@@ -23,7 +23,8 @@ const api = {
 
   // 2-way renderer to main
   // File repository on disk
-  selectRepository: () => ipcRenderer.invoke('select-repository'),
+  browseRepository: () => ipcRenderer.invoke('browse-repository'),
+  removeRepository: (ref: EditorConfig) => ipcRenderer.invoke('remove-repository', ref),
   // Viewer
   find: (noteRef: NoteRef) => ipcRenderer.invoke('find', noteRef),
   mfind: (noteRefs: NoteRef[]) => ipcRenderer.invoke('mfind', noteRefs),

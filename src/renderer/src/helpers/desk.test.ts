@@ -97,7 +97,7 @@ const emptyContainerBlock: Block = {
   query: '',
   elements: [],
   view: 'list',
-  repositorySlugs: ['main'],
+  repositories: ['main'],
   size: null
 }
 const emptyVerticalBlock: Block = {

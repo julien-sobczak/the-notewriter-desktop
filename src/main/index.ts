@@ -288,12 +288,14 @@ app.whenReady().then(async () => {
   /* Two-way communication with the renderer process */
   ipcMain.handle('save-config', (_event, editorConfig: EditorConfig) => {
     console.log('Saving configuration...')
-    config.save(editorConfig)
-    configSaved = true
+    if (!process.env.NT_VOLATILE_CONFIG) {
+      config.save(editorConfig)
+    }
+    configSaved = true // Allowed the application to exit
     mainWindow?.close()
     mainWindow = null
   })
-  ipcMain.handle('select-repository', async () => {
+  ipcMain.handle('browse-repository', async () => {
     if (!mainWindow) return null
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
@@ -308,7 +310,6 @@ app.whenReady().then(async () => {
       console.error(`The directory is not a valid repository: ${repositoryPath}`)
       return null
     }
-    console.debug(`Selected repository: ${repositoryPath}`)
     const ref: RepositoryRefConfig = {
       // IMPROVEMENT require a name/slug in config.jsonnet instead of deriving from path
       name: path.basename(repositoryPath),
@@ -316,8 +317,19 @@ app.whenReady().then(async () => {
       path: repositoryPath,
       selected: true
     }
+    config.registerRepository(ref)
+    db.registerRepository(ref)
+    op.registerRepository(ref)
+    console.debug(`Selected repository: ${repositoryPath}`)
+
     return ref
   })
+  ipcMain.handle('remove-repository', async (_event, ref: RepositoryRefConfig) => {
+    config.unregisterRepository(ref.slug)
+    db.unregisterRepository(ref.slug)
+    op.unregisterRepository(ref.slug)
+  })
+
   ipcMain.handle('list-files', async (_event, repositorySlug: string) => {
     console.debug(`Listing files in repository ${repositorySlug}`)
     const result = await db.listFiles([repositorySlug])

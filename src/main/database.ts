@@ -92,6 +92,14 @@ export default class DatabaseManager {
     return this
   }
 
+  // Unregister a repository and close its associated database connection
+  unregisterRepository(repositorySlug: string): this {
+    this.repositories.delete(repositorySlug)
+    this.datasources.delete(repositorySlug)
+    this.datasourcesPaths.delete(repositorySlug)
+    return this
+  }
+
   // Returns the absolute for to the repository root directory from its slug name.
   #getRepositoryPath(slug: string): string {
     const absolutePath = this.datasourcesPaths.get(slug)
@@ -1021,6 +1029,12 @@ export default class DatabaseManager {
 
   async listFiles(repositorySlugs: string[]): Promise<File[]> {
     const repositoryResults: Promise<File[]>[] = []
+    console.log(
+      'Listing files for repositories:',
+      repositorySlugs,
+      'in',
+      JSON.stringify(this.datasources)
+    ) // FIXME remove
     for (const datasourceName of this.datasources.keys()) {
       if (repositorySlugs.length === 0 || repositorySlugs.includes(datasourceName)) {
         const db = this.datasources.get(datasourceName)
@@ -1713,14 +1727,14 @@ function queryPart2sql(queryParent: string): string {
       return sql
     }
 
-    if (query.startsWith('@type:')) {
+    if (query.startsWith('type:')) {
       const nextSpaceIndex = query.indexOf(' ')
       let noteType = ''
       let remainingQuery
       if (nextSpaceIndex === -1) {
-        noteType = query.substring('@type:'.length)
+        noteType = query.substring('type:'.length)
       } else {
-        noteType = query.substring('@type:'.length, nextSpaceIndex)
+        noteType = query.substring('type:'.length, nextSpaceIndex)
         remainingQuery = query.substring(nextSpaceIndex)
       }
       let sql = `note.note_type='${noteType}'`

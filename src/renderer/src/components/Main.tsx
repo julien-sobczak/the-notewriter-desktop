@@ -17,7 +17,8 @@ import {
   StarIcon as BookmarkerIcon,
   XCircleIcon as CancelIcon,
   CheckCircleIcon as OpenIcon,
-  PlusIcon
+  PlusIcon,
+  XCircleIcon
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
 import { Command } from 'cmdk'
@@ -850,7 +851,7 @@ function Main() {
   }
 
   const handleAddRepository = async () => {
-    const repositoryConfig = await window.api.selectRepository()
+    const repositoryConfig = await window.api.browseRepository()
     if (!repositoryConfig) return
 
     dispatch({
@@ -858,6 +859,17 @@ function Main() {
       payload: {
         ...repositoryConfig,
         selected: true
+      }
+    })
+  }
+
+  const handleRemoveRepository = async (ref: RepositoryRefConfig) => {
+    await window.api.removeRepository(ref)
+
+    dispatch({
+      type: 'remove-repository',
+      payload: {
+        ...ref
       }
     })
   }
@@ -953,15 +965,25 @@ function Main() {
           />
         </form>
         <nav className="RepositoryButtonGroup">
-          {editorConfig.repositories.length > 1 &&
+          {!editorConfig.mono &&
             editorConfig.repositories.map((repository: RepositoryRefConfig) => (
               <button
                 type="button"
                 key={repository.name}
-                className={classNames({ selected: repository.selected })}
+                className={classNames({ RepositoryButton: true, selected: repository.selected })}
                 onClick={() => handleRepositoryToggle(repository.slug)}
               >
                 {repository.name}
+                <a
+                  className="RepositoryRemoveButton"
+                  href="#"
+                  onClick={() => {
+                    return handleRemoveRepository(repository)
+                  }}
+                  title="Remove repository"
+                >
+                  <XCircleIcon size={12} />
+                </a>
               </button>
             ))}
           <button

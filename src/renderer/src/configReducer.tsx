@@ -25,6 +25,23 @@ export default function configReducer(draft: Config, action: Action): any {
       draft.repositories = action.payload.repositories
       break
     }
+    case 'add-repository': {
+      const repositoryRefConfig = action.payload as RepositoryRefConfig
+      if (!draft.config.repositories) draft.config.repositories = []
+      draft.config.repositories.push(repositoryRefConfig)
+      break
+    }
+    case 'remove-repository': {
+      const repositoryRefConfig = action.payload as RepositoryRefConfig
+      const repositorySlug = repositoryRefConfig.slug
+      if (!draft.config.repositories) draft.config.repositories = []
+      draft.config.repositories = draft.config.repositories.filter(
+        (r: RepositoryRefConfig) => r.slug !== repositorySlug
+      )
+      delete draft.repositories[repositorySlug]
+      console.log(`Removed repository ${repositorySlug}`)
+      break
+    }
     case 'toggle-repository': {
       for (const repository of draft.config.repositories) {
         if (repository.slug === action.payload) {
@@ -56,12 +73,6 @@ export default function configReducer(draft: Config, action: Action): any {
     }
     case 'updateTabs': {
       draft.config.tabs = action.payload as TabRef[]
-      break
-    }
-    case 'add-repository': {
-      const repositoryRefConfig = action.payload as RepositoryRefConfig
-      if (!draft.config.repositories) draft.config.repositories = []
-      draft.config.repositories.push(repositoryRefConfig)
       break
     }
     default: {

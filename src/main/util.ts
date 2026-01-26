@@ -17,5 +17,11 @@ export function normalizePath(relativePath: string) {
   let normalizedPath = relativePath
   normalizedPath = normalizedPath.replace('~', os.homedir)
   normalizedPath = normalizedPath.replace('$PWD', process.cwd())
+  normalizedPath = normalizedPath.replace('$HOME', os.homedir())
+  // Replace all environment variables like $VAR or ${VAR}
+  normalizedPath = normalizedPath.replace(/\$(\w+)|\$\{(\w+)\}/g, (_, var1, var2) => {
+    const varName = var1 || var2
+    return process.env[varName] || ''
+  })
   return path.normalize(normalizedPath)
 }

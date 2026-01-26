@@ -7,7 +7,7 @@ type WelcomeProps = {
 
 function Welcome({ onRepositorySelected }: WelcomeProps) {
   const handleBrowse = async () => {
-    const result = await window.api.selectRepository()
+    const result = await window.api.browseRepository()
     if (result) {
       onRepositorySelected(result)
     }

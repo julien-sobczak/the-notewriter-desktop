@@ -26,7 +26,9 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
-    "dev": "env NT_SKIP_DAILY_QUOTE=true NT_HOME=$PWD/fixtures electron-vite dev",
+    "dev-home": "electron-vite dev",
+    "dev-fixtures": "env NT_VOLATILE_CONFIG=true NT_HOME=$NT_REPOSITORY/examples electron-vite dev",
+    "dev": "env NT_SKIP_DAILY_QUOTE=true NT_VOLATILE_CONFIG=true electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -34,8 +36,7 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "test": "jest",
-    "cloc": "gocloc --match-d='^src' --not-match-d='node_modules' --exclude-ext='json' .",
-    "fixtures": "./fixtures/build.sh $PWD/fixtures"
+    "cloc": "gocloc --match-d='^src' --not-match-d='node_modules' --exclude-ext='json' ."
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

@@ -1,6 +1,12 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { FloppyDiskIcon as SaveIcon } from '@phosphor-icons/react'
-import { JournalConfig, RoutineConfig, Note, ListItem } from '@renderer/Model'
+import {
+  JournalConfig,
+  RoutineConfig,
+  Note,
+  ListItem,
+  JournalConfigWithContext
+} from '@renderer/Model'
 import Markdown from './Markdown'
 import { evaluateTemplateVariables } from '@renderer/helpers/strings'
 
@@ -50,7 +56,6 @@ abstract class CustomTag {
 class AffirmationTag extends CustomTag {
   readonly tagName = 'Affirmation'
 
-  // eslint-disable-next-line class-methods-use-this
   async process(journal: JournalConfigWithContext, attributes: TagAttributes): Promise<string> {
     const wikilink = attributes.wikilink
     if (!wikilink) {
@@ -76,7 +81,6 @@ class AffirmationTag extends CustomTag {
 class PromptTag extends CustomTag {
   readonly tagName = 'Prompt'
 
-  // eslint-disable-next-line class-methods-use-this
   async process(journal: JournalConfigWithContext, attributes: TagAttributes): Promise<string> {
     const wikilink = attributes.wikilink
     if (!wikilink) {
@@ -197,7 +201,7 @@ class CustomTagRegistry {
 }
 
 type RenderedRoutineProps = {
-  journal: JournalConfig
+  journal: JournalConfigWithContext
   routine: RoutineConfig
   onComplete?: () => void
 }

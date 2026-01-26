@@ -42,6 +42,7 @@ export default class ConfigManager {
     } else {
       console.log(`No editorconfig.json found in repository, creating empty config`)
       editorConfig = {
+        mono: true,
         repositories: [],
         desks: [],
         bookmarks: [],
@@ -77,8 +78,7 @@ export default class ConfigManager {
     instance.repositoryConfigs = {}
 
     for (const repositoryConfig of instance.editorConfig.repositories) {
-      instance.repositoryConfigs[repositoryConfig.slug] =
-        await instance.#readRepositoryConfig(repositoryConfig)
+      instance.registerRepository(repositoryConfig)
     }
 
     return instance
@@ -99,6 +99,7 @@ export default class ConfigManager {
     } else {
       console.log(`No editorconfig.json found, creating empty config`)
       editorConfig = {
+        mono: false,
         repositories: [],
         desks: [],
         bookmarks: [],
@@ -112,9 +113,9 @@ export default class ConfigManager {
     instance.editorConfig = editorConfig
     instance.repositoryConfigs = {}
 
+    console.log(`Loading repositories`, instance.editorConfig)
     for (const repositoryConfig of instance.editorConfig.repositories) {
-      instance.repositoryConfigs[repositoryConfig.slug] =
-        await instance.#readRepositoryConfig(repositoryConfig)
+      instance.registerRepository(repositoryConfig)
     }
 
     return instance
@@ -125,6 +126,7 @@ export default class ConfigManager {
     if (!fs.existsSync(editorConfigPath)) {
       // Define default configuration
       return {
+        mono: false,
         repositories: [],
         desks: [],
         bookmarks: [],
@@ -135,19 +137,26 @@ export default class ConfigManager {
     const data = fs.readFileSync(editorConfigPath, 'utf8')
     console.log(`Reading editor configuration from ${editorConfigPath}...`)
     const config = JSON.parse(data) as EditorConfig
-    console.log(data, config)
     return config
   }
 
-  async #readRepositoryConfig(repositoryRef: RepositoryRefConfig): Promise<RepositoryConfig> {
-    const repositoryPath = normalizePath(repositoryRef.path)
+  // Read repository configuration from .nt/.config.json and add it to registered repositories
+  registerRepository(repository: RepositoryRefConfig): this {
+    const repositoryPath = normalizePath(repository.path)
     const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json')
     if (!fs.existsSync(repositoryConfigPath)) {
       throw new Error(`Missing configuration ${repositoryConfigPath}`)
     }
     const data = fs.readFileSync(repositoryConfigPath, 'utf8')
     const config = JSON.parse(data) as RepositoryConfig
-    return config
+    this.repositoryConfigs[repository.slug] = config
+    return this
+  }
+
+  // Unregister a repository
+  unregisterRepository(repositorySlug: string): this {
+    delete this.repositoryConfigs[repositorySlug]
+    return this
   }
 
   // Traverse the editor configuration to apply default values.
@@ -161,6 +170,8 @@ export default class ConfigManager {
           repository.selected = true
         }
       }
+    } else {
+      config.repositories = []
     }
 
     return config
@@ -180,7 +191,6 @@ export default class ConfigManager {
     const configPath = path.join(this.configDir, 'editorconfig.json')
     console.log(`Saving ${configPath}...`)
     const content = JSON.stringify(config, null, 2) // Pretty-print JSON with 2-space indentation
-    console.log(content)
     fs.writeFileSync(configPath, content)
   }
 

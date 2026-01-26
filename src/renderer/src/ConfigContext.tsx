@@ -16,6 +16,10 @@ type ConfigContextType = {
 
 const initialState: ConfigContextType = {
   config: {
+    mono: false,
+    desks: [],
+    tabs: [],
+    bookmarks: [],
     repositories: []
   },
   repositories: {}

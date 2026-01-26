@@ -182,7 +182,8 @@ svg {
   -webkit-app-region: none;
 }
 .TopBar .RepositoryButtonGroup button {
-  padding: 0.25rem 0.5rem;
+  position: relative; /* To position the close button absolutely inside */
+  padding: 0.25rem 1.5rem 0.25rem 0.5rem;
   margin: 0 0.1rem;
   background: transparent;
   border: none;
@@ -193,6 +194,12 @@ svg {
     border: 1px solid black;
     color: black;
     border-radius: 0.25rem;
+  }
+
+  .RepositoryRemoveButton {
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 }
 
@@ -335,6 +342,16 @@ svg {
     /* Remove left spacing to maximize the space available for notes on screen */
     margin-left: 0;
     padding-left: 0;
+  }
+  ul, ol {
+    /* Ensure bullets are inside the rendered content */
+    list-style-position: inside;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    /* Add some space around Markdown headings */
+    margin-top: 1em;
+    margin-bottom: 0.5em;
   }
 }
 

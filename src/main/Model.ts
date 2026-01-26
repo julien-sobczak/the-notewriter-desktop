@@ -70,6 +70,7 @@ export interface StatConfigWithContext extends StatConfig {
 /* editorconfig.json */
 
 export interface EditorConfig {
+  mono: boolean // True when the editor is in mono-repository mode
   repositories: RepositoryRefConfig[]
   bookmarks?: Bookmark[]
   desks?: Desk[]

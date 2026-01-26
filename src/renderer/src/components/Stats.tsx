@@ -474,7 +474,7 @@ function Stats() {
         for (const [attrName, metricInfo] of dailyMetricsMap.entries()) {
           const data = await window.api.getNoteStatistics(
             selectedRepositorySlugs,
-            '@type:Journal',
+            'type:Journal',
             'date',
             attrName
           )

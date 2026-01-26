@@ -1,18 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import {
-  DeckRef,
-  EditorConfig,
-  Flashcard,
-  Note,
-  NoteRef,
-  File,
-  Query,
-  Review,
-  JournalConfigWithContext,
-  StatConfigWithContext,
-  DeskWithContext,
-  RepositoryQuery
-} from '../main/Model'
+import { DeckRef, EditorConfig, Flashcard, Note, NoteRef, File, Query, Review } from '../main/Model'
 import { CommandExecution, JournalActivity, QueryResult } from '@renderer/Model'
 
 interface API {
@@ -31,7 +18,8 @@ interface API {
   browseUrl: (url: string) => void
 
   // 2-way renderer to main
-  selectRepository: () => Promise<RepositoryRefConfig | null>
+  browseRepository: () => Promise<RepositoryRefConfig | null>
+  removeRepository: (ref: RepositoryRefConfig) => Promise<void>
   find: (noteRef: NoteRef) => Promise<Note>
   mfind: (noteRefs: NoteRef[]) => Promise<Note[]>
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>

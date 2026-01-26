@@ -81,7 +81,7 @@ npm install
 ### Development
 
 ```bash
-npm run fixtures # Failed randomly. Rerun. Root cause still not found.
+$ export NT_REPOSITORY=/path/to/repository/the-notewriter # Define in your Shell configuration
 $ npm run dev
 
 # Launch existing tests

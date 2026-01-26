@@ -12,7 +12,13 @@ import {
   PlusCircleIcon as PlusIcon
 } from '@phosphor-icons/react'
 import { ConfigContext, selectedJournals } from '@renderer/ConfigContext'
-import { JournalConfigWithContext, Note, RoutineConfig, JournalActivity, ParentNote } from '@renderer/Model'
+import {
+  JournalConfigWithContext,
+  Note,
+  RoutineConfig,
+  JournalActivity,
+  ParentNote
+} from '@renderer/Model'
 import Question from './Question'
 import TimelineRangePicker from './TimelineRangePicker'
 import RenderedNote from './RenderedNote'

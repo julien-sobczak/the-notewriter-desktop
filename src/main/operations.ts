@@ -43,12 +43,19 @@ export default class OperationsManager {
     return new OperationsManager(options)
   }
 
+  // Register a repository to manage its operations
   registerRepository(repository: RepositoryRefConfig): this {
     const savedRepository = {
       ...repository,
       path: normalizePath(repository.path) // Replace ~ or $PWD
     }
     this.repositories.set(repository.slug, savedRepository)
+    return this
+  }
+
+  // Unregister a repository
+  unregisterRepository(repositorySlug: string): this {
+    this.repositories.delete(repositorySlug)
     return this
   }
 

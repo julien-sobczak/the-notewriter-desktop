@@ -40,16 +40,16 @@ describe('query2sql', () => {
     expect(query2sql('path:references/books OR path:projects/', 0, false)).toBe(
       `${selectClause} WHERE note.relative_path LIKE 'references/books%' OR note.relative_path LIKE 'projects/%';`
     )
-    expect(query2sql('@type:quote (#life #life-changing)', 0, false)).toBe(
+    expect(query2sql('type:quote (#life #life-changing)', 0, false)).toBe(
       `${selectClause} WHERE note.note_type='quote' AND (note.tags LIKE '%life%' AND note.tags LIKE '%life-changing%');`
     )
-    expect(query2sql('@type:note basic keyword', 0, false)).toBe(
+    expect(query2sql('type:note basic keyword', 0, false)).toBe(
       `${selectClause} WHERE note.note_type='note' AND note_fts MATCH 'basic' AND note_fts MATCH 'keyword';`
     )
-    expect(query2sql('"basic keyword" @type:note', 0, false)).toBe(
+    expect(query2sql('"basic keyword" type:note', 0, false)).toBe(
       `${selectClause} WHERE note_fts MATCH 'basic keyword' AND note.note_type='note';`
     )
-    expect(query2sql('path:references/persons (#life or #purpose) @type:quote', 0, false)).toBe(
+    expect(query2sql('path:references/persons (#life or #purpose) type:quote', 0, false)).toBe(
       `${selectClause} WHERE note.relative_path LIKE 'references/persons%' AND (note.tags LIKE '%life%' OR note.tags LIKE '%purpose%') AND note.note_type='quote';`
     )
   })
