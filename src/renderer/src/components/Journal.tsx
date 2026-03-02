@@ -1,43 +1,22 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useContext, ReactNode } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import {
   ArrowClockwiseIcon as RefreshIcon,
   FunnelIcon as FilterIcon,
   TagSimpleIcon as TagIcon,
-  XIcon as CloseIcon,
   AtIcon as AttributeIcon,
   SmileyIcon as EmojiIcon,
   ArrowsVerticalIcon as ExpandIcon,
-  ArrowElbowLeftDownIcon as UnexpandIcon,
-  PlusCircleIcon as PlusIcon
+  ArrowElbowLeftDownIcon as UnexpandIcon
 } from '@phosphor-icons/react'
 import { ConfigContext, selectedJournals } from '@renderer/ConfigContext'
-import {
-  JournalConfigWithContext,
-  Note,
-  RoutineConfig,
-  JournalActivity,
-  ParentNote
-} from '@renderer/Model'
+import { JournalConfigWithContext, Note, JournalActivity, ParentNote } from '@renderer/Model'
 import Question from './Question'
 import TimelineRangePicker from './TimelineRangePicker'
 import RenderedNote from './RenderedNote'
-import RenderedRoutine from './RenderedRoutine'
 import { Actions, Action, Subaction } from './Actions'
 import Loader from './Loader'
 import { formatDate } from '@renderer/helpers/dateUtils'
-import { evaluateTemplateVariables } from '@renderer/helpers/strings'
-
-function Aside({ children, onClose = () => {} }: { children: ReactNode; onClose?: () => void }) {
-  return (
-    <div className="Aside">
-      <Actions>
-        <Action icon={<CloseIcon />} title="Close" onClick={onClose} />
-      </Actions>
-      <div className="AsideContent">{children}</div>
-    </div>
-  )
-}
 
 type ViewState = 'loading' | 'journal-selection' | 'viewing'
 
@@ -64,9 +43,6 @@ function Journal() {
   const [showFilterTags, setShowFilterTags] = useState<boolean>(false)
   const [showFilterAttributes, setShowFilterAttributes] = useState<boolean>(false)
   const [showFilterEmojis, setShowFilterEmojis] = useState<boolean>(false)
-
-  // Routines management
-  const [selectedRoutine, setSelectedRoutine] = useState<RoutineConfig | null>(null)
 
   useEffect(() => {
     // Load journal configuration
@@ -214,24 +190,6 @@ function Journal() {
     )
   }
 
-  const handleRoutineComplete = async () => {
-    // Force add the today note
-    if (selectedJournal && window.electron) {
-      try {
-        setSelectedRoutine(null)
-        console.log('Forcing adding today note...')
-        const todayPath = evaluateTemplateVariables(selectedJournal.path)
-        await window.api.forceAdd(selectedJournal.repositorySlug, todayPath)
-        // Refresh the journal entries
-        await loadJournalEntries()
-      } catch (error) {
-        console.error('Error forcing add:', error)
-      } finally {
-        console.log(`Added today note in repository ${selectedJournal.repositorySlug}`)
-      }
-    }
-  }
-
   // Add helper to determine if a note has any top-level items matching the active filters.
   const noteHasMatchingItems = (note: Note): boolean => {
     // If no filters are active, include the note
@@ -267,12 +225,6 @@ function Journal() {
       return true
     })
   }
-
-  // Determine if the filtered notes contain today's date.
-  const today = formatDate(new Date())
-  const hasToday =
-    notes.length > 0 && notes[0].parent.attributes && notes[0].parent.attributes.date === today
-  const todayInRange = dateRange.start <= today && today <= dateRange.end
 
   if (viewState === 'loading') {
     return (
@@ -376,20 +328,7 @@ function Journal() {
         {/* Journal entries */}
         {!isLoading && (
           <>
-            {selectedRoutine && (
-              <Aside onClose={() => setSelectedRoutine(null)}>
-                <RenderedRoutine
-                  journal={selectedJournal}
-                  routine={selectedRoutine}
-                  onComplete={handleRoutineComplete}
-                />
-              </Aside>
-            )}
             <div className="JournalEntries">
-              {/* Print a fake today entry if missing to let user completes the routines */}
-              {todayInRange && !hasToday && (
-                <JournalEntry journal={selectedJournal} onRoutineSelected={setSelectedRoutine} />
-              )}
               {notes
                 .filter((note) => noteHasMatchingItems(note.parent))
                 .map((note) => {
@@ -398,7 +337,6 @@ function Journal() {
                       key={note.parent.oid}
                       journal={selectedJournal}
                       note={note as ParentNote}
-                      onRoutineSelected={setSelectedRoutine}
                       filterTags={filterTags}
                       filterAttributes={filterAttributes}
                       filterEmojis={filterEmojis}
@@ -425,39 +363,24 @@ type JournalEntryProps = {
   filterTags?: string[]
   filterAttributes?: string[]
   filterEmojis?: string[]
-  onRoutineSelected?: (routine: RoutineConfig) => void
 }
 
 function JournalEntry({
-  journal,
+  journal: _journal,
   note,
   filterTags,
   filterAttributes,
-  filterEmojis,
-  onRoutineSelected
+  filterEmojis
 }: JournalEntryProps) {
   const [selectedDailyNote, setSelectedDailyNote] = useState<Note | null>(null)
 
-  const emptyTodayNote = !note
   const entryNote = note?.parent
   const dailyNotes = note?.children || []
 
   const today = formatDate(new Date())
-  const isToday = emptyTodayNote || entryNote?.attributes.date === today
+  const isToday = entryNote?.attributes.date === today
 
-  // Filter already edited routines
-  const filteredRoutines =
-    journal.routines?.filter((routine) => {
-      return !dailyNotes.some((dailyNote) => dailyNote.shortTitle === routine.name)
-    }) || []
-
-  const showRoutines = isToday && filteredRoutines.length > 0
   const showDailyNotes = dailyNotes.length > 0
-
-  if (!isToday && emptyTodayNote) {
-    // Must not happen
-    return null
-  }
 
   const handleDailyNoteSelected = (dailyNote: Note) => {
     if (selectedDailyNote?.oid === dailyNote.oid) {
@@ -488,31 +411,19 @@ function JournalEntry({
           filterEmojis={filterEmojis}
         />
       )}
-      {(showDailyNotes || showRoutines) && (
+      {showDailyNotes && (
         <div className="JournalDailyNotes">
-          {showDailyNotes &&
-            dailyNotes.map((dailyNote: Note) => (
-              <button
-                key={dailyNote.oid}
-                type="button"
-                onClick={() => handleDailyNoteSelected(dailyNote)}
-              >
-                {selectedDailyNote?.oid === dailyNote.oid && <UnexpandIcon size={16} />}
-                {selectedDailyNote?.oid !== dailyNote.oid && <ExpandIcon size={16} />}
-                &nbsp;{dailyNote.shortTitle}
-              </button>
-            ))}
-          {showRoutines &&
-            filteredRoutines.map((routine: RoutineConfig) => (
-              <button
-                key={routine.name}
-                type="button"
-                className="New"
-                onClick={() => onRoutineSelected?.(routine)}
-              >
-                <PlusIcon size={16} /> {routine.name}
-              </button>
-            ))}
+          {dailyNotes.map((dailyNote: Note) => (
+            <button
+              key={dailyNote.oid}
+              type="button"
+              onClick={() => handleDailyNoteSelected(dailyNote)}
+            >
+              {selectedDailyNote?.oid === dailyNote.oid && <UnexpandIcon size={16} />}
+              {selectedDailyNote?.oid !== dailyNote.oid && <ExpandIcon size={16} />}
+              &nbsp;{dailyNote.shortTitle}
+            </button>
+          ))}
         </div>
       )}
       {selectedDailyNote && (

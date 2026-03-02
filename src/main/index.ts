@@ -22,7 +22,7 @@ import {
   RepositoryRefConfig,
   Review
 } from './Model'
-import { exec, spawn } from 'child_process'
+import { spawn } from 'child_process'
 import { generateOid } from './oid'
 
 // These will be initialized asynchronously
@@ -630,72 +630,6 @@ app.whenReady().then(async () => {
   })
 
   // Journal operations
-  ipcMain.handle('read-note-file', async (_event, repositorySlug: string, filePath: string) => {
-    console.debug(`Reading note file ${filePath} in repository ${repositorySlug}`)
-
-    try {
-      // Get repository configuration
-      const repository = config.repositories().find((repo) => repo.slug === repositorySlug)
-      if (!repository) {
-        throw new Error(`Repository ${repositorySlug} not found`)
-      }
-
-      // Normalize the repository path
-      const repositoryPath = normalizePath(repository.path)
-
-      // Resolve the full file path
-      const fullFilePath = path.join(repositoryPath, filePath)
-
-      // Read file content
-      if (!fs.existsSync(fullFilePath)) {
-        console.warn(`File ${fullFilePath} does not exist`)
-        return '' // Return empty content for non-existing files
-      }
-
-      const content = fs.readFileSync(fullFilePath, 'utf8')
-      console.debug(`Successfully read content from ${fullFilePath}`)
-      return content
-    } catch (error) {
-      console.error(`Error reading file ${filePath}:`, error)
-      throw error
-    }
-  })
-  ipcMain.handle(
-    'append-to-file',
-    async (_event, repositorySlug: string, filePath: string, content: string) => {
-      console.debug(`Appending to file ${filePath} in repository ${repositorySlug}`)
-
-      try {
-        // Get repository configuration
-        const repository = config.repositories().find((repo) => repo.slug === repositorySlug)
-        if (!repository) {
-          throw new Error(`Repository ${repositorySlug} not found`)
-        }
-
-        // Normalize the repository path
-        const repositoryPath = normalizePath(repository.path)
-
-        // Resolve the full file path
-        const fullFilePath = path.join(repositoryPath, filePath)
-
-        // Ensure directory exists
-        const dir = path.dirname(fullFilePath)
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true })
-        }
-
-        // Append content to file
-        fs.appendFileSync(fullFilePath, content, 'utf8')
-
-        console.debug(`Successfully appended content to ${fullFilePath}`)
-        return true
-      } catch (error) {
-        console.error(`Error appending to file ${filePath}:`, error)
-        throw error
-      }
-    }
-  )
-
   ipcMain.handle(
     'determine-journal-activity',
     async (_event, repositorySlug: string, pathPrefix: string) => {
@@ -715,59 +649,6 @@ app.whenReady().then(async () => {
       return db.findJournalEntries(repositorySlug, pathPrefix, start, end)
     }
   )
-
-  ipcMain.handle('force-add', async (_event, repositorySlug: string, filePath: string) => {
-    console.debug(`Force adding file ${filePath} in repository ${repositorySlug}`)
-
-    try {
-      // Get repository configuration
-      const repository = config.repositories().find((repo) => repo.slug === repositorySlug)
-      if (!repository) {
-        throw new Error(`Repository ${repositorySlug} not found`)
-      }
-
-      // Normalize the repository path
-      const repositoryPath = normalizePath(repository.path)
-
-      // Resolve the full file path
-      const fullFilePath = path.join(repositoryPath, filePath)
-
-      // Check if file exists
-      if (!fs.existsSync(fullFilePath)) {
-        throw new Error(`File ${fullFilePath} does not exist`)
-      }
-
-      // IMPROVEMENT introduce a NtRunner abstraction
-      // Execute nt add command
-      return new Promise((resolve, reject) => {
-        exec(
-          `nt add "${fullFilePath}"`,
-          {
-            cwd: repositoryPath,
-            env: {
-              ...process.env,
-              NT_HOME: '' // Avoid propagating NT_HOME also used by the-notewriter-desktop
-            }
-          },
-          (error: any, stdout: string, stderr: string) => {
-            if (error) {
-              console.error(`Error executing nt add: ${error}`)
-              reject(error)
-              return
-            }
-            if (stderr) {
-              console.warn(`nt add stderr: ${stderr}`)
-            }
-            console.info(`nt add stdout: ${stdout}`)
-            resolve(true)
-          }
-        )
-      })
-    } catch (error) {
-      console.error(`Error force adding file ${filePath}:`, error)
-      throw error
-    }
-  })
 
   createWindow()
 

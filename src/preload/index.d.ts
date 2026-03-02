@@ -45,8 +45,6 @@ interface API {
   flushOperations: (repositorySlugs: string[]) => Promise<void>
   reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) => Promise<Flashcard>
   runHooks: (note: Note) => Promise<CommandExecution>
-  readNoteFile: (repositorySlug: string, filePath: string) => Promise<string>
-  appendToFile: (repositorySlug: string, filePath: string, content: string) => Promise<boolean>
   determineJournalActivity: (repositorySlug: string, pathPrefix: string) => Promise<JournalActivity>
   findJournalEntries: (
     repositorySlug: string,
@@ -54,7 +52,6 @@ interface API {
     start: string,
     end: string
   ) => Promise<ParentNote[]>
-  forceAdd: (repositorySlug: string, filePath: string) => Promise<boolean>
 }
 
 declare global {

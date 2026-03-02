@@ -65,16 +65,10 @@ const api = {
   runHooks: (note: Note) => ipcRenderer.invoke('run-hooks', note),
 
   // Journal operations
-  readNoteFile: (repositorySlug: string, filePath: string) =>
-    ipcRenderer.invoke('read-note-file', repositorySlug, filePath),
-  appendToFile: (repositorySlug: string, filePath: string, content: string) =>
-    ipcRenderer.invoke('append-to-file', repositorySlug, filePath, content),
   determineJournalActivity: (repositorySlug: string, pathPrefix: string) =>
     ipcRenderer.invoke('determine-journal-activity', repositorySlug, pathPrefix),
   findJournalEntries: (repositorySlug: string, pathPrefix: string, start: string, end: string) =>
-    ipcRenderer.invoke('find-journal-entries', repositorySlug, pathPrefix, start, end),
-  forceAdd: (repositorySlug: string, filePath: string) =>
-    ipcRenderer.invoke('force-add', repositorySlug, filePath)
+    ipcRenderer.invoke('find-journal-entries', repositorySlug, pathPrefix, start, end)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
