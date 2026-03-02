@@ -335,6 +335,7 @@ function Journal() {
                   return (
                     <JournalEntry
                       key={note.parent.oid}
+                      journal={selectedJournal}
                       note={note as ParentNote}
                       filterTags={filterTags}
                       filterAttributes={filterAttributes}
@@ -357,13 +358,20 @@ function Journal() {
 }
 
 type JournalEntryProps = {
+  journal: JournalConfigWithContext
   note?: ParentNote
   filterTags?: string[]
   filterAttributes?: string[]
   filterEmojis?: string[]
 }
 
-function JournalEntry({ note, filterTags, filterAttributes, filterEmojis }: JournalEntryProps) {
+function JournalEntry({
+  journal: _journal,
+  note,
+  filterTags,
+  filterAttributes,
+  filterEmojis
+}: JournalEntryProps) {
   const [selectedDailyNote, setSelectedDailyNote] = useState<Note | null>(null)
 
   const entryNote = note?.parent
