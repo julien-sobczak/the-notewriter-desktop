@@ -47,7 +47,7 @@ function DailyQuote({ onClose }: any) {
     const randomQuery = queries[Math.floor(Math.random() * queries.length)]
 
     const query: Query = {
-      query: randomQuery.q,
+      query: randomQuery.q || '',
       repositories: [randomQuery.repositorySlug],
       blockOid: undefined,
       deskOid: undefined,

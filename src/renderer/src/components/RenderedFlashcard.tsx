@@ -34,9 +34,9 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
     if (confidence === undefined) {
       throw new Error(`Unknown feedback type: ${feedback}`)
     }
-
     onReviewed({
       flashcardOID: flashcard.oid,
+      flashcardSlug: flashcard.slug,
       confidence,
       durationInMs: completionTime.getTime() - startTime.getTime(),
       completedAt: completionTime.toISOString(),

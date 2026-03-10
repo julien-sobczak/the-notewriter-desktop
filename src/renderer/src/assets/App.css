@@ -158,11 +158,15 @@ svg {
 
   /* Make the frameless windows draggable using the top bar (similar to other applications such as Slack Desktop)
   /* https://stackoverflow.com/questions/44818508/how-do-i-move-a-frameless-window-in-electron-without-using-webkit-app-region */
-  -webkit-app-region: drag; /* NB: The property must be reset on child element to make them focusable. */
+  -webkit-app-region: drag;
+  /* NB: The property must be reset on child element to make them focusable. */
 }
+
 .TopBar form {
-  flex: 1; /* Take all available space */
+  flex: 1;
+  /* Take all available space */
 }
+
 .TopBar input {
   border-radius: 0.25rem;
   border: 1px solid var(--color-separator) !important;
@@ -176,13 +180,16 @@ svg {
     text-align: center;
   }
 }
+
 .TopBar .RepositoryButtonGroup,
 .TopBar .NotificationsStatus {
   margin-left: auto;
   -webkit-app-region: none;
 }
+
 .TopBar .RepositoryButtonGroup button {
-  position: relative; /* To position the close button absolutely inside */
+  position: relative;
+  /* To position the close button absolutely inside */
   padding: 0.25rem 1.5rem 0.25rem 0.5rem;
   margin: 0 0.1rem;
   background: transparent;
@@ -208,12 +215,14 @@ svg {
   height: 100%;
   border-right: 1px solid var(--color-separator);
 }
+
 .ActivityBar ul {
   display: flex;
   flex-direction: column;
   padding: 0;
   margin: 0;
 }
+
 .ActivityBar li {
   list-style-type: none;
   align-items: center;
@@ -224,6 +233,7 @@ svg {
   font-size: 24px;
   color: var(--color-text-dimmed);
 }
+
 .ActivityBar li.selected {
   color: black;
 }
@@ -239,6 +249,7 @@ svg {
   flex-grow: 1;
   display: none;
 }
+
 .EditorArea.focused {
   display: flex;
   flex-direction: column;
@@ -270,13 +281,14 @@ svg {
 
 .RenderedNote {
   border: 1px solid var(--color-separator-dark);
-  border-radius: var(--desktop-layout-radius) var(--desktop-layout-radius) 0
-    var(--desktop-layout-radius);
+  border-radius: var(--desktop-layout-radius) var(--desktop-layout-radius) 0 var(--desktop-layout-radius);
   background: white;
   margin: 0.5rem;
 }
+
 .LayoutGrid .RenderedNote {
-  flex-grow: 1; /* use all available space */
+  flex-grow: 1;
+  /* use all available space */
 }
 
 .Actions {
@@ -294,6 +306,7 @@ svg {
 .RenderedNoteContent {
   padding: 0.5em 1em;
 }
+
 .RenderedNoteTitle h1 {
   display: inline-block;
   font-size: 1rem;
@@ -302,21 +315,26 @@ svg {
 .RenderedNoteContent {
   font-size: 0.8rem;
 }
+
 .RenderedNoteContent.Preview {
   max-height: 20em;
-  overflow: auto; /* show scrollbar only when needed */
+  overflow: auto;
+  /* show scrollbar only when needed */
 }
+
 .RenderedNoteContent {
   pre {
     background-color: #fafafa;
     overflow-x: scroll;
     /* padding: 0.5rem; FIXME bug the parent container exceed the size of its parent. */
   }
+
   blockquote {
     position: relative;
     padding-left: 3em;
     font-style: italic;
   }
+
   blockquote::before {
     font-family: Arial;
     content: '\201C';
@@ -326,12 +344,16 @@ svg {
     left: 10px;
     top: -20px;
   }
+
   figcaption {
     padding-left: 3em;
   }
+
   a {
-    color: black !important; /* Don't put too much emphasis on external links. We want to focus on offline notes. */
+    color: black !important;
+    /* Don't put too much emphasis on external links. We want to focus on offline notes. */
   }
+
   .missing {
     /* Used on dangling medias */
     width: 32px;
@@ -343,12 +365,19 @@ svg {
     margin-left: 0;
     padding-left: 0;
   }
-  ul, ol {
+
+  ul,
+  ol {
     /* Ensure bullets are inside the rendered content */
     list-style-position: inside;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     /* Add some space around Markdown headings */
     margin-top: 1em;
     margin-bottom: 0.5em;
@@ -358,6 +387,7 @@ svg {
 .RenderedMetadata {
   background: white;
 }
+
 .RenderedMetadata ul,
 .Actions ul {
   display: flex;
@@ -365,9 +395,11 @@ svg {
   margin: 0;
   padding: 0;
 }
+
 .Actions ul {
   justify-content: flex-end;
 }
+
 .RenderedMetadata ul li,
 .Actions ul li {
   list-style-type: none;
@@ -393,18 +425,22 @@ ul.Filter {
   list-style-type: none;
   display: flex;
   flex-direction: row;
-  justify-content: center; /* Centers items horizontally */
+  justify-content: center;
+  /* Centers items horizontally */
 }
+
 ul.Filter li {
   margin: 0 0.25em;
   padding: 0.25em 0.5em;
   font-family: monospace;
   font-size: 0.8em;
-  cursor: pointer; /* Filters are clickable */
+  cursor: pointer;
+  /* Filters are clickable */
   border-radius: var(--desktop-layout-radius);
   background: var(--color-background-light);
   border: 1px solid var(--color-background-light);
 }
+
 ul.Filter li.selected {
   border-color: var(--color-separator-dark);
 }
@@ -414,6 +450,7 @@ ul.Filter li.selected {
   width: 100%;
   height: 100vh;
 }
+
 .Grid,
 .Container,
 .BlockHorizontal,
@@ -423,29 +460,37 @@ ul.Filter li.selected {
   position: relative;
   margin: var(--desktop-layout-margin);
   overflow: auto;
-  flex-grow: 1; /* Fill space equally */
+  flex-grow: 1;
+  /* Fill space equally */
 }
+
 .Grid,
 .Container,
 .BlockVertical {
   flex-direction: row;
 }
+
 .BlockHorizontal {
   flex-direction: column;
 }
-.Grid > * {
+
+.Grid>* {
   resize: horizontal;
 }
-.BlockHorizontal > * {
+
+.BlockHorizontal>* {
   resize: horizontal;
 }
-.BlockVertical > * {
+
+.BlockVertical>* {
   resize: vertical;
 }
+
 .Note {
   padding: 1em;
   margin: 1em;
 }
+
 .BlockContainer,
 .NoteContainer {
   margin: var(--desktop-layout-margin);
@@ -458,16 +503,21 @@ ul.Filter li.selected {
 .RenderedBlock .NoteContainerActions {
   visibility: hidden;
 }
+
 .RenderedBlock .NoteContainer {
   border: none;
 }
+
 .RenderedBlock .RenderedNote:hover .RenderedNoteActions,
 .RenderedBlock .NoteContainer:hover .NoteContainerActions {
   visibility: visible;
 }
+
 .RenderedBlock {
-  position: relative; /* To position the actions absolutely inside */
+  position: relative;
+  /* To position the actions absolutely inside */
 }
+
 /* Make actions less visible to reduce visual noise when multiple blocks are present */
 .RenderedBlockActions {
   background-color: white;
@@ -483,20 +533,23 @@ ul.Filter li.selected {
     }
   }
 }
+
 /* Really display actions on hover... */
-.RenderedBlock:hover > .RenderedBlockActions li {
+.RenderedBlock:hover>.RenderedBlockActions li {
   opacity: 1;
 }
+
 /* ... and render a border on closest block only */
 .RenderedBlock:has(> .RenderedBlockActions:hover) {
   border: 1px solid black;
 
   /* ... and a dashed border between inner blocks */
-  > .BlockHorizontal > .RenderedBlock:not(:first-child):not(:last-child) {
+  >.BlockHorizontal>.RenderedBlock:not(:first-child):not(:last-child) {
     border-top: 1px dashed black;
     border-bottom: 1px dashed black;
   }
-  > .BlockVertical > .RenderedBlock:not(:first-child):not(:last-child) {
+
+  >.BlockVertical>.RenderedBlock:not(:first-child):not(:last-child) {
     border-left: 1px dashed black;
     border-right: 1px dashed black;
   }
@@ -508,11 +561,13 @@ ul.Filter li.selected {
 .NoteContainer:hover {
   border: 1px dotted var(--color-separator-dark);
 }
+
 /* 2. Reveal the note actions on hover */
-.RenderedNote > .Actions {
+.RenderedNote>.Actions {
   visibility: hidden !important;
 }
-.RenderedNote:hover > .Actions {
+
+.RenderedNote:hover>.Actions {
   visibility: visible !important;
 }
 
@@ -524,6 +579,7 @@ ul.Filter li.selected {
   flex-direction: row;
   width: 100%;
 }
+
 .LeftPanel {
   height: 100%;
   font-size: 0.9em;
@@ -544,6 +600,7 @@ ul.Filter li.selected {
   margin: 0;
   padding: 0;
 }
+
 .Bookmarker .LeftPanel li {
   margin: 0;
   padding: 0.5rem;
@@ -567,13 +624,17 @@ ul.Filter li.selected {
   padding: 0.25rem;
   border-bottom: 1px solid var(--color-separator);
 }
+
 .Browser .LeftPanel .directory {
-  width: 250px; /* to avoid resizing when switching between mode */
+  width: 250px;
+  /* to avoid resizing when switching between mode */
 }
+
 .BrowserEditor {
   height: 100%;
   overflow: scroll;
-  flex-grow: 2; /* Use remaining space */
+  flex-grow: 2;
+  /* Use remaining space */
   background-color: var(--color-background-light);
 }
 
@@ -631,8 +692,10 @@ ul.Filter li.selected {
 .NoteContainer .Header {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end; /* Ensure .Actions floats to the right */
+  justify-content: flex-end;
+  /* Ensure .Actions floats to the right */
 }
+
 .NoteContainer .Name {
   flex-grow: 2;
   padding: 0.5rem;
@@ -643,26 +706,34 @@ ul.Filter li.selected {
 .NoteContainer .Content {
   display: flex;
   position: relative;
-  height: 100%; /* Useful to use offsetHeight in JavaScript */
+  height: 100%;
+  /* Useful to use offsetHeight in JavaScript */
 }
+
 .NoteContainer .Content.LayoutGrid {
   flex-wrap: wrap;
 }
+
 .NoteContainer .Content.LayoutList {
   flex-direction: column;
 }
+
 .NoteContainer .Content.LayoutFree {
   display: block;
-  position: relative; /* Notes will be positioned using static values */
+  position: relative;
+  /* Notes will be positioned using static values */
 }
+
 .NoteContainer .Content.LayoutFree .RenderedNote {
   position: absolute;
   resize: both;
   z-index: 0;
 }
-.LayoutGrid > .RenderedNote {
+
+.LayoutGrid>.RenderedNote {
   width: 20em;
 }
+
 /*
 .LayoutList > .RenderedNote {
   flex-direction is already columns
@@ -693,13 +764,14 @@ ul.Filter li.selected {
 
 /* The menu listing all opened desks */
 
-.DeskContainer > nav ul {
+.DeskContainer>nav ul {
   display: flex;
   flex-direction: row;
   padding: 0;
   margin: 0;
 }
-.DeskContainer > nav li {
+
+.DeskContainer>nav li {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -709,10 +781,12 @@ ul.Filter li.selected {
   cursor: pointer;
   color: var(--color-text-dimmed);
 }
-.DeskContainer > nav li span {
+
+.DeskContainer>nav li span {
   padding: 0 1rem;
 }
-.DeskContainer > nav li.selected {
+
+.DeskContainer>nav li.selected {
   border-bottom: 1px solid var(--color-text-dimmed);
   color: black;
 }
@@ -722,9 +796,11 @@ ul.Filter li.selected {
   margin: 0.5rem;
   /* TODO now on hover a section, make the border gray */
 }
-.DeskContainer .Desk > * {
+
+.DeskContainer .Desk>* {
   flex-grow: 1;
 }
+
 .DeskContainer .Desk.selected {
   display: flex;
 }
@@ -734,7 +810,7 @@ ul.Filter li.selected {
 .TabBar {
   width: 100%;
 
-  > nav ul {
+  >nav ul {
     display: flex;
     flex-direction: row;
     padding: 0;
@@ -756,12 +832,14 @@ ul.Filter li.selected {
       &:hover {
         background-color: var(--color-background-light);
       }
+
       &.selected {
         border-top: 1px solid black;
         border-bottom: 1px solid white;
         color: black;
         background-color: white;
       }
+
       &.stale {
         font-style: italic;
       }
@@ -775,6 +853,7 @@ ul.Filter li.selected {
         align-items: center;
         opacity: 0.5;
       }
+
       .TabCloseButton:hover {
         opacity: 1;
       }
@@ -796,10 +875,13 @@ ul.Filter li.selected {
 
 .TabContent {
   width: 100%;
-  height: calc(100% - 2rem); /* Subtract tab bar height */
+  height: calc(100% - 2rem);
+  /* Subtract tab bar height */
   overflow: auto;
-  display: none; /* Only the selected tab is visible */
+  display: none;
+  /* Only the selected tab is visible */
 }
+
 .TabContent.selected {
   display: block;
 }
@@ -815,9 +897,11 @@ ul.Filter li.selected {
   background: white;
   border-left: 1px solid var(--color-separator-dark);
   box-shadow: 0px 5px 5px 5px rgba(0, 0, 0, 0.1);
-  z-index: 100; /* must be visible on top of other pages */
+  z-index: 100;
+  /* must be visible on top of other pages */
   overflow-y: scroll;
 }
+
 .SearchPanel.expanded {
   width: 100% !important;
 }
@@ -874,6 +958,7 @@ ul.Filter li.selected {
   caret-color: #6e5ed2;
   margin: 0;
 }
+
 [cmdk-input]::placeholder {
   color: var(--gray9);
 }
@@ -894,9 +979,11 @@ ul.Filter li.selected {
   transition-property: none;
   position: relative;
 }
+
 [cmdk-item][data-selected='true'] {
   background: var(--gray2);
 }
+
 [cmdk-item][data-selected='true']:after {
   content: '';
   position: absolute;
@@ -917,7 +1004,7 @@ ul.Filter li.selected {
   background: var(--gray4);
 }
 
-[cmdk-item] + [cmdk-item] {
+[cmdk-item]+[cmdk-item] {
   margin-top: 4px;
 }
 
@@ -977,6 +1064,7 @@ ul.Filter li.selected {
   /* Make sure only the zen mode is visible */
   display: none;
 }
+
 .ZenMode,
 .Inspiration {
   display: flex;
@@ -984,6 +1072,7 @@ ul.Filter li.selected {
   align-items: center;
   flex-direction: column;
 }
+
 .ZenMode .Actions,
 .Inspiration .Actions {
   flex-grow: 0;
@@ -991,6 +1080,7 @@ ul.Filter li.selected {
   justify-content: flex-end;
   width: 100%;
 }
+
 .ZenMode .Content,
 .Inspiration .Content {
   width: 100%;
@@ -1017,6 +1107,7 @@ ul.Filter li.selected {
   h2 {
     font-weight: 100;
   }
+
   ul {
     list-style-type: none;
     display: flex;
@@ -1037,17 +1128,17 @@ ul.Filter li.selected {
 /* Timer */
 
 .Timer {
-  background: -webkit-linear-gradient(
-    left,
-    var(--color-separator-dark) 50%,
-    white 50%
-  ); /* TODO find a way to avoid -webkit */
+  background: -webkit-linear-gradient(left,
+      var(--color-separator-dark) 50%,
+      white 50%);
+  /* TODO find a way to avoid -webkit */
   border-radius: 100%;
   height: calc(var(--size) * 1px);
   width: calc(var(--size) * 1px);
   position: relative;
   animation: time calc(var(--duration) * 1s) steps(1000, start) infinite;
 }
+
 .Timer .mask {
   border-radius: 100% 0 0 100% / 50% 0 0 50%;
   height: 100%;
@@ -1058,24 +1149,29 @@ ul.Filter li.selected {
   animation: mask calc(var(--duration) * 1s) steps(500, start) infinite;
   transform-origin: 100% 50%;
 }
+
 @keyframes time {
   100% {
     transform: rotate(360deg);
   }
 }
+
 @keyframes mask {
   0% {
     background: white;
     transform: rotate(0deg);
   }
+
   50% {
     background: white;
     transform: rotate(-180deg);
   }
+
   50.01% {
     background: var(--color-separator-dark);
     transform: rotate(0deg);
   }
+
   100% {
     background: var(--color-separator-dark);
     transform: rotate(-180deg);
@@ -1099,6 +1195,7 @@ ul.Filter li.selected {
     .DecksDue {
       color: red;
     }
+
     .DecksNew {
       color: darkblue;
     }
@@ -1136,56 +1233,72 @@ ul.Filter li.selected {
   padding: 0.5em 0.25em;
   color: gray;
 }
+
 .RenderedFlashcard .ButtonGroup {
   margin-top: 1em;
   width: 100%;
   display: flex;
-  justify-content: space-between; /* or: space-evenly */
-  align-items: center; /* optional: vertical alignment */
+  justify-content: space-between;
+  /* or: space-evenly */
+  align-items: center;
+  /* optional: vertical alignment */
 }
+
 .ShowAnswerButton {
   background-color: #465a64;
   color: white;
   flex: 1;
   text-align: center;
 }
+
 .FeedbackButton {
   padding: 0.5em 1em;
-  flex: 1; /* each child takes equal space */
+  flex: 1;
+  /* each child takes equal space */
   text-align: center;
   transition: width 3s ease;
 }
+
 .FeedbackTooHard,
 .FeedbackTooEasy,
 .FeedbackConfirmation {
   color: yellow;
   background-color: black;
 }
+
 .FeedbackCancellation {
   background-color: darkred;
-  flex: 0.2; /* Make the cancel button smaller as "Too" buttons are already difficult to reach. Confirmation is only a safe guard but the user will almost always confirm. */
+  flex: 0.2;
+  /* Make the cancel button smaller as "Too" buttons are already difficult to reach. Confirmation is only a safe guard but the user will almost always confirm. */
 }
+
 .FeedbackTooHard,
 .FeedbackTooEasy {
-  flex: 0.3; /* "Too" options are exceptional, make them smaller */
+  flex: 0.3;
+  /* "Too" options are exceptional, make them smaller */
   flex-grow: 1;
 }
+
 .FeedbackHard {
   background-color: #d32f2d;
   color: white;
 }
+
 .FeedbackAgain {
   background-color: #465a64;
   color: white;
 }
+
 .FeedbackGood {
   background-color: #4cb050;
   color: white;
 }
+
 .FeedbackEasy {
   background-color: #36a9f5;
   color: white;
 }
+
 .RenderedFlashcard sup.Interval {
   background: rgba(255, 255, 255, 0.2);
   color: white;
@@ -1201,16 +1314,19 @@ ul.Filter li.selected {
 
   /* Flashcard height is fixed to stick the feedback buttons. */
   flex-grow: 1;
-  overflow-y: auto; /* show scrollbar only when needed */
+  overflow-y: auto;
+  /* show scrollbar only when needed */
 
   p {
     margin: 0.5em 0;
   }
+
   pre {
     border: 1px solid var(--color-separator-dark);
     padding: 0.5em;
     background-color: var(--color-background-light);
-    overflow-x: auto; /* show scrollbar only when needed */
+    overflow-x: auto;
+    /* show scrollbar only when needed */
   }
 }
 
@@ -1218,6 +1334,7 @@ ul.Filter li.selected {
 
 .RenderedNoteContent,
 .RenderedFlashcard {
+
   p,
   pre,
   hr {
@@ -1238,13 +1355,15 @@ ul.Filter li.selected {
     flex-grow: 1;
     justify-content: center;
     align-items: center;
-    overflow-y: auto; /* show scrollbar only when needed */
+    overflow-y: auto;
+    /* show scrollbar only when needed */
   }
 
   /* Emphasize content */
   .RenderedNote {
     border: none !important;
   }
+
   .RenderedNoteContent {
     font-size: 1.2rem;
   }
@@ -1262,7 +1381,8 @@ ul.Filter li.selected {
       display: inline-block;
       font-size: 0.7rem;
     }
-    > div {
+
+    >div {
       padding: 0.5rem;
     }
   }
@@ -1281,16 +1401,19 @@ ul.Filter li.selected {
     display: inline-block;
   }
 
-  > * {
+  >* {
     display: flex;
-    align-items: flex-end; /* push text to bottom */
+    align-items: flex-end;
+    /* push text to bottom */
   }
 }
+
 .GotoPlaceholder {
   display: flex;
   flex-direction: column;
   margin: 0 4px;
 }
+
 .GotoPlaceholderName {
   font-size: 0.8em;
   color: #888;
@@ -1306,7 +1429,8 @@ ul.Filter li.selected {
   background-color: white;
   box-shadow: 0px 5px 5px 5px rgba(0, 0, 0, 0.1);
   padding: 0.5em;
-  z-index: 1000; /* Ensure it's on top of other elements */
+  z-index: 1000;
+  /* Ensure it's on top of other elements */
   border: 1px solid var(--color-separator-dark);
 }
 
@@ -1377,13 +1501,13 @@ ul.Filter li.selected {
       font-weight: 800;
     }
 
-    & > ul {
+    &>ul {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
       padding: 0;
 
-      & > li {
+      &>li {
         display: flex;
         gap: 1rem;
         padding: 0.75rem;
@@ -1493,104 +1617,28 @@ ul.Filter li.selected {
   border: 1px solid var(--color-separator);
   background-color: white;
 
-  > header {
+  >header {
     display: flex;
     flex-direction: row;
-    justify-content: space-between; /* push children to edges */
-    align-items: start; /* force align to the top */
+    justify-content: space-between;
+    /* push children to edges */
+    align-items: start;
+    /* force align to the top */
   }
 
-  > div {
+  >div {
     padding: 1rem;
   }
 }
+
 .KanbanItemStatus {
   padding: 0.25rem 0.5rem;
 }
+
 .KanbanItemGroup {
   background-color: var(--color-background-light);
   font-size: 0.6rem;
   padding: 0.25rem 0.5rem;
-}
-
-/* <RenderedRoutine> */
-
-.RenderedRoutine {
-  display: flex;
-  justify-content: center; /* horizontal */
-  align-items: center; /* vertical */
-  flex-direction: column;
-
-  .RenderedRoutineTemplate {
-    min-width: 50%;
-    margin: 1rem;
-    padding: 1rem;
-    border: 1px solid var(--color-separator-dark);
-
-    h1,
-    h2,
-    h3 {
-      /* Create a highlight effect */
-      /* Inspired by https://max.hn/blog/how-to-create-a-highlighter-marker-effect-in-css */
-      margin: 1em -0.4em;
-      padding: 0.1em 0.4em;
-      border-radius: 0.8em 0.3em;
-      background: transparent;
-      background-image: linear-gradient(
-        to right,
-        rgba(255, 225, 0, 0.1),
-        rgba(255, 225, 0, 0.7) 4%,
-        rgba(255, 225, 0, 0.3)
-      );
-      -webkit-box-decoration-break: clone;
-      box-decoration-break: clone;
-    }
-    /* Templates use h1, h2, h3 for different levels but must be rendered like smaller headings */
-    h1 {
-      font-size: 1.2rem;
-    }
-    h2 {
-      font-size: 1.15rem;
-    }
-    h3 {
-      font-size: 1.1rem;
-    }
-
-    /* Make the input fields look like hand-written notes */
-    input,
-    textarea {
-      border: none; /* remove all borders */
-      border-bottom: 1px solid #aaa; /* keep only bottom line */
-      outline: none; /* remove blue outline on focus */
-      font-size: 1rem;
-      background: transparent; /* no background fill */
-      color: darkblue;
-      font-family: 'Pacifico', cursive;
-
-      &:focus {
-        border-bottom-color: darkblue; /* darker line when active */
-      }
-    }
-    input {
-      padding: 0.25rem 0.5rem; /* space around text */
-    }
-    textarea {
-      width: 100%;
-      height: 300px;
-      line-height: 1.5em; /* controls line spacing */
-      font-size: 1rem;
-      border: none;
-      outline: none;
-      resize: none; /* optional: prevent resizing */
-      background: repeating-linear-gradient(
-        to bottom,
-        white,
-        white calc(1.5em - 1px),
-        /* text area background */ #ccc calc(1.5em - 1px),
-        /* bottom border */ #ccc 1.5em /* space until next line */
-      );
-    }
-  }
 }
 
 /*
@@ -1655,19 +1703,23 @@ ul.Filter li.selected {
         transform 0.2s,
         box-shadow 0.2s;
     }
+
     &::-webkit-slider-thumb:hover {
       transform: scale(1.1);
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
     }
+
     &::-webkit-slider-thumb:active {
       transform: scale(1.2);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     }
   }
+
   /* Ensure end thumb is below the start thumb */
   input[type='range']:nth-child(1) {
     z-index: 3;
   }
+
   input[type='range']:nth-child(2) {
     z-index: 4;
   }
@@ -1687,7 +1739,8 @@ ul.Filter li.selected {
 
   .JournalEntries {
     margin-top: 2rem;
-    margin-left: 1rem; /* Let space for dates to overlap with the border */
+    margin-left: 1rem;
+    /* Let space for dates to overlap with the border */
     border-left: 1px solid var(--color-separator-dark);
     padding-left: 1rem;
   }
@@ -1696,10 +1749,12 @@ ul.Filter li.selected {
     margin-bottom: 1rem;
 
     .JournalDate {
-      display: inline-block; /* Don't use full width */
+      display: inline-block;
+      /* Don't use full width */
       padding: 0.125rem 0.25rem;
       font-size: 0.8rem;
-      margin-left: -1.75rem; /* align with the border */
+      margin-left: -1.75rem;
+      /* align with the border */
       margin-bottom: 0.75rem;
       font-weight: 600;
       background-color: white;
@@ -1727,13 +1782,17 @@ ul.Filter li.selected {
     }
 
     .RenderedNote {
-      border: none !important; /* Remove border around note to keep the UI minimalist when listing a large time period */
-      margin: 0 !important; /* Limit margin to show the maximum number of notes */
+      border: none !important;
+      /* Remove border around note to keep the UI minimalist when listing a large time period */
+      margin: 0 !important;
+      /* Limit margin to show the maximum number of notes */
     }
 
     .JournalSelectedDailyNote .RenderedNote {
-      border: 1px solid var(--color-separator-dark) !important; /* Highlight the selected note */
-      font-size: 80% !important; /* Slightly smaller font to show more content */
+      border: 1px solid var(--color-separator-dark) !important;
+      /* Highlight the selected note */
+      font-size: 80% !important;
+      /* Slightly smaller font to show more content */
       padding: 0.25rem 0.5rem !important;
       background-color: white;
     }
@@ -1758,18 +1817,23 @@ ul.Filter li.selected {
   flex-direction: column;
 
   /* Make the aside resizable */
-  resize: horizontal; /* allows user to drag */
-  overflow: auto; /* required for resize to work */
+  resize: horizontal;
+  /* allows user to drag */
+  overflow: auto;
+  /* required for resize to work */
   min-width: 500px;
   max-width: 1000px;
-  direction: rtl; /* Trick to have the resize handle on the left side */
+  direction: rtl;
+  /* Trick to have the resize handle on the left side */
 
   .Actions {
-    direction: ltr; /* revert to normal direction */
+    direction: ltr;
+    /* revert to normal direction */
   }
 
   .AsideContent {
-    direction: ltr; /* revert to normal direction */
+    direction: ltr;
+    /* revert to normal direction */
     padding: 1rem;
   }
 }
@@ -1786,6 +1850,7 @@ ul.Filter li.selected {
   padding: 1rem;
   background-color: var(--color-background-light);
 }
+
 .StatsChart {
   border: 1px solid var(--color-separator);
   width: 400px;
@@ -1794,10 +1859,12 @@ ul.Filter li.selected {
   padding: 1rem;
   background-color: white;
 }
+
 .StatsChartWide {
   width: 800px;
   height: 400px;
 }
+
 .StatsChartFilterButtons {
   display: flex;
   flex-direction: row;
@@ -1819,8 +1886,10 @@ ul.Filter li.selected {
   ul {
     list-style-type: none;
   }
+
   .DeskTitle {
-    cursor: pointer; /* Filters are clickable */
+    cursor: pointer;
+    /* Filters are clickable */
     font-size: 0.9rem;
     padding: 0.5rem;
   }

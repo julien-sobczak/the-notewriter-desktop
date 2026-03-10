@@ -66,7 +66,8 @@ export class NoteWriterSRS implements SRSAlgorithm {
     const newSettings = {
       ...card.settings
     }
-    if (!newSettings.repetitions) { // Never studied before
+    if (!newSettings.repetitions) {
+      // Never studied before?
       newSettings.repetitions = 0 // Initialize repetitions if not set
       newSettings.queue = 'learning' // Default to learning queue
       newSettings.step = 0
@@ -194,7 +195,7 @@ export class NoteWriterSRS implements SRSAlgorithm {
 
     newSettings.repetitions = (newSettings.repetitions || 0) + 1
 
-    console.log(`New settings for flashcard ${study.flashcardOID}:`, newSettings) // Debug log
+    console.debug(`New settings for flashcard ${study.flashcardOID}:`, newSettings)
 
     return newSettings
   }
@@ -317,6 +318,7 @@ export function intervalFn(config: DeckConfig): (card: Flashcard, feedback: stri
 
     const review: Review = {
       flashcardOID: card.oid,
+      flashcardSlug: card.slug,
       durationInMs: 0,
       confidence,
       completedAt: '',

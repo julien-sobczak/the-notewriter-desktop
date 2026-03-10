@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-shadow */
 import { Block, Desk } from '@renderer/Model'
 import RenderedDesk from './RenderedDesk'
 import { useState, useEffect, useContext } from 'react'

@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect } from 'react'
 import { useImmerReducer } from 'use-immer'
-import { EditorConfig, RepositoryConfig, RepositoryRefConfig } from '@renderer/Model'
+import { Desk, EditorConfig, RepositoryConfig, RepositoryRefConfig } from '@renderer/Model'
 import configReducer from './configReducer'
 
 // Useful Resources:
@@ -156,8 +156,8 @@ export function selectedJournals(configContext: ConfigContextType) {
   return journals
 }
 
-export function selectedDesks(configContext: ConfigContextType) {
-  const desks: any[] = []
+export function selectedDesks(configContext: ConfigContextType): Desk[] {
+  const desks: Desk[] = []
 
   // Add dynamic desks
   if (configContext.config.desks) {

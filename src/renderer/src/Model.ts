@@ -369,6 +369,7 @@ export interface Flashcard {
 
   // Note-specific attributes
   relativePath: string
+  slug: string
   shortTitle: string
   tags: string[]
   attributes: { [name: string]: string }
@@ -572,6 +573,7 @@ export interface Goto {
 
 export interface Review {
   flashcardOID: string
+  flashcardSlug: string
   confidence: number // Numeric confidence level (0-100)
   durationInMs: number
   completedAt: string

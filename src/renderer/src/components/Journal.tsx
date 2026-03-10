@@ -83,10 +83,10 @@ function Journal() {
       const endDate = formatDate(today)
       const startDate = journalActivity.minDate
         ? formatDate(
-            new Date(
-              Math.max(threeMonthsAgo.getTime(), new Date(journalActivity.minDate).getTime())
-            )
+          new Date(
+            Math.max(threeMonthsAgo.getTime(), new Date(journalActivity.minDate).getTime())
           )
+        )
         : formatDate(threeMonthsAgo)
 
       setDateRange({ start: startDate, end: endDate })
@@ -365,13 +365,7 @@ type JournalEntryProps = {
   filterEmojis?: string[]
 }
 
-function JournalEntry({
-  journal: _journal,
-  note,
-  filterTags,
-  filterAttributes,
-  filterEmojis
-}: JournalEntryProps) {
+function JournalEntry({ note, filterTags, filterAttributes, filterEmojis }: JournalEntryProps) {
   const [selectedDailyNote, setSelectedDailyNote] = useState<Note | null>(null)
 
   const entryNote = note?.parent
@@ -444,12 +438,12 @@ function JournalEntry({
 
 /**
  * Extract the path prefix from a journal path template.
- * Returns the longest prefix without placeholders (${...}).
- * For example: 'journal/${year}/${year}-${month}-${day}.md' returns 'journal/'
+ * Returns the longest prefix without placeholders ({{...}}).
+ * For example: 'journal/{{ year }}/{{ year }}-{{ month }}-{{ day }}.md' returns 'journal/'
  */
 function extractPathPrefix(pathTemplate: string): string {
-  // Find the first occurrence of ${
-  const placeholderIndex = pathTemplate.indexOf('${')
+  // Find the first occurrence of {{
+  const placeholderIndex = pathTemplate.indexOf('{{')
   if (placeholderIndex === -1) {
     // No placeholders, return the whole path
     return pathTemplate

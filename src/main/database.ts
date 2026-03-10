@@ -1029,12 +1029,6 @@ export default class DatabaseManager {
 
   async listFiles(repositorySlugs: string[]): Promise<File[]> {
     const repositoryResults: Promise<File[]>[] = []
-    console.log(
-      'Listing files for repositories:',
-      repositorySlugs,
-      'in',
-      JSON.stringify(this.datasources)
-    ) // FIXME remove
     for (const datasourceName of this.datasources.keys()) {
       if (repositorySlugs.length === 0 || repositorySlugs.includes(datasourceName)) {
         const db = this.datasources.get(datasourceName)
@@ -1137,9 +1131,10 @@ export default class DatabaseManager {
           flashcard.oid,
           flashcard.file_oid,
           flashcard.note_oid,
-          note.relative_path,
-          note.short_title,
-          note.tags,
+          flashcard.relative_path,
+          flashcard.slug,
+          flashcard.short_title,
+          flashcard.tags,
           note.attributes,
           flashcard.front,
           flashcard.back,
@@ -1158,9 +1153,10 @@ export default class DatabaseManager {
           flashcard.oid,
           flashcard.file_oid,
           flashcard.note_oid,
-          note.relative_path,
-          note.short_title,
-          note.tags,
+          flashcard.relative_path,
+          flashcard.slug,
+          flashcard.short_title,
+          flashcard.tags,
           note.attributes,
           flashcard.front,
           flashcard.back,
@@ -1189,6 +1185,7 @@ export default class DatabaseManager {
             oidFile: row.file_oid,
             oidNote: row.note_oid,
             relativePath: row.relative_path,
+            slug: row.slug,
             shortTitle: row.short_title,
             tags: row.tags.split(','),
             attributes: JSON.parse(row.attributes),

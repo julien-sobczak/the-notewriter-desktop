@@ -356,6 +356,7 @@ export interface Flashcard {
 
   // Note-specific attributes
   relativePath: string
+  slug: string
   shortTitle: string
   tags: string[]
   attributes: { [name: string]: string }

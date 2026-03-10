@@ -50,7 +50,6 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
 
   // Helper to update desk and force reload notes
   const updateDesk = (newDesk: Desk) => {
-    console.log('Updating desk', newDesk) // FIXME remove
     setDesk(newDesk)
     setQueriesLoaded(false)
     setNoteRefsLoaded(false)
