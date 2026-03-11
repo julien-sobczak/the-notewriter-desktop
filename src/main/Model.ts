@@ -1,4 +1,12 @@
-// duplicate file
+// DUPLICATED FROM src/renderer/src/Model.ts
+// IMPROVEMENT find a more elegant way to share model types
+// between the backend and the frontend without duplication
+
+/* Config */
+
+/* Editor Config */
+/* editorconfig.json */
+
 export interface RepositoryRefConfig {
   name: string
   slug: string
@@ -6,35 +14,12 @@ export interface RepositoryRefConfig {
   selected?: boolean
 }
 
-export interface DailyQuoteConfig {
-  query: string
-  repositories: string[]
-}
-
-export interface InspirationConfig {
-  name: string
-  repositories: string[]
-  query: string
-}
-
-export interface ZenConfig {
-  queries: ZenQuery[]
-}
-
-export interface ZenQuery {
-  query: string
-  repositories?: string[]
-}
-
-export interface PlannerConfig {
-  projects?: PlannerQueryConfig[]
-  tasks?: PlannerQueryConfig[]
-}
-
-export interface PlannerQueryConfig {
-  name: string
-  query: string
-  repositories: string[]
+export interface EditorConfig {
+  mono: boolean // True when the editor is in mono-repository mode
+  repositories: RepositoryRefConfig[]
+  bookmarks?: Bookmark[]
+  desks?: Desk[]
+  tabs?: TabRef[]
 }
 
 export interface JournalConfig {
@@ -66,16 +51,7 @@ export interface StatConfigWithContext extends StatConfig {
   repositorySlug: string
 }
 
-/* Editor Config */
-/* editorconfig.json */
-
-export interface EditorConfig {
-  mono: boolean // True when the editor is in mono-repository mode
-  repositories: RepositoryRefConfig[]
-  bookmarks?: Bookmark[]
-  desks?: Desk[]
-  tabs?: TabRef[]
-}
+export type CountStat = [string, number]
 
 export interface TabRef {
   kind: 'file' | 'notes' | 'desk'
@@ -148,8 +124,10 @@ export interface Block {
 
 export interface RepositoryConfig {
   core: CoreConfig | null
+  tags: { [key: string]: TagConfig }
   attributes: { [key: string]: AttributeConfig }
-  types: { [key: string]: TypeConfig }
+  noteTypes: { [key: string]: NoteTypeConfig }
+  fileTypes: { [key: string]: FileTypeConfig }
   decks: DeckConfig[]
   queries: { [key: string]: QueryConfig }
   desks?: Desk[]
@@ -161,6 +139,13 @@ export interface CoreConfig {
   extensions: string[]
   // Ignore media section
 }
+
+export interface TagConfig {
+  name: string
+  shorthand: string
+  preserveShorthand?: boolean
+}
+
 export interface AttributeConfig {
   name: string
   aliases: string[]
@@ -176,11 +161,18 @@ export interface AttributeConfig {
   defaultValue?: any
   dailyMetrics?: boolean
 }
-export interface TypeConfig {
+export interface NoteTypeConfig {
   name: string
   pattern: string
   processors: string[]
   attributes: TypeAttributeConfig[]
+  hooks: string[]
+}
+export interface FileTypeConfig {
+  name: string
+  pattern: string
+  attributes: TypeAttributeConfig[]
+  deskTemplates: string[]
 }
 export interface TypeAttributeConfig {
   name: string
@@ -203,6 +195,12 @@ export interface QueryConfig {
 }
 
 export interface QueryConfigWithContext extends QueryConfig {
+  repositorySlug: string
+}
+
+export interface RepositoryQuery {
+  key: string
+  config: QueryConfig
   repositorySlug: string
 }
 
@@ -558,17 +556,9 @@ export interface Goto {
   name: string
 }
 
-export interface Study {
-  // TODO still useful?
-  oid: string
-  startedAt: string
-  endedAt: string
-  reviews: Review[]
-}
-
 export interface Review {
-  // TODO update?
   flashcardOID: string
+  flashcardSlug: string
   confidence: number // Numeric confidence level (0-100)
   durationInMs: number
   completedAt: string
@@ -647,4 +637,11 @@ export function extractSourceURL(note: Note): string | undefined {
     }
   }
   return undefined
+}
+
+// Utility to filter out some attributes
+export function filterAttributes(attributes: Record<string, any>, omitAttributes: string[] = []) {
+  return Object.fromEntries(
+    Object.entries(attributes).filter(([key]) => !omitAttributes.includes(key))
+  )
 }

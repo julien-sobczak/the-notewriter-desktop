@@ -3,8 +3,6 @@
 /* Editor Config */
 /* editorconfig.json */
 
-// TODO use repositorySlugs instead of repositories to be consistent
-
 export interface RepositoryRefConfig {
   name: string
   slug: string
@@ -18,37 +16,6 @@ export interface EditorConfig {
   bookmarks?: Bookmark[]
   desks?: Desk[]
   tabs?: TabRef[]
-}
-
-export interface DailyQuoteConfig {
-  query: string
-  repositories: string[]
-}
-
-export interface InspirationConfig {
-  name: string
-  repositories: string[]
-  query: string
-}
-
-export interface ZenConfig {
-  queries: ZenQuery[]
-}
-
-export interface ZenQuery {
-  query: string
-  repositories?: string[]
-}
-
-export interface PlannerConfig {
-  projects?: PlannerQueryConfig[]
-  tasks?: PlannerQueryConfig[]
-}
-
-export interface PlannerQueryConfig {
-  name: string
-  query: string
-  repositories: string[]
 }
 
 export interface JournalConfig {
@@ -137,8 +104,6 @@ export interface Block {
   view: string | null // single | grid | list | free
   // Percentage of this block on parent size (height for vertical, width for horizontal)
   size: string | null
-  // The used repositories by this block
-  repositories: string[]
 
   // Layout-specific attributes
 
@@ -155,8 +120,10 @@ export interface Block {
 
 export interface RepositoryConfig {
   core: CoreConfig | null
+  tags: { [key: string]: TagConfig }
   attributes: { [key: string]: AttributeConfig }
-  types: { [key: string]: TypeConfig }
+  noteTypes: { [key: string]: NoteTypeConfig }
+  fileTypes: { [key: string]: FileTypeConfig }
   decks: DeckConfig[]
   queries: { [key: string]: QueryConfig }
   desks?: Desk[]
@@ -168,6 +135,13 @@ export interface CoreConfig {
   extensions: string[]
   // Ignore media section
 }
+
+export interface TagConfig {
+  name: string
+  shorthand: string
+  preserveShorthand?: boolean
+}
+
 export interface AttributeConfig {
   name: string
   aliases: string[]
@@ -183,11 +157,18 @@ export interface AttributeConfig {
   defaultValue?: any
   dailyMetrics?: boolean
 }
-export interface TypeConfig {
+export interface NoteTypeConfig {
   name: string
   pattern: string
   processors: string[]
   attributes: TypeAttributeConfig[]
+  hooks: string[]
+}
+export interface FileTypeConfig {
+  name: string
+  pattern: string
+  attributes: TypeAttributeConfig[]
+  deskTemplates: string[]
 }
 export interface TypeAttributeConfig {
   name: string
