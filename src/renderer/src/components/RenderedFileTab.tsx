@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useContext, useMemo } from 'react'
-import { Note, FileRef, File, Desk } from '@renderer/Model'
+import { Note, FileRef, File, DeskWithContext } from '@renderer/Model'
 import { ListIcon, DesktopIcon, BrainIcon as StudyIcon } from '@phosphor-icons/react'
 import NoteContainer from './NoteContainer'
 import { Action, Actions } from './Actions'
@@ -21,8 +21,8 @@ function RenderedFileTab(props: RenderedFileTabProps) {
   const [file, setFile] = useState<File | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
   const [viewMode, setViewMode] = useState<'list' | 'desk'>('list')
-  const [desks, setDesks] = useState<Desk[]>([])
-  const [selectedDesk, setSelectedDesk] = useState<Desk | null>(null)
+  const [desks, setDesks] = useState<DeskWithContext[]>([])
+  const [selectedDesk, setSelectedDesk] = useState<DeskWithContext | null>(null)
 
   useEffect(() => {
     if (!fileRef.repositorySlug || !relativePath) return

@@ -1,13 +1,66 @@
-import { Block, Desk, NoteRef, Query } from '@renderer/Model'
+import { Block, Desk, DeskWithContext, NoteRef, Query } from '@renderer/Model'
 import { generateOid } from './oid'
 
+// Utility function to apply a desk template on a given path.
+export function evaluateDeskTemplate(desk: Desk, relativePath: string): Desk {
+  // The function must iterate over all blocks in the desk and prepend `path:${desk.relativePath}` to all queries
+  const evaluateBlock = (block: Block): Block => {
+    if (block.layout === 'container' && block.query) {
+      return {
+        ...block,
+        query: `path:${relativePath} ${block.query}`
+      }
+    } else if (block.elements) {
+      return {
+        ...block,
+        elements: block.elements.map(evaluateBlock)
+      }
+    } else {
+      return block
+    }
+  }
+  return {
+    ...desk,
+    template: false,
+    root: evaluateBlock(desk.root)
+  }
+}
+
+// Utility function to initialize a desk with unique OIDs for every block.
+export function initializeDesk(desk: DeskWithContext): DeskWithContext {
+  // Fill in missing OIDs and set template to false
+  const initializeBlock = (block: Block): Block => {
+    const oid = block.oid || generateOid()
+    if (block.elements) {
+      return {
+        ...block,
+        oid,
+        elements: block.elements.map(initializeBlock)
+      }
+    } else {
+      return {
+        ...block,
+        oid
+      }
+    }
+  }
+
+  const initializedRoot = initializeBlock(desk.root)
+  return {
+    ...desk,
+    oid: desk.oid || generateOid(),
+    template: false,
+    root: initializedRoot
+  }
+}
+
 // Return all note refs present in a desk recursively.
-export function extractNoteRefs(desk: Desk): NoteRef[] {
+export function extractNoteRefs(desk: DeskWithContext): NoteRef[] {
   return extractNoteRefsFromBlock(desk, desk.root)
 }
 
 // Same as extractNoteRefs but from a given Block instead.
-function extractNoteRefsFromBlock(desk: Desk, block: Block): NoteRef[] {
+function extractNoteRefsFromBlock(desk: DeskWithContext, block: Block): NoteRef[] {
   const results: NoteRef[] = []
   if (block.layout === 'container') {
     if (!block.noteRefs) return results
@@ -23,12 +76,12 @@ function extractNoteRefsFromBlock(desk: Desk, block: Block): NoteRef[] {
 }
 
 // Return all queries present in a desk recursively.
-export function extractQueries(desk: Desk): Query[] {
+export function extractQueries(desk: DeskWithContext): Query[] {
   return extractQueriesFromBlock(desk, desk.root)
 }
 
 // Same as extractQueries but from a given Block instead.
-function extractQueriesFromBlock(desk: Desk, block: Block): Query[] {
+function extractQueriesFromBlock(desk: DeskWithContext, block: Block): Query[] {
   const results: Query[] = []
   if (block.layout === 'container') {
     if (!block.query) return results
@@ -36,7 +89,7 @@ function extractQueriesFromBlock(desk: Desk, block: Block): Query[] {
       deskOid: desk.oid,
       blockOid: block.oid,
       query: block.query,
-      repositories: block.repositories,
+      repositories: [desk.repositorySlug],
       limit: 0,
       shuffle: false
     })
@@ -102,7 +155,6 @@ export function splitBlock(block: Block, oid: string, direction: 'horizontal' | 
           layout: 'container',
           name: '',
           query: '',
-          repositories: block.repositories,
           noteRefs: [],
           size: newSize,
           view: 'list',
@@ -115,7 +167,6 @@ export function splitBlock(block: Block, oid: string, direction: 'horizontal' | 
       oid: generateOid(),
       name: '',
       noteRefs: [],
-      repositories: block.repositories,
       query: '',
       size: '50%',
       view: 'list',
@@ -130,7 +181,6 @@ export function splitBlock(block: Block, oid: string, direction: 'horizontal' | 
           layout: 'container',
           name: '',
           noteRefs: [],
-          repositories: block.repositories,
           query: '',
           size: '50%',
           view: 'list',

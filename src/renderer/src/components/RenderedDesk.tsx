@@ -6,7 +6,7 @@ import {
   XIcon as CloseIcon
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
-import { Desk, Block, Note, Query, QueryResult, initializeDesk } from '@renderer/Model'
+import { Block, Note, Query, QueryResult, DeskWithContext } from '@renderer/Model'
 import NoteContainer from './NoteContainer'
 import Loader from './Loader'
 import { Action, Actions } from './Actions'
@@ -18,6 +18,7 @@ import {
   extractNoteRefs,
   extractQueries,
   findBlock,
+  initializeDesk,
   splitBlock
 } from '@renderer/helpers/desk'
 
@@ -36,7 +37,7 @@ import {
  */
 
 type RenderedDeskProps = {
-  desk: Desk
+  desk: DeskWithContext
 }
 
 export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
@@ -49,7 +50,7 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
   const notesCache = useRef(new Map<string, Note[]>())
 
   // Helper to update desk and force reload notes
-  const updateDesk = (newDesk: Desk) => {
+  const updateDesk = (newDesk: DeskWithContext) => {
     setDesk(newDesk)
     setQueriesLoaded(false)
     setNoteRefsLoaded(false)

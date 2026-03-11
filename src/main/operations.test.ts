@@ -86,7 +86,7 @@ describe('OperationsManager', () => {
     })
 
     // Check that the WAL file was filled
-    const walPath = path.join(tempDir, '.nt', 'operations', 'wal', 'wal.json')
+    const walPath = path.join(tempDir, '.nt', 'wal', 'wal.json')
     expect(fs.existsSync(walPath)).toBe(true)
     let walContent = fs.readFileSync(walPath, 'utf8')
     let walRows = walContent.split('\n').filter((line) => line.length > 0).length
@@ -96,7 +96,7 @@ describe('OperationsManager', () => {
     manager.flushWalToPackFiles(repository.slug)
 
     // Check that a pack file was created
-    const packDir = path.join(tempDir, '.nt', 'operations')
+    const packDir = path.join(tempDir, '.nt', 'objects')
 
     // Find the subdirectory and pack files
     const subdirs = fs.readdirSync(packDir).filter((f) => f.length === 2)
@@ -159,7 +159,7 @@ describe('OperationsManager', () => {
     })
 
     // Several WAL files must have been created
-    const operationsDir = path.join(tempDir, '.nt', 'operations')
+    const operationsDir = path.join(tempDir, '.nt')
     const walDir = path.join(operationsDir, 'wal')
     const walFiles = findFilesWithExtension(walDir, '.json')
     // expect walFiles to contains two files

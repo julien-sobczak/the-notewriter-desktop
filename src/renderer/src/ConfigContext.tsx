@@ -3,14 +3,14 @@
 import React, { createContext, useEffect } from 'react'
 import { useImmerReducer } from 'use-immer'
 import {
-  Desk,
+  DeskWithContext,
   EditorConfig,
-  evaluateDeskTemplate,
   File,
   RepositoryConfig,
   RepositoryRefConfig
 } from '@renderer/Model'
 import configReducer from './configReducer'
+import { evaluateDeskTemplate } from './helpers/desk'
 
 // Useful Resources:
 // - https://blog.isquaredsoftware.com/2021/01/context-redux-differences/
@@ -135,7 +135,7 @@ export function getFileTypeConfig(repositoryConfig: RepositoryConfig, fileType: 
 }
 
 // Utility function to get desks for a file based on its attributes and repository configuration
-export function getDesksForFile(configContext: ConfigContextType, file: File): Desk[] {
+export function getDesksForFile(configContext: ConfigContextType, file: File): DeskWithContext[] {
   const repositoryConfig = configContext.repositories[file.repositorySlug]
 
   const fileTypeConfig = getFileTypeConfig(repositoryConfig, file.type)
@@ -148,15 +148,21 @@ export function getDesksForFile(configContext: ConfigContextType, file: File): D
     return []
   }
 
-  const desks: Desk[] = []
+  const desks: DeskWithContext[] = []
   for (const deskName of deskNames) {
     const deskConfig = repositoryConfig.desks?.find((desk) => desk.name === deskName)
     if (deskConfig) {
       if (deskConfig.template) {
         const evaluatedDesk = evaluateDeskTemplate(deskConfig, file.relativePath)
-        desks.push(evaluatedDesk)
+        desks.push({
+          ...evaluatedDesk,
+          repositorySlug: file.repositorySlug
+        })
       } else {
-        desks.push(deskConfig)
+        desks.push({
+          ...deskConfig,
+          repositorySlug: file.repositorySlug
+        })
       }
     }
   }
@@ -199,8 +205,8 @@ export function selectedJournals(configContext: ConfigContextType) {
   return journals
 }
 
-export function selectedDesks(configContext: ConfigContextType): Desk[] {
-  const desks: Desk[] = []
+export function selectedDesks(configContext: ConfigContextType): DeskWithContext[] {
+  const desks: DeskWithContext[] = []
 
   // Add dynamic desks
   if (configContext.config.desks) {
