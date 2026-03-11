@@ -535,12 +535,16 @@ export interface Relation {
 export interface File {
   oid: string
   slug: string
+  type: string
 
   repositorySlug: string
   repositoryPath: string
 
   relativePath: string
   wikilink: string
+
+  attributes: { [name: string]: any }
+
   // Titles in Markdown
   title: string
   shortTitle: string

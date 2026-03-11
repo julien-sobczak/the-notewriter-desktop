@@ -7,6 +7,7 @@ import {
   Annotation,
   DeckConfig,
   File,
+  FileRef,
   Flashcard,
   Goto,
   Items,
@@ -822,6 +823,38 @@ export default class DatabaseManager {
     })
   }
 
+  async findFile(fileRef: FileRef): Promise<File> {
+    const datasourceName = fileRef.repositorySlug
+    const db = this.datasources.get(datasourceName)
+    if (!db) {
+      throw new Error(`No datasource ${datasourceName} found`)
+    }
+    return new Promise<File>((resolve, reject) => {
+      const sqlQuery = `
+        SELECT
+          oid,
+          slug,
+          file_type,
+          relative_path,
+          wikilink,
+          attributes,
+          title,
+          short_title
+        FROM file
+        WHERE oid = ?
+      `
+      db.get(sqlQuery, [fileRef.oid], async (err: any, row: any) => {
+        if (err) {
+          console.log('Error while searching for file by id', err)
+          reject(err)
+          return
+        }
+        const file = this.#rowToFile(row, datasourceName)
+        resolve(file)
+      })
+    })
+  }
+
   async find(noteRef: NoteRef): Promise<Note> {
     const datasourceName = noteRef.repositorySlug
     const db = this.datasources.get(datasourceName)
@@ -1043,10 +1076,12 @@ export default class DatabaseManager {
                 SELECT
                   file.oid as oid,
                   file.slug as slug,
+                  file.file_type as file_type,
                   file.relative_path as relative_path,
                   file.wikilink as wikilink,
                   file.title as title,
                   file.short_title as short_title,
+                  file.attributes as attributes,
                   count(*) as count_notes
                 FROM note JOIN file on note.file_oid = file.oid
                 GROUP BY file.relative_path
@@ -1593,10 +1628,12 @@ export default class DatabaseManager {
       repositorySlug,
       repositoryPath: this.#getRepositoryPath(repositorySlug),
       slug: row.slug,
+      type: row.file_type,
       relativePath: row.relative_path,
       wikilink: row.wikilink,
       title: row.title,
-      shortTitle: row.short_title
+      shortTitle: row.short_title,
+      attributes: JSON.parse(row.attributes)
     }
   }
 

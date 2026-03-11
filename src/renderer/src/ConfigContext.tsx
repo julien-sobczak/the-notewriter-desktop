@@ -2,7 +2,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect } from 'react'
 import { useImmerReducer } from 'use-immer'
-import { Desk, EditorConfig, RepositoryConfig, RepositoryRefConfig } from '@renderer/Model'
+import {
+  Desk,
+  EditorConfig,
+  evaluateDeskTemplate,
+  File,
+  RepositoryConfig,
+  RepositoryRefConfig
+} from '@renderer/Model'
 import configReducer from './configReducer'
 
 // Useful Resources:
@@ -118,6 +125,42 @@ export function determineAttributeShorthand(
   }
 
   return undefined
+}
+
+// Utility function to get file type configuration for a given file type in a repository
+export function getFileTypeConfig(repositoryConfig: RepositoryConfig, fileType: string) {
+  if (!repositoryConfig.fileTypes) return undefined
+  if (!repositoryConfig.fileTypes[fileType]) return undefined
+  return repositoryConfig.fileTypes[fileType]
+}
+
+// Utility function to get desks for a file based on its attributes and repository configuration
+export function getDesksForFile(configContext: ConfigContextType, file: File): Desk[] {
+  const repositoryConfig = configContext.repositories[file.repositorySlug]
+
+  const fileTypeConfig = getFileTypeConfig(repositoryConfig, file.type)
+  let deskNames: string[] = []
+  deskNames = deskNames.concat(file.attributes['desks'] || [])
+  deskNames = deskNames.concat(fileTypeConfig?.deskTemplates || [])
+
+  // No desk available?
+  if (!deskNames || deskNames.length == 0) {
+    return []
+  }
+
+  const desks: Desk[] = []
+  for (const deskName of deskNames) {
+    const deskConfig = repositoryConfig.desks?.find((desk) => desk.name === deskName)
+    if (deskConfig) {
+      if (deskConfig.template) {
+        const evaluatedDesk = evaluateDeskTemplate(deskConfig, file.relativePath)
+        desks.push(evaluatedDesk)
+      } else {
+        desks.push(deskConfig)
+      }
+    }
+  }
+  return desks
 }
 
 // Helper functions to access configuration from selected repositories

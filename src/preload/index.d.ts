@@ -25,6 +25,7 @@ interface API {
   findByWikilink: (repositorySlug: string, wikilink: string) => Promise<Note>
   search: (query: Query) => Promise<QueryResult>
   msearch: (queries: Query[]) => Promise<QueryResult[]>
+  findFile: (fileRef: FileRef) => Promise<File>
   listNotesInFile: (repositorySlug: string, filePath: string) => Promise<Note[]>
   listFiles: (repositorySlug: string) => Promise<File[]>
   listGotos: (repositorySlugs: string[]) => Promise<Goto[]>

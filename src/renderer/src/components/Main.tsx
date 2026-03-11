@@ -253,12 +253,12 @@ function CommandMenu({
   decks,
   bookmarks,
   files,
-  onActivitySelected = () => {},
-  onRepositoryToggled = () => {},
-  onDeskSelected = () => {},
-  onDeckSelected = () => {},
-  onBookmarkSelected = () => {},
-  onFileSelected = () => {}
+  onActivitySelected = () => { },
+  onRepositoryToggled = () => { },
+  onDeskSelected = () => { },
+  onDeckSelected = () => { },
+  onBookmarkSelected = () => { },
+  onFileSelected = () => { }
 }: CommandMenuProps) {
   const { config } = useContext(ConfigContext)
   const editorConfig = config.config
@@ -885,7 +885,6 @@ function Main() {
   }
 
   // Check if there are no repositories
-  console.log('editorConfig.repositories:', editorConfig.repositories) // FIXME
   const hasNoRepositories = editorConfig.repositories.length === 0
 
   if (hasNoRepositories) {

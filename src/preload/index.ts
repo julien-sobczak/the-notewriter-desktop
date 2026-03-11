@@ -1,6 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { DeckRef, EditorConfig, Flashcard, Note, NoteRef, Query, Review } from '../main/Model'
+import {
+  DeckRef,
+  EditorConfig,
+  FileRef,
+  Flashcard,
+  Note,
+  NoteRef,
+  Query,
+  Review
+} from '../main/Model'
 
 // Custom APIs for renderer
 const api = {
@@ -32,6 +41,7 @@ const api = {
     ipcRenderer.invoke('find-by-wikilink', repositorySlug, wikilink),
   search: (query: Query) => ipcRenderer.invoke('search', query),
   msearch: (queries: Query[]) => ipcRenderer.invoke('msearch', queries),
+  findFile: (fileRef: FileRef) => ipcRenderer.invoke('find-file', fileRef),
   listNotesInFile: (repositorySlug: string, filePath: string) =>
     ipcRenderer.invoke('list-notes-in-file', repositorySlug, filePath),
   listFiles: (repositorySlug: string) => ipcRenderer.invoke('list-files', repositorySlug),

@@ -6,7 +6,7 @@ import {
   XIcon as CloseIcon
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
-import { Desk, Block, Note, Query, QueryResult } from '@renderer/Model'
+import { Desk, Block, Note, Query, QueryResult, initializeDesk } from '@renderer/Model'
 import NoteContainer from './NoteContainer'
 import Loader from './Loader'
 import { Action, Actions } from './Actions'
@@ -43,7 +43,7 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
   const { config } = useContext(ConfigContext)
   const editorConfig = config.config
 
-  const [desk, setDesk] = useState(initialDesk)
+  const [desk, setDesk] = useState(initializeDesk(initialDesk))
   const [queriesLoaded, setQueriesLoaded] = useState(false)
   const [noteRefsLoaded, setNoteRefsLoaded] = useState(false)
   const notesCache = useRef(new Map<string, Note[]>())
@@ -99,7 +99,6 @@ export default function RenderedDesk({ desk: initialDesk }: RenderedDeskProps) {
           layout: 'container',
           name: '',
           query: '',
-          repositories: getSelectedRepositorySlugs(editorConfig),
           noteRefs: [],
           view: 'list',
           elements: [],

@@ -15,6 +15,7 @@ import {
   DeckRef,
   determineNextReminder,
   EditorConfig,
+  FileRef,
   Flashcard,
   Note,
   NoteRef,
@@ -386,6 +387,13 @@ app.whenReady().then(async () => {
   ipcMain.handle('msearch', async (_event, queries: Query[]) => {
     const results = await db.multiSearch(queries)
     return results
+  })
+
+  ipcMain.handle('find-file', async (_event, fileRef: FileRef) => {
+    console.debug(`Finding file from ref ${fileRef.oid}`)
+    const result = await db.findFile(fileRef)
+    console.debug(`Found file for ref ${result.oid}`)
+    return result
   })
 
   ipcMain.handle(

@@ -1,5 +1,7 @@
 /* Config */
 
+import { generateOid } from "./helpers/oid"
+
 /* Editor Config */
 /* editorconfig.json */
 
@@ -531,12 +533,16 @@ export interface Relation {
 export interface File {
   oid: string
   slug: string
+  type: string
 
   repositorySlug: string
   repositoryPath: string
 
   relativePath: string
   wikilink: string
+
+  attributes: { [name: string]: any }
+
   // Titles in Markdown
   title: string
   shortTitle: string
@@ -640,4 +646,57 @@ export function filterAttributes(attributes: Record<string, any>, omitAttributes
   return Object.fromEntries(
     Object.entries(attributes).filter(([key]) => !omitAttributes.includes(key))
   )
+}
+
+// Utility function to apply a desk template on a given path.
+export function evaluateDeskTemplate(desk: Desk, relativePath: string): Desk {
+  // The function must iterate over all blocks in the desk and prepend `path:${desk.relativePath}` to all queries
+  const evaluateBlock = (block: Block): Block => {
+    if (block.layout === 'container' && block.query) {
+      return {
+        ...block,
+        query: `path:${relativePath} ${block.query}`
+      }
+    } else if (block.elements) {
+      return {
+        ...block,
+        elements: block.elements.map(evaluateBlock)
+      }
+    } else {
+      return block
+    }
+  }
+  return {
+    ...desk,
+    template: false,
+    root: evaluateBlock(desk.root)
+  }
+}
+
+// Utility function to initialize a desk with unique OIDs for every block.
+export function initializeDesk(desk: Desk): Desk {
+  // Fill in missing OIDs and set template to false
+  const initializeBlock = (block: Block): Block => {
+    const oid = block.oid || generateOid()
+    if (block.elements) {
+      return {
+        ...block,
+        oid,
+        elements: block.elements.map(initializeBlock)
+      }
+    } else {
+      return {
+        ...block,
+        oid
+      }
+    }
+  }
+
+  const initializedRoot = initializeBlock(desk.root)
+  return {
+    ...desk,
+    oid: desk.oid || generateOid(),
+    template: false,
+    root: initializedRoot
+  }
 }
