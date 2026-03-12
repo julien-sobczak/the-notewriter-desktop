@@ -5,7 +5,7 @@ import {
   EyeIcon as ShowIcon,
   ThumbsDownIcon as TooHardIcon,
   ThumbsUpIcon as TooEasyIcon,
-  XCircleIcon as CancelIcon,
+  CheckFatIcon as ConfirmIcon,
   IconProps
 } from '@phosphor-icons/react'
 import { Flashcard, Review } from '@renderer/Model'
@@ -19,8 +19,6 @@ type RenderedFlashcardProps = {
 }
 
 function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashcardProps) {
-  // TODO useEffect to support key bindings to answers (like arrows)
-
   const [startTime] = useState<Date>(new Date())
   const [revealed, setRevealed] = useState<boolean>(false)
   const [confirmationPending, setConfirmationPending] = useState<string>('') // "too-hard" or "too-easy". Empty means no confirmation is needed.
@@ -44,6 +42,7 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
       algorithm: 'nt0',
       settings: flashcard.settings
     })
+    setConfirmationPending('')
     setRevealed(false)
   }
 
@@ -52,9 +51,6 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
   }
   const onAnswerConfirmed = () => {
     onAnswered(confirmationPending)
-    setConfirmationPending('')
-  }
-  const onAnswerCancelled = () => {
     setConfirmationPending('')
   }
 
@@ -98,85 +94,66 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
           )}
           {revealed && (
             <>
-              {(!confirmationPending || confirmationPending === 'too-hard') && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!confirmationPending) {
-                      askConfirmationOnAnswer('too-hard')
-                    } else {
-                      onAnswerConfirmed()
-                    }
-                  }}
-                  className="FeedbackButton FeedbackTooHard"
-                >
-                  <TooHardIcon />
-                </button>
-              )}
-              {!confirmationPending && (
-                <button
-                  type="button"
-                  onClick={() => onAnswered('hard')}
-                  className="FeedbackButton FeedbackHard"
-                >
-                  Hard
-                  {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'hard')}</sup>}
-                </button>
-              )}
-              {!confirmationPending && (
-                <button
-                  type="button"
-                  onClick={() => onAnswered('again')}
-                  className="FeedbackButton FeedbackAgain"
-                >
-                  Again
-                  {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'again')}</sup>}
-                </button>
-              )}
-              {!confirmationPending && (
-                <button
-                  type="button"
-                  onClick={() => onAnswered('good')}
-                  className="FeedbackButton FeedbackGood"
-                >
-                  Good
-                  {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'good')}</sup>}
-                </button>
-              )}
-              {!confirmationPending && (
-                <button
-                  type="button"
-                  onClick={() => onAnswered('easy')}
-                  className="FeedbackButton FeedbackEasy"
-                >
-                  Easy
-                  {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'easy')}</sup>}
-                </button>
-              )}
-              {(!confirmationPending || confirmationPending === 'too-easy') && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!confirmationPending) {
-                      askConfirmationOnAnswer('too-easy')
-                    } else {
-                      onAnswerConfirmed()
-                    }
-                  }}
-                  className="FeedbackButton FeedbackTooEasy"
-                >
-                  <TooEasyIcon />
-                </button>
-              )}
-              {confirmationPending && (
-                <button
-                  type="button"
-                  onClick={() => onAnswerCancelled()}
-                  className="FeedbackButton FeedbackCancellation"
-                >
-                  <CancelIcon />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!confirmationPending) {
+                    askConfirmationOnAnswer('too-hard')
+                  } else {
+                    onAnswerConfirmed()
+                  }
+                }}
+                className={`FeedbackButton FeedbackTooHard${confirmationPending === 'too-hard' ? ' FeedbackConfirmButton' : ''}`}
+              >
+                {confirmationPending !== 'too-hard' && <TooHardIcon />}
+                {confirmationPending === 'too-hard' && <ConfirmIcon />}
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswered('hard')}
+                className="FeedbackButton FeedbackHard"
+              >
+                Hard
+                {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'hard')}</sup>}
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswered('again')}
+                className="FeedbackButton FeedbackAgain"
+              >
+                Again
+                {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'again')}</sup>}
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswered('good')}
+                className="FeedbackButton FeedbackGood"
+              >
+                Good
+                {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'good')}</sup>}
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswered('easy')}
+                className="FeedbackButton FeedbackEasy"
+              >
+                Easy
+                {intervalFn && <sup className="Interval">{intervalFn(flashcard, 'easy')}</sup>}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!confirmationPending) {
+                    askConfirmationOnAnswer('too-easy')
+                  } else {
+                    onAnswerConfirmed()
+                  }
+                }}
+                className={`FeedbackButton FeedbackTooEasy${confirmationPending === 'too-easy' ? ' FeedbackConfirmButton' : ''}`}
+              >
+                {confirmationPending !== 'too-easy' && <TooEasyIcon />}
+                {confirmationPending === 'too-easy' && <ConfirmIcon />}
+              </button>
             </>
           )}
         </div>

@@ -15,7 +15,7 @@ type RenderedDeckProps = {
   onQuit?: (deckRef: DeckRef) => void
 }
 
-function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
+function RenderedDeck({ deckRef, onQuit = () => { } }: RenderedDeckProps) {
   const { config } = useContext(ConfigContext)
 
   // Read deck config
@@ -40,7 +40,7 @@ function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
   useEffect(() => {
     const listTodayFlashcards = async () => {
       const results = await window.api.listTodayFlashcards(deckRef)
-      // TODO support different sorts
+      // IMPROVEMENT support different sorts
       const shuffledFlashcards = results.sort(() => 0.5 - Math.random())
       setFlashcards(shuffledFlashcards)
       setFlashcardIndex(0)
@@ -67,7 +67,7 @@ function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
     review.settings = scheduledFlashcard.settings
 
     window.api
-      .reviewFlashcard(deckRef, flashcard, review)
+      .reviewFlashcard(deckRef, scheduledFlashcard, review)
       .then((updatedFlashcard: Flashcard) => {
         // Reschedule the flashcard if next review is imminent
         const nextDueAtTime = new Date(updatedFlashcard.dueAt).getTime()
@@ -94,7 +94,17 @@ function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
   return (
     <>
       {!flashcards && <Loader />}
-      {flashcards && (
+      {flashcards && flashcards.length === 0 && (
+        <div className="RenderedDeck">
+          <span>
+            <strong>No flashcards</strong> to review for today.
+          </span>
+          <button type="button" className="Button" onClick={() => onQuit(deckRef)}>
+            Try another deck?
+          </button>
+        </div>
+      )}
+      {flashcards && flashcards.length > 0 && (
         <div className="RenderedDeck">
           <Actions>
             <Indicator>
@@ -103,11 +113,15 @@ function RenderedDeck({ deckRef, onQuit = () => {} }: RenderedDeckProps) {
             <Action icon={<SkipIcon />} title="Skip" onClick={onSkip} />
             <Action icon={<CloseIcon />} title="Quit" onClick={() => onQuit(deckRef)} />
           </Actions>
-          <RenderedFlashcard
-            flashcard={flashcards[flashcardIndex]}
-            intervalFn={intervalFn(deckConfig)}
-            onReviewed={(review: Review) => onFlashcardReviewed(flashcards[flashcardIndex], review)}
-          />
+          <div className="FlashcardContainer">
+            <RenderedFlashcard
+              flashcard={flashcards[flashcardIndex]}
+              intervalFn={intervalFn(deckConfig)}
+              onReviewed={(review: Review) =>
+                onFlashcardReviewed(flashcards[flashcardIndex], review)
+              }
+            />
+          </div>
         </div>
       )}
     </>
