@@ -214,28 +214,38 @@ svg {
   width: var(--left-bar-width);
   height: 100%;
   border-right: 1px solid var(--color-separator);
-}
+  position: relative;
+  background-color: white;
 
-.ActivityBar ul {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  margin: 0;
-}
+  ul {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
 
-.ActivityBar li {
-  list-style-type: none;
-  align-items: center;
-  justify-content: center;
-  display: flex;
-  width: 48px;
-  height: 48px;
-  font-size: 24px;
-  color: var(--color-text-dimmed);
-}
+    li {
+      list-style-type: none;
+      align-items: center;
+      justify-content: center;
+      display: flex;
+      width: 48px;
+      height: 48px;
+      font-size: 24px;
+      color: var(--color-text-dimmed);
+    }
 
-.ActivityBar li.selected {
-  color: black;
+    &.selected {
+      color: black;
+    }
+  }
+
+  #logo {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: var(--left-bar-width);
+    width: var(--left-bar-width);
+  }
 }
 
 .ActivitySidebar {

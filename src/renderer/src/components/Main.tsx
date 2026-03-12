@@ -20,6 +20,7 @@ import {
   PlusIcon,
   XCircleIcon
 } from '@phosphor-icons/react'
+import Logo from '../assets/favicon.svg'
 import classNames from 'classnames'
 import { Command } from 'cmdk'
 import {
@@ -253,12 +254,12 @@ function CommandMenu({
   decks,
   bookmarks,
   files,
-  onActivitySelected = () => { },
-  onRepositoryToggled = () => { },
-  onDeskSelected = () => { },
-  onDeckSelected = () => { },
-  onBookmarkSelected = () => { },
-  onFileSelected = () => { }
+  onActivitySelected = () => {},
+  onRepositoryToggled = () => {},
+  onDeskSelected = () => {},
+  onDeckSelected = () => {},
+  onBookmarkSelected = () => {},
+  onFileSelected = () => {}
 }: CommandMenuProps) {
   const { config } = useContext(ConfigContext)
   const editorConfig = config.config
@@ -1037,6 +1038,15 @@ function Main() {
               </li>
             ))}
           </ul>
+          <a
+            id="logo"
+            href="https://julien-sobczak.github.io/the-notewriter/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="The Notewriter Home Page"
+          >
+            <img src={Logo} alt="The Notewriter Logo" />
+          </a>
         </div>
 
         {activity === 'browser' && (

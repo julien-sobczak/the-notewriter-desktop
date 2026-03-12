@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-shadow */
-import { Block, Desk } from '@renderer/Model'
+import { Block, DeskWithContext } from '@renderer/Model'
 import RenderedDesk from './RenderedDesk'
 import { useState, useEffect, useContext } from 'react'
 import { ConfigContext, selectedDesks } from '@renderer/ConfigContext'
@@ -8,7 +8,7 @@ import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 // Static desks declared in config.jsonnet may omit OIDs.
 // This function edits a desk to ensure all blocks have OIDs populated.
 // NB: Dynamic desks created by users in the app should already have these properties set.
-async function editDesk(desk: Desk): Promise<Desk> {
+async function editDesk(desk: DeskWithContext): Promise<DeskWithContext> {
   const editBlock = (currentBlock: Block): Block => {
     const editedElements: Block[] = []
     for (const child of currentBlock.elements ?? []) {
@@ -40,7 +40,7 @@ type RenderedDeskTabProps = {
 }
 
 function RenderedDeskTab({ oid }: RenderedDeskTabProps) {
-  const [desk, setDesk] = useState<Desk | null>(null)
+  const [desk, setDesk] = useState<DeskWithContext | null>(null)
 
   const { config } = useContext(ConfigContext)
   const dynamicDecks = config.config.desks

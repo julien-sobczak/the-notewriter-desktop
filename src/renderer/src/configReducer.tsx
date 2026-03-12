@@ -1,10 +1,10 @@
 import {
   EditorConfig,
   RepositoryConfig,
-  Desk,
   Bookmark,
   TabRef,
-  RepositoryRefConfig
+  RepositoryRefConfig,
+  DeskWithContext
 } from '@renderer/Model'
 
 export type Config = {
@@ -52,18 +52,22 @@ export default function configReducer(draft: Config, action: Action): any {
     }
     case 'add-desk': {
       if (!draft.config.desks) draft.config.desks = []
-      draft.config.desks.push(action.payload as Desk)
+      draft.config.desks.push(action.payload as DeskWithContext)
       break
     }
     case 'edit-desk': {
       if (!draft.config.desks) draft.config.desks = []
-      const index = draft.config.desks.findIndex((d: Desk) => d.oid === action.payload.oid)
+      const index = draft.config.desks.findIndex(
+        (d: DeskWithContext) => d.oid === action.payload.oid
+      )
       draft.config.desks[index] = action.payload
       break
     }
     case 'delete-desk': {
       if (!draft.config.desks) draft.config.desks = []
-      draft.config.desks = draft.config.desks.filter((d: Desk) => d.oid !== action.payload.oid)
+      draft.config.desks = draft.config.desks.filter(
+        (d: DeskWithContext) => d.oid !== action.payload.oid
+      )
       break
     }
     case 'add-bookmark': {
