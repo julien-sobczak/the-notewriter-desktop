@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import { Block, DeskWithContext } from '@renderer/Model'
-import RenderedDesk from './RenderedDesk'
+import RenderedDeskDynamic from './RenderedDeskDynamic'
 import { useState, useEffect, useContext } from 'react'
 import { ConfigContext, selectedDesks } from '@renderer/ConfigContext'
 import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
@@ -76,7 +76,7 @@ function RenderedDeskTab({ oid }: RenderedDeskTabProps) {
     return <div>Loading desk...</div>
   }
 
-  return <RenderedDesk desk={desk} />
+  return <RenderedDeskDynamic desk={desk} />
 }
 
 export default RenderedDeskTab
