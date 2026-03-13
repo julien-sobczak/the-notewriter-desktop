@@ -5,7 +5,7 @@ import { ListIcon, DesktopIcon, BrainIcon as StudyIcon } from '@phosphor-icons/r
 import NoteContainer from './NoteContainer'
 import { Action, Actions } from './Actions'
 import { ConfigContext, getDesksForFile } from '@renderer/ConfigContext'
-import RenderedDesk from './RenderedDesk'
+import RenderedDeskDynamic from './RenderedDeskDynamic'
 
 type RenderedFileTabProps = {
   title: string
@@ -83,7 +83,7 @@ function RenderedFileTab(props: RenderedFileTabProps) {
       {effectiveViewMode === 'list' && (
         <NoteContainer notes={notes} layout="list" layoutSelectable={true} />
       )}
-      {effectiveViewMode === 'desk' && file && selectedDesk && <RenderedDesk desk={selectedDesk} />}
+      {effectiveViewMode === 'desk' && file && selectedDesk && <RenderedDeskDynamic desk={selectedDesk} />}
     </div>
   )
 }
