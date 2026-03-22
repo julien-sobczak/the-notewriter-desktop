@@ -304,8 +304,7 @@ svg {
 }
 
 .LayoutGrid .RenderedNote {
-  flex-grow: 1;
-  /* use all available space */
+  flex-grow: 0;
 }
 
 .Actions {
@@ -510,6 +509,7 @@ ul.Filter li.selected {
 
 .BlockContainer,
 .NoteContainer {
+  position: relative;
   margin: var(--desktop-layout-margin);
   width: 100%;
   height: 100%;

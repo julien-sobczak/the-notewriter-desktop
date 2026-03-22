@@ -20,6 +20,12 @@ type NoteContainerProps = {
   notes: Note[] | undefined
   layout?: string
   layoutSelectable?: boolean
+  showTags?: boolean
+  showAttributes?: boolean
+  showTitle?: boolean
+  showBody?: boolean
+  showActions?: boolean
+  showComment?: boolean
   onClose?: () => void
 }
 
@@ -28,7 +34,13 @@ function NoteContainer({
   notes,
   layout = 'list',
   layoutSelectable = true,
-  onClose = () => {} // do nothing
+  showTags = true,
+  showAttributes = true,
+  showTitle = true,
+  showBody = true,
+  showActions = true,
+  showComment = true,
+  onClose = () => { } // do nothing
 }: NoteContainerProps) {
   const [selectedLayout, setSelectedLayout] = useState(layout)
   const [originalNotes, setOriginalNotes] = useState<Note[]>([])
@@ -48,7 +60,7 @@ function NoteContainer({
     const shuffled = [...array]
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
     }
     return shuffled
   }
@@ -176,6 +188,12 @@ function NoteContainer({
               key={note.oid}
               note={note}
               layout={selectedLayout}
+              showActions={showActions}
+              showAttributes={showAttributes}
+              showBody={showBody}
+              showComment={showComment}
+              showTags={showTags}
+              showTitle={showTitle}
               draggable={selectedLayout === 'free'}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}

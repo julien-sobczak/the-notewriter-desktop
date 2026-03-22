@@ -117,6 +117,14 @@ export interface Block {
   // for container blocks
   query: string | null
   noteRefs: NoteRef[]
+
+  // Rendering
+  showActions: boolean
+  showTitle: boolean
+  showBody: boolean
+  showComment: boolean
+  showAttributes: boolean
+  showTags: boolean
 }
 
 /* The NoteWriter Config */

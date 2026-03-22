@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { Block, DeskWithContext, Note, Query } from '@renderer/Model'
-import { ConfigContext, getSelectedRepositorySlugs } from '@renderer/ConfigContext'
 import NoteContainer from './NoteContainer'
 import RenderedNote from './RenderedNote'
 import Loader from './Loader'
@@ -31,9 +30,6 @@ type RenderedBlockStaticProps = {
 }
 
 function RenderedBlockStatic({ block, repositorySlug }: RenderedBlockStaticProps) {
-  const { config } = useContext(ConfigContext)
-  const editorConfig = config.config
-
   const [notes, setNotes] = useState<Note[]>([])
   const [loaded, setLoaded] = useState(false)
 
@@ -51,7 +47,7 @@ function RenderedBlockStatic({ block, repositorySlug }: RenderedBlockStaticProps
     const fetchNotes = async () => {
       const query: Query = {
         query: block.query!,
-        repositories: getSelectedRepositorySlugs(editorConfig),
+        repositories: [repositorySlug], // Desk are defined per repository
         deskOid: null,
         blockOid: null,
         limit: 0,
@@ -70,7 +66,21 @@ function RenderedBlockStatic({ block, repositorySlug }: RenderedBlockStaticProps
 
     if (block.view === 'single') {
       const note = notes.length > 0 ? notes[0] : null
-      return <div className="BlockContainer">{note && <RenderedNote note={note} />}</div>
+      return (
+        <div className="BlockContainer">
+          {note && (
+            <RenderedNote
+              note={note}
+              showActions={block.showActions}
+              showAttributes={block.showAttributes}
+              showBody={block.showBody}
+              showComment={block.showComment}
+              showTags={block.showTags}
+              showTitle={block.showTitle}
+            />
+          )}
+        </div>
+      )
     }
 
     return (
@@ -80,38 +90,38 @@ function RenderedBlockStatic({ block, repositorySlug }: RenderedBlockStaticProps
           notes={notes}
           layout={block.view ?? 'list'}
           layoutSelectable={false}
+          showActions={block.showActions}
+          showAttributes={block.showAttributes}
+          showBody={block.showBody}
+          showComment={block.showComment}
+          showTags={block.showTags}
+          showTitle={block.showTitle}
         />
       </div>
     )
   }
 
-  if (block.layout === 'horizontal') {
-    return (
-      <div className="BlockHorizontal">
-        {block.elements?.map((element, index) => (
-          <RenderedBlockStatic
-            key={element.oid ?? index}
-            block={element}
-            repositorySlug={repositorySlug}
-          />
-        ))}
-      </div>
-    )
-  }
+  return <BlockContainer block={block} repositorySlug={repositorySlug} layout={block.layout} />
+}
 
-  if (block.layout === 'vertical') {
-    return (
-      <div className="BlockVertical">
-        {block.elements?.map((element, index) => (
-          <RenderedBlockStatic
-            key={element.oid ?? index}
-            block={element}
-            repositorySlug={repositorySlug}
-          />
-        ))}
-      </div>
-    )
-  }
+type BlockContainerProps = {
+  block: Block
+  repositorySlug: string
+  layout: string // 'horizontal' or 'vertical'
+}
 
-  return null
+// This component is used for horizontal and vertical blocks.
+function BlockContainer({ block, repositorySlug, layout }: BlockContainerProps) {
+  const className = `Block${layout.charAt(0).toUpperCase() + layout.slice(1)}`
+  return (
+    <div className={className}>
+      {block.elements?.map((element, index) => (
+        <RenderedBlockStatic
+          key={element.oid ?? index}
+          block={element}
+          repositorySlug={repositorySlug}
+        />
+      ))}
+    </div>
+  )
 }

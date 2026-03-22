@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react'
-import { Note, Query } from '@renderer/Model'
+import { Note, Query, QueryConfigWithContext } from '@renderer/Model'
 import FullScreenNote from './FullScreenNote'
 import useKeyDown from '@renderer/helpers/useKeyDown'
 import { ConfigContext, selectedDailyQuotes } from '@renderer/ConfigContext'
@@ -44,10 +44,10 @@ function DailyQuote({ onClose }: any) {
     }
 
     // If multiple queries have the tag, choose one randomly
-    const randomQuery = queries[Math.floor(Math.random() * queries.length)]
+    const randomQuery: QueryConfigWithContext = queries[Math.floor(Math.random() * queries.length)]
 
     const query: Query = {
-      query: randomQuery.q || '',
+      query: randomQuery.query || '',
       repositories: [randomQuery.repositorySlug],
       blockOid: undefined,
       deskOid: undefined,
@@ -61,6 +61,7 @@ function DailyQuote({ onClose }: any) {
       if (result.notes.length === 0) setDailyQuote(defaultDailyNote)
       setDailyQuote(result.notes[0])
     }
+    console.debug('Fetching daily quote with query', query)
     getDailyQuote()
   }, [config])
 

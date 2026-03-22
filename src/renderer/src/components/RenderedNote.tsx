@@ -165,6 +165,7 @@ type RenderedNoteProps = {
   showTags?: boolean
   showAttributes?: boolean
   showTitle?: boolean
+  showBody?: boolean
   showActions?: boolean
   showComment?: boolean
   // Filters (only used when viewMode="list")
@@ -187,17 +188,18 @@ export default function RenderedNote({
   showTags = true,
   showAttributes = true,
   showTitle = true,
+  showBody = true,
   showActions = true,
   showComment = true,
   filterTags = [],
   filterAttributes = [],
   filterEmojis = [],
   draggable = false,
-  onDragStart = () => {},
-  onDrag = () => {},
-  onDragEnd = () => {},
-  onMouseStart = () => {},
-  onMouseEnd = () => {}
+  onDragStart = () => { },
+  onDrag = () => { },
+  onDragEnd = () => { },
+  onMouseStart = () => { },
+  onMouseEnd = () => { }
 }: RenderedNoteProps) {
   const { config, dispatch } = useContext(ConfigContext)
   const repositoryConfig = config.repositories[note.repositorySlug]
@@ -487,8 +489,8 @@ export default function RenderedNote({
   let bookmarked = false
   if (config.config && config.config.bookmarks) {
     bookmarked =
-      config.config.bookmarks.filter((bookmark: Bookmark) => bookmark.noteOID === note.oid)
-        .length > 0
+      config.config.bookmarks.filter((bookmark: Bookmark) => bookmark.noteOID === note.oid).length >
+      0
   }
 
   const sourceURL = extractSourceURL(note)
@@ -627,80 +629,82 @@ export default function RenderedNote({
           <Markdown md={note.longTitle} inline />
         </div>
       )}
-      <div className="RenderedNoteContent">
-        {/* Default Mode */}
-        {currentViewMode === 'default' && (
-          <Markdown md={formatContent(note, ['preview'])} onWikilinkClick={handleWikilinkClick} />
-        )}
-        {/* List Mode */}
-        {showActions && currentViewMode === 'list' && note.items?.children && (
-          <div className="RenderedNoteItemsFilters">
-            <input
-              type="text"
-              placeholder="Filter items"
-              value={currentFilterText}
-              onChange={(e) => setCurrentFilterText(e.target.value)}
-            />
-            {(showFilterAttributes || showFilterTags || showFilterEmojis) && (
-              <ul className="Filter">
-                {showFilterTags &&
-                  note.items.tags?.map((tag, index) => (
-                    <li
-                      key={`tag-${index}`}
-                      className={currentFilterTags.includes(tag) ? 'selected' : ''}
-                      onClick={() => handleToggleFilterTag(tag)}
-                    >
-                      #{tag}
-                    </li>
-                  ))}
-                {showFilterAttributes &&
-                  note.items.attributes?.map((attribute, index) => (
-                    <li
-                      key={`attribute-${index}`}
-                      className={currentFilterAttributes.includes(attribute) ? 'selected' : ''}
-                      onClick={() => handleToggleFilterAttribute(attribute)}
-                    >
-                      @{attribute}
-                    </li>
-                  ))}
-                {showFilterEmojis &&
-                  note.items.emojis?.map((emoji, index) => (
-                    <li
-                      key={`emoji-${index}`}
-                      className={currentFilterEmojis.includes(emoji) ? 'selected' : ''}
-                      onClick={() => handleToggleFilterEmoji(emoji)}
-                    >
-                      {emoji}
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </div>
-        )}
-        {currentViewMode === 'list' && note.items?.children && (
-          <ul className="RenderedNoteItems">
-            {filteredItems.map((item, index) => (
-              <li key={index}>
-                <Markdown md={item.text} onWikilinkClick={handleWikilinkClick} inline />
-                {item.children && item.children.length > 0 && (
-                  <ul>
-                    {item.children.map((child, childIndex) => (
-                      <li key={childIndex}>
-                        <Markdown md={child.text} onWikilinkClick={handleWikilinkClick} inline />
-                        <RenderedTags tags={child.tags || []} />
-                        <RenderedAttributes
-                          attributes={child.attributes || []}
-                          repositoryConfig={repositoryConfig}
-                        />
+      {showBody && (
+        <div className="RenderedNoteContent">
+          {/* Default Mode */}
+          {currentViewMode === 'default' && (
+            <Markdown md={formatContent(note, ['preview'])} onWikilinkClick={handleWikilinkClick} />
+          )}
+          {/* List Mode */}
+          {showActions && currentViewMode === 'list' && note.items?.children && (
+            <div className="RenderedNoteItemsFilters">
+              <input
+                type="text"
+                placeholder="Filter items"
+                value={currentFilterText}
+                onChange={(e) => setCurrentFilterText(e.target.value)}
+              />
+              {(showFilterAttributes || showFilterTags || showFilterEmojis) && (
+                <ul className="Filter">
+                  {showFilterTags &&
+                    note.items.tags?.map((tag, index) => (
+                      <li
+                        key={`tag-${index}`}
+                        className={currentFilterTags.includes(tag) ? 'selected' : ''}
+                        onClick={() => handleToggleFilterTag(tag)}
+                      >
+                        #{tag}
                       </li>
                     ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                  {showFilterAttributes &&
+                    note.items.attributes?.map((attribute, index) => (
+                      <li
+                        key={`attribute-${index}`}
+                        className={currentFilterAttributes.includes(attribute) ? 'selected' : ''}
+                        onClick={() => handleToggleFilterAttribute(attribute)}
+                      >
+                        @{attribute}
+                      </li>
+                    ))}
+                  {showFilterEmojis &&
+                    note.items.emojis?.map((emoji, index) => (
+                      <li
+                        key={`emoji-${index}`}
+                        className={currentFilterEmojis.includes(emoji) ? 'selected' : ''}
+                        onClick={() => handleToggleFilterEmoji(emoji)}
+                      >
+                        {emoji}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {currentViewMode === 'list' && note.items?.children && (
+            <ul className="RenderedNoteItems">
+              {filteredItems.map((item, index) => (
+                <li key={index}>
+                  <Markdown md={item.text} onWikilinkClick={handleWikilinkClick} inline />
+                  {item.children && item.children.length > 0 && (
+                    <ul>
+                      {item.children.map((child, childIndex) => (
+                        <li key={childIndex}>
+                          <Markdown md={child.text} onWikilinkClick={handleWikilinkClick} inline />
+                          <RenderedTags tags={child.tags || []} />
+                          <RenderedAttributes
+                            attributes={child.attributes || []}
+                            repositoryConfig={repositoryConfig}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       {metadataVisible && (
         <RenderedMetadata note={note} showTags={showTags} showAttributes={showAttributes} />
       )}

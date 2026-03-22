@@ -1,5 +1,5 @@
 import React, { useState, ReactNode, ReactElement, MouseEvent } from 'react'
-import { X as CloseIcon } from '@phosphor-icons/react'
+import { XIcon as CloseIcon } from '@phosphor-icons/react'
 
 type IndicatorProps = {
   children: ReactNode

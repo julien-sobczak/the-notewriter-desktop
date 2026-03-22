@@ -6,8 +6,11 @@ import {
   DeskWithContext,
   EditorConfig,
   File,
+  JournalConfigWithContext,
+  QueryConfigWithContext,
   RepositoryConfig,
-  RepositoryRefConfig
+  RepositoryRefConfig,
+  StatConfigWithContext
 } from '@renderer/Model'
 import configReducer from './configReducer'
 import { evaluateDeskTemplate } from './helpers/desk'
@@ -175,8 +178,8 @@ export function selectedRepositories(configContext: ConfigContextType): Reposito
   return configContext.config.repositories.filter((repo) => repo.selected)
 }
 
-export function selectedStats(configContext: ConfigContextType) {
-  const stats: any[] = []
+export function selectedStats(configContext: ConfigContextType): StatConfigWithContext[] {
+  const stats: StatConfigWithContext[] = []
   const repos = selectedRepositories(configContext)
 
   for (const repo of repos) {
@@ -189,8 +192,8 @@ export function selectedStats(configContext: ConfigContextType) {
   return stats
 }
 
-export function selectedJournals(configContext: ConfigContextType) {
-  const journals: any[] = []
+export function selectedJournals(configContext: ConfigContextType): JournalConfigWithContext[] {
+  const journals: JournalConfigWithContext[] = []
   const repos = selectedRepositories(configContext)
 
   for (const repo of repos) {
@@ -225,8 +228,11 @@ export function selectedDesks(configContext: ConfigContextType): DeskWithContext
   return desks
 }
 
-export function selectedQueriesMatchingTag(configContext: ConfigContextType, tag: string) {
-  const queries: any[] = []
+export function selectedQueriesMatchingTag(
+  configContext: ConfigContextType,
+  tag: string
+): QueryConfigWithContext[] {
+  const queries: QueryConfigWithContext[] = []
   const repos = selectedRepositories(configContext)
 
   for (const repo of repos) {
@@ -243,10 +249,10 @@ export function selectedQueriesMatchingTag(configContext: ConfigContextType, tag
   return queries
 }
 
-export function selectedInspirations(configContext: ConfigContextType) {
+export function selectedInspirations(configContext: ConfigContextType): QueryConfigWithContext[] {
   return selectedQueriesMatchingTag(configContext, 'inspiration')
 }
 
-export function selectedDailyQuotes(configContext: ConfigContextType) {
+export function selectedDailyQuotes(configContext: ConfigContextType): QueryConfigWithContext[] {
   return selectedQueriesMatchingTag(configContext, 'daily-quote')
 }
