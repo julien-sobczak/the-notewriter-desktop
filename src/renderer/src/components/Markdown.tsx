@@ -139,17 +139,17 @@ const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
         )
       },
 
-      // Restore file: URLs from placeholders
+      // Restore blob URLs from placeholders using custom protocol handler defined in main process
       img: ({ ...props }) => {
-        const src = props.src?.replace('https://notewriter.app', 'file:') || ''
+        const src = props.src?.replace('https://notewriter.app/', 'nt://') || ''
         return <img {...props} src={src} />
       },
       audio: ({ ...props }) => {
-        const src = props.src?.replace('https://notewriter.app', 'file:') || ''
+        const src = props.src?.replace('https://notewriter.app/', 'nt://') || ''
         return <audio {...props} src={src} />
       },
       video: ({ ...props }) => {
-        const src = props.src?.replace('https://notewriter.app', 'file:') || ''
+        const src = props.src?.replace('https://notewriter.app/', 'nt://') || ''
         return <video {...props} src={src} />
       }
     }

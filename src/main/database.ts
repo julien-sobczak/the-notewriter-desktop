@@ -1142,7 +1142,7 @@ export default class DatabaseManager {
 
       db.get(sql, (err: any, row: any) => {
         if (err) {
-          console.log('Error while searching for due flashcards', err)
+          console.log('Error while searching for deck stats', err)
           reject(err)
         } else {
           resolve({
@@ -1263,7 +1263,7 @@ export default class DatabaseManager {
                   WHERE oid = ?`
       db.run(sql, data, (err: any) => {
         if (err) {
-          console.log('Error while searching for due flashcards', err)
+          console.log('Error while updating reviewed flashcard', err)
           reject(err)
         } else {
           resolve(flashcard)
@@ -1709,6 +1709,7 @@ export function readStringValue(query: string): [string, string] {
 
 function queryPart2sql(queryParent: string): string {
   // Forward-declare so extractFirstCondition and queryPart2sqlInner can mutually reference each other
+  // eslint-disable-next-line prefer-const
   let queryPart2sqlInner: (queryRaw: string) => string
 
   // Extract the first single condition from query, returning [conditionSQL, remainingQuery]

@@ -1,4 +1,14 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut, dialog } from 'electron'
+import {
+  app,
+  protocol,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  clipboard,
+  globalShortcut,
+  dialog,
+  net
+} from 'electron'
 import path, { join } from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -199,6 +209,13 @@ app.whenReady().then(async () => {
   await initializeConfig()
   await initializeDatabase()
   await initializeOperations()
+
+  protocol.handle('nt', (request) => {
+    // Strip 'nt://' to get the absolute file path
+    const filePath = request.url.slice('nt://'.length)
+    // Serve it securely using Electron's built-in net module
+    return net.fetch(`file://${filePath}`)
+  })
 
   // Global shortcut are activated even when the window has not the focus
   globalShortcut.register('Alt+Space', () => {

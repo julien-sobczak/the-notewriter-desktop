@@ -88,6 +88,18 @@ $ npm run dev
 $ npm run test src/renderer/src/helpers/
 ```
 
+#### Under the Hood
+
+##### Media rendering
+
+Markdown notes can reference medias like pictures. _The NoteWriter_ CLI converts them to blobs that are stored inside `.nt/objects`.
+
+When retrieving notes from the SQLite database, these medias are defined using a custom HTML tag `<media relative-path="relative-path-to-media-file.ext">`. These medias are rendered using this process:
+
+1. The function `formatContent` in `RenderedNote` convert this custom tag `<media>` to a valid Markdown image link by searching for a matching media in type `Note`. The link becomes `![https://notewriter.app/absolute/path/to/blob/file]()`. We do not use `file:` as `react-markdown` refuses to load them otherwise. We use a fake domain name instead.
+2. The component `Markdown` relies on `ReactMarkdown` and overrides how some tags are rendered by overriding `components`. The `src` attribute of tags `<img>` is rewritten to replace the fake domain name by a custom protocol `nt://`.
+3. The protocol `nt:` is defined in the main Electron process and simply reads the local file on disk. 😅
+
 ### Build
 
 ```bash

@@ -5,6 +5,7 @@ import path from 'path'
 import type { Operation, PackFile, PackObject, RepositoryRefConfig } from './Model'
 import { normalizePath } from './util'
 import { generateOid } from './oid'
+import { spawn } from 'child_process'
 
 export class ObjectData {
   value: any
@@ -104,7 +105,7 @@ export default class OperationsManager {
     return this
   }
 
-  // Empty the WAL files by generate new pack files inside .nt/operations
+  // Empty the WAL files by generate new pack files inside .nt/objects
   flushWalToPackFiles(repositorySlug: string): void {
     const repository = this.repositories.get(repositorySlug)
     if (!repository) {
@@ -172,6 +173,19 @@ export default class OperationsManager {
       fs.writeFileSync(filepath, yamlStr, 'utf8')
 
       console.log(`Pack file created: ${filepath}`)
+
+      // Import the pack file into the repository index
+      const subprocess = spawn('nt', ['import-pack', filepath], {
+        cwd: repository.path,
+        detached: true,
+        stdio: 'ignore'
+      })
+      subprocess.on('error', (err) => {
+        console.error(
+          `Failed to import pack file ${filepath}. Try running "nt import-pack ${filepath}" manually.`,
+          err
+        )
+      })
 
       // Empty the WAL file after processing if wal.json, otherwise delete it
       if (walFile === 'wal.json') {

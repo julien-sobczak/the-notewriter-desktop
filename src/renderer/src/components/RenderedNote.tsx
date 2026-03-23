@@ -73,7 +73,7 @@ function formatContent(note: Note, tags: string[] = []): string {
 
     if (relativePath === '' || !mediasByRelativePath.has(relativePath)) {
       // 404 or dangling media or missing blob
-      console.log(`Missing media ${relativePath}`, mediasByRelativePath)
+      console.warn(`Missing media ${relativePath}`, mediasByRelativePath)
       result = result.replace(mediaTag, `<img src="${NotFound}" class="missing" />`)
       continue
     }
@@ -97,7 +97,7 @@ function formatContent(note: Note, tags: string[] = []): string {
       }
     }
     if (!foundBlob) {
-      console.log(`Missing blob for media ${relativePath} matching "${tags.join(',')}"`)
+      console.warn(`Missing blob for media ${relativePath} matching "${tags.join(',')}"`)
 
       // Fallback to the first blob
       if (media.blobs.length === 0) {
@@ -114,24 +114,29 @@ function formatContent(note: Note, tags: string[] = []): string {
     const blob = foundBlob
     const prefix = blob.oid.substring(0, 2)
     const blobPath = `${note.repositoryPath}/.nt/objects/${prefix}/${blob.oid}.blob`
+
+    console.debug(
+      `Found blob ${foundBlob.oid} for media ${relativePath} in note ${note.title} at path ${blobPath}`
+    )
+
     if (media.kind === 'picture') {
       result = result.replace(
         mediaTag,
-        `<img src="file:${blobPath}" alt="${alt}" title="${title}" />`
+        `<img src="https://notewriter.app/${blobPath}" alt="${alt}" title="${title}" />`
       )
       continue
     }
     if (media.kind === 'audio') {
       result = result.replace(
         mediaTag,
-        `<audio controls title="${title}"><source src="file:${blobPath}" type="${blob.mimeType}"></audio>`
+        `<audio controls title="${title}"><source src="https://notewriter.app/${blobPath}" type="${blob.mimeType}"></audio>`
       )
       continue
     }
     if (media.kind === 'video') {
       result = result.replace(
         mediaTag,
-        `<video controls title="${title}"><source src="file:${blobPath}" type="${blob.mimeType}"></video>`
+        `<video controls title="${title}"><source src="https://notewriter.app/${blobPath}" type="${blob.mimeType}"></video>`
       )
       continue
     }
@@ -143,7 +148,7 @@ function formatContent(note: Note, tags: string[] = []): string {
     }
     result = result.replace(
       mediaTag,
-      `<a target="_blank" href="file:${blobPath}" title="${title}">${label}</a>`
+      `<a target="_blank" href="https://notewriter.app/${blobPath}" title="${title}">${label}</a>`
     )
   }
 
