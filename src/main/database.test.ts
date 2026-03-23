@@ -70,4 +70,44 @@ describe('query2sql', () => {
       `${selectClause} WHERE note.tags LIKE '%life%' ORDER BY RANDOM();`
     )
   })
+
+  test('with + prefix (explicit include)', async () => {
+    expect(query2sql('+#life', 0, false)).toBe(`${selectClause} WHERE note.tags LIKE '%life%';`)
+    expect(query2sql('+path:references/books', 0, false)).toBe(
+      `${selectClause} WHERE note.relative_path LIKE 'references/books%';`
+    )
+    expect(query2sql('+type:note', 0, false)).toBe(
+      `${selectClause} WHERE note.note_type='note';`
+    )
+    expect(query2sql('+@name:value', 0, false)).toBe(
+      `${selectClause} WHERE json_extract(note.attributes, "$.name") = "value";`
+    )
+  })
+
+  test('with - prefix (negation)', async () => {
+    expect(query2sql('-#life', 0, false)).toBe(
+      `${selectClause} WHERE NOT (note.tags LIKE '%life%');`
+    )
+    expect(query2sql('-path:references/books', 0, false)).toBe(
+      `${selectClause} WHERE NOT (note.relative_path LIKE 'references/books%');`
+    )
+    expect(query2sql('-type:note', 0, false)).toBe(
+      `${selectClause} WHERE NOT (note.note_type='note');`
+    )
+    expect(query2sql('-@name:value', 0, false)).toBe(
+      `${selectClause} WHERE NOT (json_extract(note.attributes, "$.name") = "value");`
+    )
+    expect(query2sql('-path:/top/sub/directory +path:/top', 0, false)).toBe(
+      `${selectClause} WHERE NOT (note.relative_path LIKE '/top/sub/directory%') AND note.relative_path LIKE '/top%';`
+    )
+    expect(query2sql('-#life -#other', 0, false)).toBe(
+      `${selectClause} WHERE NOT (note.tags LIKE '%life%') AND NOT (note.tags LIKE '%other%');`
+    )
+    expect(query2sql('type:quote -#life', 0, false)).toBe(
+      `${selectClause} WHERE note.note_type='quote' AND NOT (note.tags LIKE '%life%');`
+    )
+    expect(query2sql('-(#life #purpose)', 0, false)).toBe(
+      `${selectClause} WHERE NOT ((note.tags LIKE '%life%' AND note.tags LIKE '%purpose%'));`
+    )
+  })
 })
