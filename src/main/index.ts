@@ -553,6 +553,36 @@ app.whenReady().then(async () => {
     return flashcards
   })
 
+  ipcMain.handle('list-today-flashcards-for-file', async (_event, fileRef: FileRef) => {
+    console.debug(
+      `Listing flashcards for today for file ${fileRef.relativePath} in repository ${fileRef.repositorySlug}`
+    )
+    const repositoryConfig = config.repositoryConfigs[fileRef.repositorySlug]
+
+    if (!fileRef.relativePath) {
+      console.error(`No relative path provided for file in repository ${fileRef.repositorySlug}`)
+      return []
+    }
+
+    // Use the first deck config for daily limits
+    const deckConfig: DeckConfig | undefined = repositoryConfig.decks?.[0]
+
+    if (!deckConfig) {
+      console.error(`No deck configuration found for repository ${fileRef.repositorySlug}`)
+      return []
+    }
+
+    const flashcards = await db.getTodayFlashcardsForFile(
+      fileRef.repositorySlug,
+      fileRef.relativePath,
+      deckConfig
+    )
+    console.debug(
+      `Found ${flashcards.length} flashcards to study today for file ${fileRef.relativePath} in repository ${fileRef.repositorySlug}`
+    )
+    return flashcards
+  })
+
   ipcMain.handle('flush-operations', async (_event, repositorySlugs: string[]) => {
     for (const repositorySlug of repositorySlugs) {
       console.debug(`Flushing operations for repository ${repositorySlug}...`)

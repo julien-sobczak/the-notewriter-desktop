@@ -1,14 +1,8 @@
 import { useEffect, useContext, useState } from 'react'
-import { SkipForwardIcon as SkipIcon, XIcon as CloseIcon } from '@phosphor-icons/react'
-import { DeckRef, Flashcard, Review } from '@renderer/Model'
+import { DeckRef, Flashcard } from '@renderer/Model'
 import Loader from './Loader'
-import RenderedFlashcard from './RenderedFlashcard'
-import { Action, Actions, Indicator } from './Actions'
+import RenderedFlashcards from './RenderedFlashcards'
 import { ConfigContext } from '@renderer/ConfigContext'
-import { intervalFn, NoteWriterSRS } from '@renderer/helpers/srs'
-
-// Delay to consider a flashcard as due today
-const DayCutoff = 1000 * 60 * 60 // 1 hour, used to determine if a flashcard is due today
 
 type RenderedDeckProps = {
   deckRef: DeckRef
@@ -34,7 +28,6 @@ function RenderedDeck({ deckRef, onQuit = () => { } }: RenderedDeckProps) {
   }
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>()
-  const [flashcardIndex, setFlashcardIndex] = useState<number>(0)
 
   // Download flashcard
   useEffect(() => {
@@ -43,89 +36,24 @@ function RenderedDeck({ deckRef, onQuit = () => { } }: RenderedDeckProps) {
       // IMPROVEMENT support different sorts
       const shuffledFlashcards = results.sort(() => 0.5 - Math.random())
       setFlashcards(shuffledFlashcards)
-      setFlashcardIndex(0)
     }
     listTodayFlashcards()
   }, [deckRef])
 
-  const onSkip = () => {
-    if (!flashcards) return
-    if (flashcardIndex + 1 < flashcards.length - 1) {
-      setFlashcardIndex(flashcardIndex + 1)
-    } else {
-      onQuit(deckRef)
-    }
-  }
-
-  // Called when the user completes the review of a single flashcard
-  const onFlashcardReviewed = (flashcard: Flashcard, review: Review) => {
-    // Reschedule the flashcard using the SRS algorithm
-    const algorithm = new NoteWriterSRS()
-    const scheduledFlashcard = algorithm.schedule(deckConfig, flashcard, review)
-    // Update SRS settings based on the confidence
-    review.dueAt = scheduledFlashcard.dueAt
-    review.settings = scheduledFlashcard.settings
-
-    window.api
-      .reviewFlashcard(deckRef, scheduledFlashcard, review)
-      .then((updatedFlashcard: Flashcard) => {
-        // Reschedule the flashcard if next review is imminent
-        const nextDueAtTime = new Date(updatedFlashcard.dueAt).getTime()
-        if (nextDueAtTime - Date.now() < DayCutoff) {
-          setFlashcards([...(flashcards ?? []), updatedFlashcard])
-        }
-        if (flashcardIndex + 1 === flashcards?.length) {
-          onQuit(deckRef)
-        } else {
-          setFlashcardIndex(flashcardIndex + 1)
-        }
-        return updatedFlashcard
-      })
-      .catch((error: unknown) => {
-        if (error instanceof Error) {
-          // throw the error
-          console.error('Error updating flashcard:', error.message)
-        } else {
-          console.error('Unknown error:', error)
-        }
-      })
-  }
-
   return (
     <>
       {!flashcards && <Loader />}
-      {flashcards && flashcards.length === 0 && (
-        <div className="RenderedDeck">
-          <span>
-            <strong>No flashcards</strong> to review for today.
-          </span>
-          <button type="button" className="Button" onClick={() => onQuit(deckRef)}>
-            Try another deck?
-          </button>
-        </div>
-      )}
-      {flashcards && flashcards.length > 0 && (
-        <div className="RenderedDeck">
-          <Actions>
-            <Indicator>
-              {flashcardIndex + 1} / <strong>{flashcards.length}</strong>
-            </Indicator>
-            <Action icon={<SkipIcon />} title="Skip" onClick={onSkip} />
-            <Action icon={<CloseIcon />} title="Quit" onClick={() => onQuit(deckRef)} />
-          </Actions>
-          <div className="FlashcardContainer">
-            <RenderedFlashcard
-              flashcard={flashcards[flashcardIndex]}
-              intervalFn={intervalFn(deckConfig)}
-              onReviewed={(review: Review) =>
-                onFlashcardReviewed(flashcards[flashcardIndex], review)
-              }
-            />
-          </div>
-        </div>
+      {flashcards && (
+        <RenderedFlashcards
+          flashcards={flashcards}
+          deckRef={deckRef}
+          deckConfig={deckConfig}
+          onQuit={() => onQuit(deckRef)}
+        />
       )}
     </>
   )
 }
 
 export default RenderedDeck
+
