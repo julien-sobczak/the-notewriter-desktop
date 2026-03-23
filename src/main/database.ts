@@ -1708,14 +1708,11 @@ export function readStringValue(query: string): [string, string] {
 }
 
 function queryPart2sql(queryParent: string): string {
-  const queryPart2sqlInner = (queryRaw: string): string => {
-    const query = queryRaw.trim()
+  // Forward-declare so extractFirstCondition and queryPart2sqlInner can mutually reference each other
+  let queryPart2sqlInner: (queryRaw: string) => string
 
-    if (query === '') {
-      // Match all records with a "dummy" condition
-      return '1=1'
-    }
-
+  // Extract the first single condition from query, returning [conditionSQL, remainingQuery]
+  const extractFirstCondition = (query: string): [string, string] => {
     if (query.startsWith('(')) {
       // Find closing parenthesis
       let countOpening = 0
@@ -1725,11 +1722,8 @@ function queryPart2sql(queryParent: string): string {
         } else if (query.charAt(i) === ')') {
           countOpening--
           if (countOpening === 0) {
-            let sql = `(${queryPart2sqlInner(query.substring(1, i))})`
-            if (i < query.length - 1) {
-              sql += ` AND ${queryPart2sqlInner(query.substring(i + 1))}`
-            }
-            return sql
+            const sql = `(${queryPart2sqlInner(query.substring(1, i))})`
+            return [sql, query.substring(i + 1).trim()]
           }
         }
       }
@@ -1739,43 +1733,24 @@ function queryPart2sql(queryParent: string): string {
     if (query.startsWith('#')) {
       const i = query.indexOf(' ')
       if (i === -1) {
-        return `note.tags LIKE '%${query.substring(1)}%'`
+        return [`note.tags LIKE '%${query.substring(1)}%'`, '']
       }
-      return `note.tags LIKE '%${query.substring(1, i)}%' AND ${queryPart2sqlInner(query.substring(i + 1))}`
-    }
-
-    if (query.startsWith('OR ') || query.startsWith('or ')) {
-      return `OR ${queryPart2sqlInner(query.substring(3))}`
-    }
-    if (query.startsWith('AND ') || query.startsWith('and ')) {
-      return `AND ${queryPart2sqlInner(query.substring(3))}`
+      return [`note.tags LIKE '%${query.substring(1, i)}%'`, query.substring(i + 1).trim()]
     }
 
     if (query.startsWith('path:')) {
       const subQuery = query.substring('path:'.length)
       const [value, remainingQuery] = readStringValue(subQuery)
-      let sql = `note.relative_path LIKE '${value}%'`
-      if (remainingQuery) {
-        sql += ` AND ${queryPart2sqlInner(remainingQuery)}`
-      }
-      return sql
+      return [`note.relative_path LIKE '${value}%'`, remainingQuery]
     }
 
     if (query.startsWith('type:')) {
       const nextSpaceIndex = query.indexOf(' ')
-      let noteType = ''
-      let remainingQuery
       if (nextSpaceIndex === -1) {
-        noteType = query.substring('type:'.length)
-      } else {
-        noteType = query.substring('type:'.length, nextSpaceIndex)
-        remainingQuery = query.substring(nextSpaceIndex)
+        return [`note.note_type='${query.substring('type:'.length)}'`, '']
       }
-      let sql = `note.note_type='${noteType}'`
-      if (remainingQuery) {
-        sql += ` AND ${queryPart2sqlInner(remainingQuery)}`
-      }
-      return sql
+      const noteType = query.substring('type:'.length, nextSpaceIndex)
+      return [`note.note_type='${noteType}'`, query.substring(nextSpaceIndex).trim()]
     }
 
     if (query.startsWith('@')) {
@@ -1786,16 +1761,46 @@ function queryPart2sql(queryParent: string): string {
       const name = query.substring(1, nextColonIndex)
       const subQuery = query.substring(nextColonIndex + 1)
       const [value, remainingQuery] = readStringValue(subQuery)
-      let sql = `json_extract(note.attributes, "$.${name}") = "${value}"`
+      return [`json_extract(note.attributes, "$.${name}") = "${value}"`, remainingQuery]
+    }
+
+    // Or just a text to match
+    const [value, remainingQuery] = readStringValue(query)
+    return [`note_fts MATCH '${value}'`, remainingQuery]
+  }
+
+  queryPart2sqlInner = (queryRaw: string): string => {
+    const query = queryRaw.trim()
+
+    if (query === '') {
+      // Match all records with a "dummy" condition
+      return '1=1'
+    }
+
+    if (query.startsWith('OR ') || query.startsWith('or ')) {
+      return `OR ${queryPart2sqlInner(query.substring(3))}`
+    }
+    if (query.startsWith('AND ') || query.startsWith('and ')) {
+      return `AND ${queryPart2sqlInner(query.substring(3))}`
+    }
+
+    // Handle + prefix (explicit include - same as default, + is implicit)
+    if (query.startsWith('+')) {
+      return queryPart2sqlInner(query.substring(1).trim())
+    }
+
+    // Handle - prefix (negation: generates a NOT condition in SQL)
+    if (query.startsWith('-')) {
+      const [conditionSQL, remainingQuery] = extractFirstCondition(query.substring(1).trim())
+      let sql = `NOT (${conditionSQL})`
       if (remainingQuery) {
         sql += ` AND ${queryPart2sqlInner(remainingQuery)}`
       }
       return sql
     }
 
-    // Or just a text to match
-    const [value, remainingQuery] = readStringValue(query)
-    let sql = `note_fts MATCH '${value}'`
+    const [conditionSQL, remainingQuery] = extractFirstCondition(query)
+    let sql = conditionSQL
     if (remainingQuery) {
       sql += ` AND ${queryPart2sqlInner(remainingQuery)}`
     }
