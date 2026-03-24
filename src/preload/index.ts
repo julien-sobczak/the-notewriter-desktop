@@ -64,6 +64,8 @@ const api = {
   // Flashcards
   listDecks: (repositorySlugs: string[]) => ipcRenderer.invoke('list-decks', repositorySlugs),
   listTodayFlashcards: (deckRef: DeckRef) => ipcRenderer.invoke('list-today-flashcards', deckRef),
+  listTodayFlashcardsForFile: (fileRef: FileRef) =>
+    ipcRenderer.invoke('list-today-flashcards-for-file', fileRef),
 
   // Operations
   flushOperations: (repositorySlugs: string[]) =>

@@ -553,6 +553,22 @@ app.whenReady().then(async () => {
     return flashcards
   })
 
+  ipcMain.handle('list-today-flashcards-for-file', async (_event, fileRef: FileRef) => {
+    const relativePath = fileRef.relativePath
+    if (!relativePath) {
+      console.error('No relativePath provided for list-today-flashcards-for-file')
+      return []
+    }
+    console.debug(
+      `Listing flashcards for file ${relativePath} in repository ${fileRef.repositorySlug}`
+    )
+    const flashcards = await db.getTodayFlashcardsForFile(fileRef.repositorySlug, relativePath)
+    console.debug(
+      `Found ${flashcards.length} flashcards in file ${relativePath}`
+    )
+    return flashcards
+  })
+
   ipcMain.handle('flush-operations', async (_event, repositorySlugs: string[]) => {
     for (const repositorySlug of repositorySlugs) {
       console.debug(`Flushing operations for repository ${repositorySlug}...`)
