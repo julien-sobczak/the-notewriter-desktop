@@ -8,14 +8,21 @@ export interface SRSAlgorithm {
 const defaultEaseFactor = 2.5 // Default ease factor for new cards graduating to learning queue
 const defaultInterestFactor = 1.0 // Default interest factor for cards without the attribute
 
-// Map feedback strings to confidence numbers (0-100)
-export const feedbackToConfidence: { [key: string]: number } = {
+// Map feedback strings to confidence numbers (0-100) for review mode
+export const feedbackReviewToConfidence: { [key: string]: number } = {
   'too-hard': 0,
   hard: 10,
   again: 30,
   good: 60,
   easy: 80,
   'too-easy': 100
+}
+
+// Map feedback strings to confidence numbers (0-100) for test mode
+export const feedbackTestToConfidence: { [key: string]: number } = {
+  wrong: 0,
+  'partially-correct': 50,
+  correct: 100
 }
 
 export class NoteWriterSRS implements SRSAlgorithm {
@@ -311,7 +318,7 @@ export class Interval {
 export function intervalFn(config: DeckConfig): (card: Flashcard, feedback: string) => string {
   const algorithm: SRSAlgorithm = new NoteWriterSRS()
   return (card: Flashcard, feedback: string): string => {
-    const confidence = feedbackToConfidence[feedback]
+    const confidence = feedbackReviewToConfidence[feedback]
     if (confidence === undefined) {
       throw new Error(`Unknown feedback type: ${feedback}`)
     }

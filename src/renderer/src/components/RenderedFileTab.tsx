@@ -1,16 +1,47 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useContext, useMemo } from 'react'
-import { Note, FileRef, File, DeskWithContext } from '@renderer/Model'
-import { ListIcon, DesktopIcon, BrainIcon as StudyIcon } from '@phosphor-icons/react'
+import { Note, FileRef, File, DeskWithContext, Flashcard, Review } from '@renderer/Model'
+import {
+  ListIcon,
+  DesktopIcon,
+  BrainIcon as StudyIcon,
+  XIcon as CloseIcon
+} from '@phosphor-icons/react'
 import NoteContainer from './NoteContainer'
 import { Action, Actions } from './Actions'
 import { ConfigContext, getDesksForFile } from '@renderer/ConfigContext'
 import RenderedDeskStatic from './RenderedDeskStatic'
+import RenderedStudy from './RenderedFlashcards'
 
 type RenderedFileTabProps = {
   title: string
   file: FileRef
   relativePath: string
+}
+
+type FileTabView = 'list' | 'desk' | 'test' | 'score'
+
+type TestScore = {
+  total: number
+  sumConfidence: number
+}
+
+function RenderedScore({ score, onClose }: { score: TestScore; onClose: () => void }) {
+  const scorePercent = score.total > 0 ? Math.round(score.sumConfidence / score.total) : 0
+  const message =
+    scorePercent >= 75
+      ? `Congratulations! You got ${scorePercent}%`
+      : `Need to study... You got ${scorePercent}%`
+  return (
+    <div>
+      <Actions>
+        <Action icon={<CloseIcon />} title="Close" onClick={onClose} />
+      </Actions>
+      <div className="TestScore">
+        <p>{message}</p>
+      </div>
+    </div>
+  )
 }
 
 function RenderedFileTab(props: RenderedFileTabProps) {
@@ -20,9 +51,14 @@ function RenderedFileTab(props: RenderedFileTabProps) {
   const fileRef = props.file
   const [file, setFile] = useState<File | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
-  const [viewMode, setViewMode] = useState<'list' | 'desk'>('list')
+  const [viewMode, setViewMode] = useState<FileTabView>('list')
   const [desks, setDesks] = useState<DeskWithContext[]>([])
   const [selectedDesk, setSelectedDesk] = useState<DeskWithContext | null>(null)
+  const [testFlashcards, setTestFlashcards] = useState<Flashcard[]>([])
+  const [testScore, setTestScore] = useState<TestScore>({
+    total: 0,
+    sumConfidence: 0
+  })
 
   useEffect(() => {
     if (!fileRef.repositorySlug || !relativePath) return
@@ -50,17 +86,47 @@ function RenderedFileTab(props: RenderedFileTabProps) {
     return notes.some((note) => note.type === 'Flashcard')
   }, [notes])
 
-  const effectiveViewMode = viewMode === 'desk' && selectedDesk ? 'desk' : 'list'
+  const startTest = async () => {
+    const results = await window.api.listTodayFlashcardsForFile(fileRef)
+    const shuffledFlashcards = results.sort(() => 0.5 - Math.random())
+    setTestFlashcards(shuffledFlashcards)
+    setTestScore({ total: 0, sumConfidence: 0 })
+    setViewMode('test')
+  }
+
+  const onTestReview = (_flashcard: Flashcard, review: Review) => {
+    setTestScore((prev) => ({
+      total: prev.total + 1,
+      sumConfidence: prev.sumConfidence + review.confidence
+    }))
+  }
+
+  const onTestQuit = () => {
+    setViewMode('score')
+  }
+
+  const effectiveViewMode = viewMode === 'desk' && selectedDesk ? 'desk' : viewMode
+
+  if (viewMode === 'test') {
+    return (
+      <RenderedStudy
+        flashcards={testFlashcards}
+        mode="test"
+        onReview={onTestReview}
+        onQuit={onTestQuit}
+      />
+    )
+  }
+
+  if (viewMode === 'score') {
+    return <RenderedScore score={testScore} onClose={() => setViewMode('list')} />
+  }
 
   return (
     <div>
       <Actions>
         {hasFlashcards && (
-          <Action
-            icon={<StudyIcon />}
-            title="Study flashcard"
-            onClick={() => alert('Not implemented yet')}
-          />
+          <Action icon={<StudyIcon />} title="Test Yourself" onClick={startTest} />
         )}
         <Action icon={<ListIcon />} title="List View" onClick={() => setViewMode('list')} />
         <Action icon={<DesktopIcon />} title="Desk View" onClick={() => setViewMode('desk')} />
@@ -91,3 +157,4 @@ function RenderedFileTab(props: RenderedFileTabProps) {
 }
 
 export default RenderedFileTab
+

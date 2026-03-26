@@ -1181,6 +1181,8 @@ export default class DatabaseManager {
         WHERE note.note_type='Flashcard'
         AND (flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}')
         AND ${queryPart2sql(deckConfig.query)}
+        ORDER BY flashcard.due_at ASC
+        LIMIT ${deckConfig.maxFlashcardsPerDay}
 
         UNION
 
@@ -1203,11 +1205,75 @@ export default class DatabaseManager {
         WHERE note.note_type='Flashcard'
         AND (flashcard.due_at IS NULL OR flashcard.due_at = '')
         AND ${queryPart2sql(deckConfig.query)}
+        LIMIT ${deckConfig.newFlashcardsPerDay}
         `
 
       db.all(sql, (err: any, rows: any[]) => {
         if (err) {
           console.log('Error while searching for due flashcards', err)
+          reject(err)
+          return
+        }
+
+        const results: Flashcard[] = []
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i]
+          const flashcard: Flashcard = {
+            oid: row.oid,
+            oidFile: row.file_oid,
+            oidNote: row.note_oid,
+            relativePath: row.relative_path,
+            slug: row.slug,
+            shortTitle: row.short_title,
+            tags: row.tags.split(','),
+            attributes: JSON.parse(row.attributes),
+            front: row.front,
+            back: row.back,
+            dueAt: row.due_at,
+            studiedAt: row.studied_at,
+            settings: JSON.parse(row.settings)
+          }
+          results.push(flashcard)
+        }
+        resolve(results)
+      })
+    })
+  }
+
+  async getTodayFlashcardsForFile(
+    repositorySlug: string,
+    relativePath: string
+  ): Promise<Flashcard[]> {
+    const db = this.datasources.get(repositorySlug)
+    if (!db) {
+      throw new Error(`No datasource ${repositorySlug} found`)
+    }
+
+    return new Promise<Flashcard[]>((resolve, reject) => {
+      const sql = `
+        SELECT
+          flashcard.oid,
+          flashcard.file_oid,
+          flashcard.note_oid,
+          flashcard.relative_path,
+          flashcard.slug,
+          flashcard.short_title,
+          flashcard.tags,
+          note.attributes,
+          flashcard.front,
+          flashcard.back,
+          flashcard.due_at,
+          flashcard.studied_at,
+          flashcard.settings
+        FROM note_fts JOIN note on note.oid = note_fts.oid
+        JOIN flashcard on flashcard.note_oid = note.oid
+        WHERE note.note_type='Flashcard'
+        AND flashcard.relative_path = ?
+        `
+
+      db.all(sql, [relativePath], (err: any, rows: any[]) => {
+        if (err) {
+          console.log('Error while searching for flashcards in file', err)
           reject(err)
           return
         }

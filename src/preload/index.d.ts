@@ -43,6 +43,7 @@ interface API {
   saveConfig: (editorConfig: EditorConfig) => Promise<void>
   listDecks: (repositorySlugs: string[]) => Promise<Deck[]>
   listTodayFlashcards: (deckRef: DeckRef) => Promise<Flashcard[]>
+  listTodayFlashcardsForFile: (fileRef: FileRef) => Promise<Flashcard[]>
   flushOperations: (repositorySlugs: string[]) => Promise<void>
   reviewFlashcard: (deckRef: DeckRef, flashcard: Flashcard, review: Review) => Promise<Flashcard>
   runHooks: (note: Note) => Promise<CommandExecution>

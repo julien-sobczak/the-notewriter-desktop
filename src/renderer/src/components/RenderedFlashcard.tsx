@@ -9,16 +9,17 @@ import {
   IconProps
 } from '@phosphor-icons/react'
 import { Flashcard, Review } from '@renderer/Model'
-import { feedbackToConfidence } from '@renderer/helpers/srs'
+import { feedbackReviewToConfidence, feedbackTestToConfidence } from '@renderer/helpers/srs'
 import Markdown from './Markdown'
 
 type RenderedFlashcardProps = {
   flashcard: Flashcard
+  mode?: 'review' | 'test'
   intervalFn?: (flashcard: Flashcard, feedback: string) => string // Optional function to describe interval based on feedback
   onReviewed?: (review: Review) => void
 }
 
-function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashcardProps) {
+function RenderedFlashcard({ flashcard, mode = 'review', intervalFn, onReviewed }: RenderedFlashcardProps) {
   const [startTime] = useState<Date>(new Date())
   const [revealed, setRevealed] = useState<boolean>(false)
   const [confirmationPending, setConfirmationPending] = useState<string>('') // "too-hard" or "too-easy". Empty means no confirmation is needed.
@@ -28,7 +29,8 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
     const completionTime = new Date()
 
     // Map feedback strings to confidence numbers (0-100)
-    const confidence = feedbackToConfidence[feedback]
+    const confidenceMap = mode === 'test' ? feedbackTestToConfidence : feedbackReviewToConfidence
+    const confidence = confidenceMap[feedback]
     if (confidence === undefined) {
       throw new Error(`Unknown feedback type: ${feedback}`)
     }
@@ -59,10 +61,16 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
       if (!revealed && (e.key === 'Enter' || e.key === ' ')) {
         setRevealed(true)
       } else if (revealed && !confirmationPending) {
-        if (e.key === '1') onAnswered('hard')
-        if (e.key === '2') onAnswered('again')
-        if (e.key === '3') onAnswered('good')
-        if (e.key === '4') onAnswered('easy')
+        if (mode === 'test') {
+          if (e.key === '1') onAnswered('wrong')
+          if (e.key === '2') onAnswered('partially-correct')
+          if (e.key === '3') onAnswered('correct')
+        } else {
+          if (e.key === '1') onAnswered('hard')
+          if (e.key === '2') onAnswered('again')
+          if (e.key === '3') onAnswered('good')
+          if (e.key === '4') onAnswered('easy')
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -92,7 +100,32 @@ function RenderedFlashcard({ flashcard, intervalFn, onReviewed }: RenderedFlashc
               <ShowIcon />
             </button>
           )}
-          {revealed && (
+          {revealed && mode === 'test' && (
+            <>
+              <button
+                type="button"
+                onClick={() => onAnswered('wrong')}
+                className="FeedbackButton FeedbackTooHard"
+              >
+                Wrong
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswered('partially-correct')}
+                className="FeedbackButton FeedbackAgain"
+              >
+                Partially Correct
+              </button>
+              <button
+                type="button"
+                onClick={() => onAnswered('correct')}
+                className="FeedbackButton FeedbackTooEasy"
+              >
+                Correct
+              </button>
+            </>
+          )}
+          {revealed && mode === 'review' && (
             <>
               <button
                 type="button"
