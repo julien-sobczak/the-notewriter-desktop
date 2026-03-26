@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react'
 import { generateOid, generateOidFromString } from '@renderer/helpers/oid'
 import {
-  HandWavingIcon as HiIcon,
   FileSearchIcon as BrowserIcon,
   DesktopIcon,
   NotebookIcon as JournalIcon,
@@ -38,7 +37,6 @@ import {
   Goto,
   FileRef
 } from '@renderer/Model'
-import Hi from './Hi'
 import Bookmarker from './Bookmarker'
 import Planner from './Planner'
 import Stats from './Stats'
@@ -386,12 +384,6 @@ function CommandMenu({
           <Command.Empty>No results found.</Command.Empty>
 
           <Command.Group heading="Commands">
-            {!page && (
-              <Command.Item onSelect={() => handleActivitySelected('hi')}>Hello</Command.Item>
-            )}
-            {!page && (
-              <Command.Item onSelect={() => handleActivitySelected('hi')}>Bye</Command.Item>
-            )}
             <Command.Separator />
 
             {!page && (
@@ -615,8 +607,8 @@ function Main() {
   const [expandSearchResults, setExpandSearchResults] = useState<boolean>(false) // display the search panel in large
 
   // Activities
-  const [activity, setActivity] = useState<string>('desktop')
-  const previousActivity = useRef<string>('desktop')
+  const [activity, setActivity] = useState<string>('browser')
+  const previousActivity = useRef<string>('browser')
   // Use this method to memorize the last activity (useful for example to come back when you left after the zen mode)
   const switchActivity = (newActivity: string) => {
     previousActivity.current = activity
@@ -811,7 +803,7 @@ function Main() {
     if (previousActivity.current) {
       setActivity(previousActivity.current)
     } else {
-      switchActivity('hi')
+      switchActivity('browser')
     }
   }
 
@@ -893,11 +885,6 @@ function Main() {
   }
 
   const activities: Activity[] = [
-    {
-      slug: 'hi',
-      name: 'Hi',
-      icon: HiIcon
-    },
     {
       slug: 'bookmarker',
       name: 'Bookmarker',
@@ -1151,9 +1138,6 @@ function Main() {
             ))}
           </div>
         )}
-
-        {/* Hi */}
-        {activity === 'hi' && <Hi />}
 
         {/* Bookmarks */}
         {activity === 'bookmarker' && <Bookmarker bookmark={selectedBookmark} />}
