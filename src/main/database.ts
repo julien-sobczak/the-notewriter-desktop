@@ -1181,6 +1181,8 @@ export default class DatabaseManager {
         WHERE note.note_type='Flashcard'
         AND (flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}')
         AND ${queryPart2sql(deckConfig.query)}
+        ORDER BY flashcard.due_at ASC
+        LIMIT ${deckConfig.maxFlashcardsPerDay}
 
         UNION
 
@@ -1203,6 +1205,7 @@ export default class DatabaseManager {
         WHERE note.note_type='Flashcard'
         AND (flashcard.due_at IS NULL OR flashcard.due_at = '')
         AND ${queryPart2sql(deckConfig.query)}
+        LIMIT ${deckConfig.newFlashcardsPerDay}
         `
 
       db.all(sql, (err: any, rows: any[]) => {

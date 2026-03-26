@@ -21,6 +21,29 @@ type RenderedFileTabProps = {
 
 type FileTabView = 'list' | 'desk' | 'test' | 'score'
 
+type TestScore = {
+  total: number
+  sumConfidence: number
+}
+
+function RenderedScore({ score, onClose }: { score: TestScore; onClose: () => void }) {
+  const scorePercent = score.total > 0 ? Math.round(score.sumConfidence / score.total) : 0
+  const message =
+    scorePercent >= 75
+      ? `Congratulations! You got ${scorePercent}%`
+      : `Need to study... You got ${scorePercent}%`
+  return (
+    <div>
+      <Actions>
+        <Action icon={<CloseIcon />} title="Close" onClick={onClose} />
+      </Actions>
+      <div className="TestScore">
+        <p>{message}</p>
+      </div>
+    </div>
+  )
+}
+
 function RenderedFileTab(props: RenderedFileTabProps) {
   const { config } = useContext(ConfigContext)
 
@@ -32,7 +55,7 @@ function RenderedFileTab(props: RenderedFileTabProps) {
   const [desks, setDesks] = useState<DeskWithContext[]>([])
   const [selectedDesk, setSelectedDesk] = useState<DeskWithContext | null>(null)
   const [testFlashcards, setTestFlashcards] = useState<Flashcard[]>([])
-  const [testScore, setTestScore] = useState<{ total: number; sumConfidence: number }>({
+  const [testScore, setTestScore] = useState<TestScore>({
     total: 0,
     sumConfidence: 0
   })
@@ -82,9 +105,6 @@ function RenderedFileTab(props: RenderedFileTabProps) {
     setViewMode('score')
   }
 
-  const scorePercent =
-    testScore.total > 0 ? Math.round(testScore.sumConfidence / testScore.total) : 0
-
   const effectiveViewMode = viewMode === 'desk' && selectedDesk ? 'desk' : viewMode
 
   if (viewMode === 'test') {
@@ -99,20 +119,7 @@ function RenderedFileTab(props: RenderedFileTabProps) {
   }
 
   if (viewMode === 'score') {
-    const message =
-      scorePercent >= 75
-        ? `Congratulations! You got ${scorePercent}%`
-        : `Need to study... You got ${scorePercent}%`
-    return (
-      <div>
-        <Actions>
-          <Action icon={<CloseIcon />} title="Close" onClick={() => setViewMode('list')} />
-        </Actions>
-        <div className="TestScore">
-          <p>{message}</p>
-        </div>
-      </div>
-    )
+    return <RenderedScore score={testScore} onClose={() => setViewMode('list')} />
   }
 
   return (
