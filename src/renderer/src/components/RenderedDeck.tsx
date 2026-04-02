@@ -1,9 +1,9 @@
 import { useEffect, useContext, useState } from 'react'
 import { DeckRef, Flashcard, Review } from '@renderer/Model'
 import Loader from './Loader'
-import RenderedStudy from './RenderedFlashcards'
+import RenderedStudy from './RenderedStudy'
 import { ConfigContext } from '@renderer/ConfigContext'
-import { NoteWriterSRS } from '@renderer/helpers/srs'
+import { intervalFn, NoteWriterSRS } from '@renderer/helpers/srs'
 
 // Delay to consider a flashcard as due today
 const DayCutoff = 1000 * 60 * 60 // 1 hour, used to determine if a flashcard is due today
@@ -80,6 +80,7 @@ function RenderedDeck({ deckRef, onQuit = () => { } }: RenderedDeckProps) {
     <RenderedStudy
       flashcards={flashcards}
       mode="review"
+      intervalFn={intervalFn(deckConfig)}
       onReview={onFlashcardReviewed}
       onQuit={() => onQuit(deckRef)}
     />

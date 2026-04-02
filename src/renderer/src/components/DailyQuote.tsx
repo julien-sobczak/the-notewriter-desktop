@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react'
 import { Note, Query, QueryConfigWithContext } from '@renderer/Model'
 import FullScreenNote from './FullScreenNote'
 import useKeyDown from '@renderer/helpers/useKeyDown'
-import { ConfigContext, selectedDailyQuotes } from '@renderer/ConfigContext'
+import { ConfigContext, selectedQueriesDailyQuote } from '@renderer/ConfigContext'
 
 // No daily quote query can be defined in configuration, or no quote found by the query.
 // We fallback to a memento mori quote.
@@ -35,7 +35,7 @@ function DailyQuote({ onClose }: any) {
   const [dailyQuote, setDailyQuote] = useState<Note | undefined>(undefined)
 
   useEffect(() => {
-    const queries = selectedDailyQuotes(config)
+    const queries = selectedQueriesDailyQuote(config)
 
     if (queries.length === 0) {
       // Return a fake note with a Marcus Aurelius quote

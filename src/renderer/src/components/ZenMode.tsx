@@ -7,10 +7,10 @@ import {
   SmileyXEyesIcon,
   StopIcon
 } from '@phosphor-icons/react'
-import { Note, Query, QueryResult } from '@renderer/Model'
+import { Note, Query, QueryConfigWithContext, QueryResult } from '@renderer/Model'
 import FullScreenNote from './FullScreenNote'
 import { Action, Actions, Indicator } from './Actions'
-import { ConfigContext } from '@renderer/ConfigContext'
+import { ConfigContext, selectedQueriesZen } from '@renderer/ConfigContext'
 import useKeyDown from '@renderer/helpers/useKeyDown'
 
 function getRandomInt() {
@@ -28,8 +28,9 @@ type ZenModeProps = {
  * These notes are rendered in a minimal style with minimal context present
  * in the footer.
  */
-function ZenMode({ onClose = () => {} }: ZenModeProps) {
+function ZenMode({ onClose = () => { } }: ZenModeProps) {
   // Data management
+  const [queries, setQueries] = useState<QueryConfigWithContext[]>([])
   const [queriesLoaded, setQueriesLoaded] = useState<boolean>(false)
   const [notes, setNotes] = useState<Note[]>([])
   const [index, setIndex] = useState<number>(0) // 0 <= index < note.length
@@ -55,35 +56,31 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
 
   // Load notes based on configuration
   useEffect(() => {
-    // Get zen queries from repository configs
-    const zenQueries: Query[] = []
-    const selectedRepos = config.config.repositories.filter((repo) => repo.selected)
+    const zenQueries = selectedQueriesZen(config)
+    console.debug('Zen mode: loaded zen queries from config', zenQueries) // FIXME remove
+    setQueries(selectedQueriesZen(config))
+    setQueriesLoaded(true)
+  }, [config])
 
-    for (const repo of selectedRepos) {
-      const repoConfig = config.repositories[repo.slug]
-      if (repoConfig?.queries) {
-        for (const [, queryConfig] of Object.entries(repoConfig.queries)) {
-          if (queryConfig.tags && queryConfig.tags.includes('zen')) {
-            zenQueries.push({
-              query: queryConfig.query,
-              repositories: [repo.slug],
-              deskOid: undefined,
-              blockOid: undefined,
-              limit: 1000,
-              shuffle: true
-            })
-          }
-        }
-      }
-    }
-
-    if (zenQueries.length === 0) {
-      setQueriesLoaded(true)
+  useEffect(() => {
+    console.log('Zen mode: queries loaded', queries) // FIXME remove
+    if (queries.length === 0) {
       return
     }
 
+    // Convert queries into Query objects
+    const queriesToSearch: Query[] = queries.map((queryConfig) => ({
+      query: queryConfig.query || '',
+      repositories: [queryConfig.repositorySlug],
+      blockOid: undefined,
+      deskOid: undefined,
+      // Return a limited number of notes for every configured query
+      limit: 50,
+      shuffle: true
+    }))
+
     const msearch = async () => {
-      const results: QueryResult[] = await window.api.msearch(zenQueries)
+      const results: QueryResult[] = await window.api.msearch(queriesToSearch)
       setQueriesLoaded(true)
       const foundNotes: Note[] = []
       for (const result of results) {
@@ -92,7 +89,7 @@ function ZenMode({ onClose = () => {} }: ZenModeProps) {
       setNotes(foundNotes)
     }
     msearch()
-  }, [config])
+  }, [queries])
 
   // Exit Zen Mode on pressing ESC
   useKeyDown(() => {

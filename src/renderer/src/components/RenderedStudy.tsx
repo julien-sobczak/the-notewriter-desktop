@@ -7,6 +7,7 @@ import { Action, Actions, Indicator } from './Actions'
 type RenderedStudyProps = {
   flashcards: Flashcard[]
   mode: 'review' | 'test'
+  intervalFn?: (flashcard: Flashcard, feedback: string) => string // Optional function to describe interval based on feedback
   onReview?: (flashcard: Flashcard, review: Review) => void
   onQuit?: () => void
 }
@@ -14,8 +15,9 @@ type RenderedStudyProps = {
 function RenderedStudy({
   flashcards,
   mode,
-  onReview = () => {},
-  onQuit = () => {}
+  intervalFn = () => '',
+  onReview = () => { },
+  onQuit = () => { }
 }: RenderedStudyProps) {
   const [flashcardIndex, setFlashcardIndex] = useState<number>(0)
 
@@ -62,6 +64,7 @@ function RenderedStudy({
         <RenderedFlashcard
           flashcard={flashcards[flashcardIndex]}
           mode={mode}
+          intervalFn={intervalFn}
           onReviewed={onFlashcardReviewed}
         />
       </div>

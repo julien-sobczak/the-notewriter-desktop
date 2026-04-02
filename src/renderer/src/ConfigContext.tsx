@@ -249,10 +249,18 @@ export function selectedQueriesMatchingTag(
   return queries
 }
 
-export function selectedInspirations(configContext: ConfigContextType): QueryConfigWithContext[] {
+export function selectedQueriesInspiration(
+  configContext: ConfigContextType
+): QueryConfigWithContext[] {
   return selectedQueriesMatchingTag(configContext, 'inspiration')
 }
 
-export function selectedDailyQuotes(configContext: ConfigContextType): QueryConfigWithContext[] {
+export function selectedQueriesDailyQuote(
+  configContext: ConfigContextType
+): QueryConfigWithContext[] {
   return selectedQueriesMatchingTag(configContext, 'daily-quote')
+}
+
+export function selectedQueriesZen(configContext: ConfigContextType): QueryConfigWithContext[] {
+  return selectedQueriesMatchingTag(configContext, 'zen')
 }

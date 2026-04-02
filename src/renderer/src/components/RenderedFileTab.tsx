@@ -11,7 +11,7 @@ import NoteContainer from './NoteContainer'
 import { Action, Actions } from './Actions'
 import { ConfigContext, getDesksForFile } from '@renderer/ConfigContext'
 import RenderedDeskStatic from './RenderedDeskStatic'
-import RenderedStudy from './RenderedFlashcards'
+import RenderedStudy from './RenderedStudy'
 
 type RenderedFileTabProps = {
   title: string
@@ -109,25 +109,29 @@ function RenderedFileTab(props: RenderedFileTabProps) {
 
   if (viewMode === 'test') {
     return (
-      <RenderedStudy
-        flashcards={testFlashcards}
-        mode="test"
-        onReview={onTestReview}
-        onQuit={onTestQuit}
-      />
+      <div className="FullScreen">
+        <RenderedStudy
+          flashcards={testFlashcards}
+          mode="test"
+          onReview={onTestReview}
+          onQuit={onTestQuit}
+        />
+      </div>
     )
   }
 
   if (viewMode === 'score') {
-    return <RenderedScore score={testScore} onClose={() => setViewMode('list')} />
+    return (
+      <div className="FullScreen">
+        <RenderedScore score={testScore} onClose={() => setViewMode('list')} />
+      </div>
+    )
   }
 
   return (
     <div>
       <Actions>
-        {hasFlashcards && (
-          <Action icon={<StudyIcon />} title="Test Yourself" onClick={startTest} />
-        )}
+        {hasFlashcards && <Action icon={<StudyIcon />} title="Test Yourself" onClick={startTest} />}
         <Action icon={<ListIcon />} title="List View" onClick={() => setViewMode('list')} />
         <Action icon={<DesktopIcon />} title="Desk View" onClick={() => setViewMode('desk')} />
       </Actions>

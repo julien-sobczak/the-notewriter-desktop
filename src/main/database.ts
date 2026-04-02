@@ -1132,8 +1132,10 @@ export default class DatabaseManager {
         SELECT
           COUNT(CASE WHEN flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}' THEN 1 END) as count_due,
           COUNT(CASE WHEN flashcard.due_at IS NULL OR flashcard.due_at = '' THEN 1 END) as count_new
-        FROM note_fts JOIN note on note.oid = note_fts.oid
-        JOIN flashcard on flashcard.note_oid = note.oid WHERE note.note_type='Flashcard'`
+        FROM flashcard JOIN note on flashcard.note_oid = note.oid
+        WHERE 1=1`
+      // No need to join note_fts as deck queries as not expected
+      // to contain text to match, but only attributes/tags conditions
       const whereContent = queryPart2sql(deckConfig.query)
       if (whereContent) {
         sql += ` AND ${whereContent}`
@@ -1163,49 +1165,81 @@ export default class DatabaseManager {
     return new Promise<Flashcard[]>((resolve, reject) => {
       const sql = `
         SELECT
-          flashcard.oid,
-          flashcard.file_oid,
-          flashcard.note_oid,
-          flashcard.relative_path,
-          flashcard.slug,
-          flashcard.short_title,
-          flashcard.tags,
-          note.attributes,
-          flashcard.front,
-          flashcard.back,
-          flashcard.due_at,
-          flashcard.studied_at,
-          flashcard.settings
-        FROM note_fts JOIN note on note.oid = note_fts.oid
-        JOIN flashcard on flashcard.note_oid = note.oid
-        WHERE note.note_type='Flashcard'
-        AND (flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}')
-        AND ${queryPart2sql(deckConfig.query)}
-        ORDER BY flashcard.due_at ASC
-        LIMIT ${deckConfig.maxFlashcardsPerDay}
+          oid,
+          file_oid,
+          note_oid,
+          relative_path,
+          slug,
+          short_title,
+          tags,
+          attributes,
+          front,
+          back,
+          due_at,
+          studied_at,
+          settings
+        FROM (
+          SELECT
+            flashcard.oid,
+            flashcard.file_oid,
+            flashcard.note_oid,
+            flashcard.relative_path,
+            flashcard.slug,
+            flashcard.short_title,
+            flashcard.tags,
+            note.attributes,
+            flashcard.front,
+            flashcard.back,
+            flashcard.due_at,
+            flashcard.studied_at,
+            flashcard.settings
+          FROM note_fts JOIN note on note.oid = note_fts.oid
+          JOIN flashcard on flashcard.note_oid = note.oid
+          WHERE note.note_type='Flashcard'
+          AND (flashcard.due_at IS NOT NULL AND flashcard.due_at < '${calculateDueDate()}')
+          AND ${queryPart2sql(deckConfig.query)}
+          ORDER BY flashcard.due_at ASC
+          LIMIT ${deckConfig.maxFlashcardsPerDay}
+        )
 
         UNION
 
         SELECT
-          flashcard.oid,
-          flashcard.file_oid,
-          flashcard.note_oid,
-          flashcard.relative_path,
-          flashcard.slug,
-          flashcard.short_title,
-          flashcard.tags,
-          note.attributes,
-          flashcard.front,
-          flashcard.back,
-          flashcard.due_at,
-          flashcard.studied_at,
-          flashcard.settings
-        FROM note_fts JOIN note on note.oid = note_fts.oid
-        JOIN flashcard on flashcard.note_oid = note.oid
-        WHERE note.note_type='Flashcard'
-        AND (flashcard.due_at IS NULL OR flashcard.due_at = '')
-        AND ${queryPart2sql(deckConfig.query)}
-        LIMIT ${deckConfig.newFlashcardsPerDay}
+          oid,
+          file_oid,
+          note_oid,
+          relative_path,
+          slug,
+          short_title,
+          tags,
+          attributes,
+          front,
+          back,
+          due_at,
+          studied_at,
+          settings
+        FROM (
+          SELECT
+            flashcard.oid,
+            flashcard.file_oid,
+            flashcard.note_oid,
+            flashcard.relative_path,
+            flashcard.slug,
+            flashcard.short_title,
+            flashcard.tags,
+            note.attributes,
+            flashcard.front,
+            flashcard.back,
+            flashcard.due_at,
+            flashcard.studied_at,
+            flashcard.settings
+          FROM note_fts JOIN note on note.oid = note_fts.oid
+          JOIN flashcard on flashcard.note_oid = note.oid
+          WHERE note.note_type='Flashcard'
+          AND (flashcard.due_at IS NULL OR flashcard.due_at = '')
+          AND ${queryPart2sql(deckConfig.query)}
+          LIMIT ${deckConfig.newFlashcardsPerDay}
+        )
         `
 
       db.all(sql, (err: any, rows: any[]) => {

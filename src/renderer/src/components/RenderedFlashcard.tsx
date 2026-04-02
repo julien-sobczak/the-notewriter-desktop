@@ -6,6 +6,7 @@ import {
   ThumbsDownIcon as TooHardIcon,
   ThumbsUpIcon as TooEasyIcon,
   CheckFatIcon as ConfirmIcon,
+  WarningCircleIcon as AlmostIcon,
   IconProps
 } from '@phosphor-icons/react'
 import { Flashcard, Review } from '@renderer/Model'
@@ -19,7 +20,12 @@ type RenderedFlashcardProps = {
   onReviewed?: (review: Review) => void
 }
 
-function RenderedFlashcard({ flashcard, mode = 'review', intervalFn, onReviewed }: RenderedFlashcardProps) {
+function RenderedFlashcard({
+  flashcard,
+  mode = 'review',
+  intervalFn,
+  onReviewed
+}: RenderedFlashcardProps) {
   const [startTime] = useState<Date>(new Date())
   const [revealed, setRevealed] = useState<boolean>(false)
   const [confirmationPending, setConfirmationPending] = useState<string>('') // "too-hard" or "too-easy". Empty means no confirmation is needed.
@@ -41,7 +47,7 @@ function RenderedFlashcard({ flashcard, mode = 'review', intervalFn, onReviewed 
       durationInMs: completionTime.getTime() - startTime.getTime(),
       completedAt: completionTime.toISOString(),
       dueAt: completionTime.toISOString(),
-      algorithm: 'nt0',
+      algorithm: 'nt-boring',
       settings: flashcard.settings
     })
     setConfirmationPending('')
@@ -107,21 +113,21 @@ function RenderedFlashcard({ flashcard, mode = 'review', intervalFn, onReviewed 
                 onClick={() => onAnswered('wrong')}
                 className="FeedbackButton FeedbackTooHard"
               >
-                Wrong
+                <TooHardIcon />
               </button>
               <button
                 type="button"
                 onClick={() => onAnswered('partially-correct')}
                 className="FeedbackButton FeedbackAgain"
               >
-                Partially Correct
+                <AlmostIcon />
               </button>
               <button
                 type="button"
                 onClick={() => onAnswered('correct')}
                 className="FeedbackButton FeedbackTooEasy"
               >
-                Correct
+                <ConfirmIcon />
               </button>
             </>
           )}

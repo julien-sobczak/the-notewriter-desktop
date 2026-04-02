@@ -135,7 +135,7 @@ function createWindow(): void {
       // Impossible to reference local files in <img src="file://" /> with the default settings.
       // See https://stackoverflow.com/questions/61623156/electron-throws-not-allowed-to-load-local-resource-when-using-showopendialog
       // A non-optimal solution is to disable the security:
-      webSecurity: false, // TODO use a custom protocol instead
+      webSecurity: false, // TODO use a custom protocol instead FIXME already done
 
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -522,6 +522,10 @@ app.whenReady().then(async () => {
     await Promise.all(statsPromises)
 
     console.debug(`Found ${decks.length} decks for repositories ${repositorySlugs}`)
+
+    // Sort decks by name
+    decks.sort((a, b) => a.name.localeCompare(b.name))
+
     return decks
   })
   ipcMain.handle('list-today-flashcards', async (_event, deckRef: DeckRef) => {
@@ -580,8 +584,8 @@ app.whenReady().then(async () => {
     'review-flashcard',
     async (_event, deckRef: DeckRef, flashcard: Flashcard, review: Review): Promise<Flashcard> => {
       const deckConfig = config.mustGetDeckConfig(deckRef)
-      const algorithmName = deckConfig.algorithm || 'nt-0'
-      if (algorithmName !== 'nt-0') {
+      const algorithmName = deckConfig.algorithm || 'nt-boring'
+      if (algorithmName !== 'nt-boring') {
         // Only the default algorithm is implemented
         throw new Error(`Algorithm ${algorithmName} is not supported yet`)
       }
