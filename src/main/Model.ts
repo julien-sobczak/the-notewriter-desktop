@@ -360,6 +360,10 @@ export interface Flashcard {
   oidFile: string
   oidNote: string
 
+  // Enriched information about the repository where the flashcard comes from
+  repositorySlug: string
+  repositoryPath: string
+
   // Note-specific attributes
   relativePath: string
   slug: string
@@ -370,6 +374,9 @@ export interface Flashcard {
   // Content in Markdown
   front: string
   back: string
+
+  // Medias/Blobs referenced by the flashcard
+  medias: Media[]
 
   // SRS
   dueAt: string // ISO Format (TODO use type Date instead?), empty if never studied

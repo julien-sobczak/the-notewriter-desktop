@@ -11,6 +11,8 @@ import {
 } from '@phosphor-icons/react'
 import { Flashcard, Review } from '@renderer/Model'
 import { feedbackReviewToConfidence, feedbackTestToConfidence } from '@renderer/helpers/srs'
+import { formatContent } from '@renderer/helpers/markdown'
+import NotFound from '../assets/404.svg'
 import Markdown from './Markdown'
 
 type RenderedFlashcardProps = {
@@ -92,9 +94,9 @@ function RenderedFlashcard({
   return (
     <div className="RenderedFlashcard">
       <div className="Content">
-        <Markdown md={flashcard.front} />
+        <Markdown md={formatContent(flashcard, flashcard.front, [], NotFound)} />
         {revealed && <hr />}
-        {revealed && <Markdown md={flashcard.back} />}
+        {revealed && <Markdown md={formatContent(flashcard, flashcard.back, [], NotFound)} />}
       </div>
       <div className="Source">
         {/* IMPROVEMENT Add an icon to edit the note in $EDITOR */}({flashcard.shortTitle})
