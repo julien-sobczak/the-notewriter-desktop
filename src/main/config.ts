@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs'
+import { spawn } from 'child_process'
 
 import { EditorConfig, RepositoryRefConfig, RepositoryConfig, DeckRef, DeckConfig } from './Model'
 import { normalizePath } from './util'
@@ -78,7 +79,7 @@ export default class ConfigManager {
     instance.repositoryConfigs = {}
 
     for (const repositoryConfig of instance.editorConfig.repositories) {
-      instance.registerRepository(repositoryConfig)
+      await instance.registerRepository(repositoryConfig)
     }
 
     return instance
@@ -115,7 +116,7 @@ export default class ConfigManager {
 
     console.log(`Loading repositories`, instance.editorConfig)
     for (const repositoryConfig of instance.editorConfig.repositories) {
-      instance.registerRepository(repositoryConfig)
+      await instance.registerRepository(repositoryConfig)
     }
 
     return instance
@@ -141,9 +142,51 @@ export default class ConfigManager {
   }
 
   // Read repository configuration from .nt/.config.json and add it to registered repositories
-  registerRepository(repository: RepositoryRefConfig): this {
+  async registerRepository(repository: RepositoryRefConfig): Promise<this> {
     const repositoryPath = normalizePath(repository.path)
     const repositoryConfigPath = path.join(repositoryPath, '.nt/.config.json')
+    const jsonnetConfigPath = path.join(repositoryPath, '.nt/config.jsonnet')
+
+    // If config.jsonnet exists and is newer than .config.json, regenerate .config.json
+    if (fs.existsSync(jsonnetConfigPath)) {
+      const jsonnetStat = fs.statSync(jsonnetConfigPath)
+      const configStat = fs.existsSync(repositoryConfigPath)
+        ? fs.statSync(repositoryConfigPath)
+        : null
+
+      if (!configStat || jsonnetStat.mtimeMs > configStat.mtimeMs) {
+        console.log(
+          `${repositoryConfigPath} is outdated, running 'nt version' to regenerate it...`
+        )
+        await new Promise<void>((resolve, reject) => {
+          const subprocess = spawn('nt', ['version'], {
+            cwd: repositoryPath,
+            env: {
+              ...process.env,
+              NT_HOME: '' // Avoid propagating NT_HOME also used by the-notewriter-desktop
+            },
+            stdio: 'pipe'
+          })
+
+          subprocess.on('close', (exitCode) => {
+            if (exitCode !== 0) {
+              reject(
+                new Error(
+                  `'nt version' exited with code ${exitCode}. Check .nt/config.jsonnet for syntax errors.`
+                )
+              )
+            } else {
+              resolve()
+            }
+          })
+
+          subprocess.on('error', (error) => {
+            reject(new Error(`Failed to run 'nt version': ${error.message}`))
+          })
+        })
+      }
+    }
+
     if (!fs.existsSync(repositoryConfigPath)) {
       throw new Error(`Missing configuration ${repositoryConfigPath}`)
     }
