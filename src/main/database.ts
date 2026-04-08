@@ -50,11 +50,11 @@ function extractMediaRelativePathsFromContent(content: string): string[] {
   return results
 }
 
-function extractMediaRelativePaths(note: Note): string[] {
+function extractMediaRelativePathsFromNote(note: Note): string[] {
   return extractMediaRelativePathsFromContent(note.body)
 }
 
-function extractFlashcardMediaRelativePaths(flashcard: Flashcard): string[] {
+function extractMediaRelativePathsFromFlashcard(flashcard: Flashcard): string[] {
   return [
     ...extractMediaRelativePathsFromContent(flashcard.front),
     ...extractMediaRelativePathsFromContent(flashcard.back)
@@ -223,6 +223,7 @@ export default class DatabaseManager {
               kind: row.kind,
               extension: row.extension,
               relativePath: row.relative_path,
+              repositoryPath: this.#getRepositoryPath(datasourceName),
               blobs: [
                 {
                   oid: row.blobOid,
@@ -285,6 +286,7 @@ export default class DatabaseManager {
               kind: row.kind,
               extension: row.extension,
               relativePath: row.relative_path,
+              repositoryPath: this.#getRepositoryPath(datasourceName),
               blobs: [
                 {
                   oid: row.blobOid,
@@ -328,7 +330,7 @@ export default class DatabaseManager {
         // Iterate over found notes and search for potential referenced medias
         for (let i = 0; i < rows.length; i++) {
           const note = this.#rowToNote(rows[i], datasourceName)
-          const noteMediaRelativePaths = extractMediaRelativePaths(note)
+          const noteMediaRelativePaths = extractMediaRelativePathsFromNote(note)
           notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths)
           mediaRelativePaths.push(...noteMediaRelativePaths)
           notes.push(note)
@@ -820,7 +822,7 @@ export default class DatabaseManager {
           return
         }
         const note = this.#rowToNote(row, datasourceName)
-        const mediaRelativePaths = extractMediaRelativePaths(note)
+        const mediaRelativePaths = extractMediaRelativePathsFromNote(note)
 
         // Append found medias on note
         const foundMedias = await this.searchMediasByRelativePaths(
@@ -904,7 +906,7 @@ export default class DatabaseManager {
           return
         }
         const note = this.#rowToNote(row, datasourceName)
-        const mediaRelativePaths = extractMediaRelativePaths(note)
+        const mediaRelativePaths = extractMediaRelativePathsFromNote(note)
 
         // Append found medias on note
         const foundMedias = await this.searchMediasByRelativePaths(
@@ -982,7 +984,7 @@ export default class DatabaseManager {
           // Iterate over found notes and search for potential referenced medias
           for (let i = 0; i < rows.length; i++) {
             const note = this.#rowToNote(rows[i], datasourceName)
-            const noteMediaRelativePaths = extractMediaRelativePaths(note)
+            const noteMediaRelativePaths = extractMediaRelativePathsFromNote(note)
             notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths)
             mediaRelativePaths.push(...noteMediaRelativePaths)
             notes.push(note)
@@ -1708,7 +1710,7 @@ export default class DatabaseManager {
     const notesMediaRelativePaths = new Map<string, string[]>()
     for (let i = 0; i < notes.length; i++) {
       const note = notes[i]
-      const noteMediaRelativePaths = extractMediaRelativePaths(note)
+      const noteMediaRelativePaths = extractMediaRelativePathsFromNote(note)
       notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths)
       mediaRelativePaths.push(...noteMediaRelativePaths)
     }
@@ -1746,7 +1748,7 @@ export default class DatabaseManager {
     const flashcardsMediaRelativePaths = new Map<string, string[]>()
     for (let i = 0; i < flashcards.length; i++) {
       const flashcard = flashcards[i]
-      const flashcardMediaRelativePaths = extractFlashcardMediaRelativePaths(flashcard)
+      const flashcardMediaRelativePaths = extractMediaRelativePathsFromFlashcard(flashcard)
       flashcardsMediaRelativePaths.set(flashcard.oid, flashcardMediaRelativePaths)
       mediaRelativePaths.push(...flashcardMediaRelativePaths)
     }

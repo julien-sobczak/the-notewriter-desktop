@@ -1,15 +1,12 @@
 import { Media, Blob } from '@renderer/Model'
+import NotFound from '../assets/404.svg'
 
-export interface WithMedias {
-  medias: Media[]
-  repositoryPath: string
-}
+const missingMediaSrc = NotFound
 
-export function formatContent(
-  holder: WithMedias,
+export function replaceMediasByLinks(
   content: string,
-  tags: string[] = [],
-  missingMediaSrc = ''
+  medias: Media[],
+  mediaTagsPreferences: string[] = []
 ): string {
   // Regex to locate media references
   const reMedias: RegExp = /<media relative-path="(.*)".*\/>/g
@@ -17,7 +14,7 @@ export function formatContent(
 
   // Create a map of all medias for quick access
   const mediasByRelativePath = new Map<string, Media>()
-  holder.medias.forEach((media) => mediasByRelativePath.set(media.relativePath, media))
+  medias.forEach((media) => mediasByRelativePath.set(media.relativePath, media))
 
   let result = content
 
@@ -74,14 +71,16 @@ export function formatContent(
         // Ignore for now the blob containing the first frame of videos
         continue
       }
-      if (tags.every((tag) => blob.tags.includes(tag))) {
+      if (mediaTagsPreferences.every((tag) => blob.tags.includes(tag))) {
         // Found a potential blob
         foundBlob = blob
         break
       }
     }
     if (!foundBlob) {
-      console.warn(`Missing blob for media ${relativePath} matching "${tags.join(',')}"`)
+      console.warn(
+        `Missing blob for media ${relativePath} matching "${mediaTagsPreferences.join(',')}"`
+      )
 
       // Fallback to the first blob
       if (media.blobs.length === 0) {
@@ -97,7 +96,7 @@ export function formatContent(
 
     const blob = foundBlob
     const prefix = blob.oid.substring(0, 2)
-    const blobPath = `${holder.repositoryPath}/.nt/objects/${prefix}/${blob.oid}.blob`
+    const blobPath = `${media.repositoryPath}/.nt/objects/${prefix}/${blob.oid}.blob`
 
     console.debug(`Found blob ${foundBlob.oid} for media ${relativePath} at path ${blobPath}`)
 

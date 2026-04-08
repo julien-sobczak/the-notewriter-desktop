@@ -272,6 +272,7 @@ export interface Blob {
 export interface Media {
   oid: string
   relativePath: string
+  repositoryPath: string
   kind: string
   extension: string
   blobs: Blob[]

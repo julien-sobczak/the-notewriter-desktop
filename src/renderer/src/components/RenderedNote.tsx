@@ -17,7 +17,6 @@ import {
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
 import { Note, Blob, Bookmark, extractSourceURL, ListItem } from '@renderer/Model'
-import NotFound from '../assets/404.svg'
 import NoteType from './NoteType'
 import Markdown from './Markdown'
 import RenderedMetadata, { RenderedAttributes, RenderedTags } from './RenderedMetadata'
@@ -25,10 +24,10 @@ import { Action, Actions, Subaction } from './Actions'
 import HoveredNote from './HoveredNote'
 import { ConfigContext } from '@renderer/ConfigContext'
 import { capitalize } from '@renderer/helpers/strings'
-import { formatContent as formatContentHelper } from '@renderer/helpers/markdown'
+import { replaceMediasByLinks } from '@renderer/helpers/markdown'
 
 function formatContent(note: Note, tags: string[] = []): string {
-  return formatContentHelper(note, note.body, tags, NotFound)
+  return replaceMediasByLinks(note.body, note.medias, tags)
 }
 
 interface LastPosition {
