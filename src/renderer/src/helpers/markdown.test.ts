@@ -1,25 +1,20 @@
-import { Media } from '@renderer/Model'
 import { replaceMediasByLinks } from './markdown'
-
-function makeMedias(medias: Media[] = []): Media[] {
-  return medias
-}
 
 describe('replaceMediasByLinks', () => {
   it('returns content unchanged when there are no media tags', () => {
     const content = '# Hello\n\nSome text without medias.'
-    expect(replaceMediasByLinks(content, makeMedias())).toBe(content)
+    expect(replaceMediasByLinks(content, [])).toBe(content)
   })
 
   it('replaces a missing media tag with a missing image placeholder', () => {
     const content = '<media relative-path="images/photo.jpg" />'
-    const result = replaceMediasByLinks(content, makeMedias())
+    const result = replaceMediasByLinks(content, [])
     expect(result).toContain('<img')
     expect(result).toContain('class="missing"')
   })
 
   it('renders a picture media as an <img> tag', () => {
-    const medias = makeMedias([
+    const medias = [
       {
         oid: 'abcdef1234567890',
         relativePath: 'images/photo.jpg',
@@ -35,7 +30,7 @@ describe('replaceMediasByLinks', () => {
           }
         ]
       }
-    ])
+    ]
     const content = '<media relative-path="images/photo.jpg" alt="My photo" title="Photo title" />'
     const result = replaceMediasByLinks(content, medias)
     expect(result).toContain('<img')
@@ -46,7 +41,7 @@ describe('replaceMediasByLinks', () => {
   })
 
   it('renders an audio media as an <audio> tag', () => {
-    const medias = makeMedias([
+    const medias = [
       {
         oid: 'mediaaudio1234567890',
         relativePath: 'audio/track.mp3',
@@ -62,7 +57,7 @@ describe('replaceMediasByLinks', () => {
           }
         ]
       }
-    ])
+    ]
     const content = '<media relative-path="audio/track.mp3" />'
     const result = replaceMediasByLinks(content, medias)
     expect(result).toContain('<audio')
@@ -71,7 +66,7 @@ describe('replaceMediasByLinks', () => {
   })
 
   it('renders a video media as a <video> tag', () => {
-    const medias = makeMedias([
+    const medias = [
       {
         oid: 'mediavideo1234567890',
         relativePath: 'video/clip.mp4',
@@ -87,7 +82,7 @@ describe('replaceMediasByLinks', () => {
           }
         ]
       }
-    ])
+    ]
     const content = '<media relative-path="video/clip.mp4" />'
     const result = replaceMediasByLinks(content, medias)
     expect(result).toContain('<video')
@@ -96,7 +91,7 @@ describe('replaceMediasByLinks', () => {
   })
 
   it('renders an unknown media kind as an <a> link', () => {
-    const medias = makeMedias([
+    const medias = [
       {
         oid: 'mediadoc1234567890ab',
         relativePath: 'docs/file.pdf',
@@ -112,7 +107,7 @@ describe('replaceMediasByLinks', () => {
           }
         ]
       }
-    ])
+    ]
     const content = '<media relative-path="docs/file.pdf" title="My PDF" />'
     const result = replaceMediasByLinks(content, medias)
     expect(result).toContain('<a ')
@@ -120,7 +115,7 @@ describe('replaceMediasByLinks', () => {
   })
 
   it('selects the blob matching requested tags', () => {
-    const medias = makeMedias([
+    const medias = [
       {
         oid: 'mediatagged123456789',
         relativePath: 'images/photo.jpg',
@@ -142,7 +137,7 @@ describe('replaceMediasByLinks', () => {
           }
         ]
       }
-    ])
+    ]
     const content = '<media relative-path="images/photo.jpg" />'
 
     const resultOriginal = replaceMediasByLinks(content, medias)
@@ -153,7 +148,7 @@ describe('replaceMediasByLinks', () => {
   })
 
   it('replaces multiple media tags in a single content string', () => {
-    const medias = makeMedias([
+    const medias = [
       {
         oid: 'mediapic1234567890ab',
         relativePath: 'images/a.jpg',
@@ -174,7 +169,7 @@ describe('replaceMediasByLinks', () => {
           { oid: 'blobpicb1122334455667', mimeType: 'image/jpeg', attributes: {}, tags: [] }
         ]
       }
-    ])
+    ]
     const content =
       'First: <media relative-path="images/a.jpg" />\nSecond: <media relative-path="images/b.jpg" />'
     const result = replaceMediasByLinks(content, medias)

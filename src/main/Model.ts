@@ -119,12 +119,12 @@ export interface Block {
   noteRefs: NoteRef[]
 
   // Rendering
-  showActions: boolean
-  showTitle: boolean
-  showBody: boolean
-  showComment: boolean
-  showAttributes: boolean
-  showTags: boolean
+  showActions?: boolean
+  showTitle?: boolean
+  showBody?: boolean
+  showComment?: boolean
+  showAttributes?: boolean
+  showTags?: boolean
 }
 
 /* The NoteWriter Config */

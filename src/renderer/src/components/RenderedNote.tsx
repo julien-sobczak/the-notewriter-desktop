@@ -16,7 +16,7 @@ import {
   PlayIcon as RunHooksIcon
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
-import { Note, Blob, Bookmark, extractSourceURL, ListItem } from '@renderer/Model'
+import { Note, Bookmark, extractSourceURL, ListItem } from '@renderer/Model'
 import NoteType from './NoteType'
 import Markdown from './Markdown'
 import RenderedMetadata, { RenderedAttributes, RenderedTags } from './RenderedMetadata'

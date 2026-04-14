@@ -1256,9 +1256,10 @@ ul.Filter li.selected {
 .RenderedFlashcard {
   /* Make sure the buttons are always positioning at the same place on screen */
   width: 40rem;
-  /* Not too wide to keep the text readable */
-  min-height: 60vh;
-  max-height: 60vh;
+  height: 100%;
+  /* Avoid scrolling if space is available */
+  padding: 2rem;
+  /* Add some space especially below answer buttons */
   display: flex;
   flex-direction: column;
 }
