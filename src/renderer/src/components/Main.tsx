@@ -1041,6 +1041,16 @@ function Main() {
             <BrowserSidebar
               onFileSelected={handleFileRefSelected}
               onClose={() => setActivity('')}
+              defaultRepositorySlug={
+                activeTabIndex >= 0 && openedTabs[activeTabIndex]?.kind === 'file'
+                  ? (openedTabs[activeTabIndex].data as FileTab).file.repositorySlug
+                  : undefined
+              }
+              defaultRelativePath={
+                activeTabIndex >= 0 && openedTabs[activeTabIndex]?.kind === 'file'
+                  ? (openedTabs[activeTabIndex].data as FileTab).relativePath
+                  : undefined
+              }
             />
           </div>
         )}
