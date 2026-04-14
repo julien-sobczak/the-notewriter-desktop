@@ -15,17 +15,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [
       'ts-jest',
       {
-        tsconfig: {
-          jsx: 'react-jsx',
-          target: 'es2021',
-          esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-          moduleResolution: 'node',
-          baseUrl: '.',
-          paths: {
-            '@renderer/*': ['src/renderer/src/*']
-          }
-        }
+        tsconfig: 'tsconfig.jest.json'
       }
     ]
   },

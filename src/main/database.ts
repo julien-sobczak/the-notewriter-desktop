@@ -34,13 +34,13 @@ function randomElement(items: string[]): string {
 }
 
 // Extract medias relative paths from a single note
-function extractMediaRelativePaths(note: Note): string[] {
+function extractMediaRelativePathsFromContent(content: string): string[] {
   const results: string[] = []
 
   const re: RegExp = /<media relative-path="(.*?)".*?\/>/g
   let m: RegExpExecArray | null
   while (true) {
-    m = re.exec(note.body)
+    m = re.exec(content)
     if (m == null) {
       break
     }
@@ -48,6 +48,17 @@ function extractMediaRelativePaths(note: Note): string[] {
   }
 
   return results
+}
+
+function extractMediaRelativePathsFromNote(note: Note): string[] {
+  return extractMediaRelativePathsFromContent(note.body)
+}
+
+function extractMediaRelativePathsFromFlashcard(flashcard: Flashcard): string[] {
+  return [
+    ...extractMediaRelativePathsFromContent(flashcard.front),
+    ...extractMediaRelativePathsFromContent(flashcard.back)
+  ]
 }
 
 export default class DatabaseManager {
@@ -212,6 +223,7 @@ export default class DatabaseManager {
               kind: row.kind,
               extension: row.extension,
               relativePath: row.relative_path,
+              repositoryPath: this.#getRepositoryPath(datasourceName),
               blobs: [
                 {
                   oid: row.blobOid,
@@ -274,6 +286,7 @@ export default class DatabaseManager {
               kind: row.kind,
               extension: row.extension,
               relativePath: row.relative_path,
+              repositoryPath: this.#getRepositoryPath(datasourceName),
               blobs: [
                 {
                   oid: row.blobOid,
@@ -317,7 +330,7 @@ export default class DatabaseManager {
         // Iterate over found notes and search for potential referenced medias
         for (let i = 0; i < rows.length; i++) {
           const note = this.#rowToNote(rows[i], datasourceName)
-          const noteMediaRelativePaths = extractMediaRelativePaths(note)
+          const noteMediaRelativePaths = extractMediaRelativePathsFromNote(note)
           notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths)
           mediaRelativePaths.push(...noteMediaRelativePaths)
           notes.push(note)
@@ -809,7 +822,7 @@ export default class DatabaseManager {
           return
         }
         const note = this.#rowToNote(row, datasourceName)
-        const mediaRelativePaths = extractMediaRelativePaths(note)
+        const mediaRelativePaths = extractMediaRelativePathsFromNote(note)
 
         // Append found medias on note
         const foundMedias = await this.searchMediasByRelativePaths(
@@ -893,7 +906,7 @@ export default class DatabaseManager {
           return
         }
         const note = this.#rowToNote(row, datasourceName)
-        const mediaRelativePaths = extractMediaRelativePaths(note)
+        const mediaRelativePaths = extractMediaRelativePathsFromNote(note)
 
         // Append found medias on note
         const foundMedias = await this.searchMediasByRelativePaths(
@@ -971,7 +984,7 @@ export default class DatabaseManager {
           // Iterate over found notes and search for potential referenced medias
           for (let i = 0; i < rows.length; i++) {
             const note = this.#rowToNote(rows[i], datasourceName)
-            const noteMediaRelativePaths = extractMediaRelativePaths(note)
+            const noteMediaRelativePaths = extractMediaRelativePathsFromNote(note)
             notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths)
             mediaRelativePaths.push(...noteMediaRelativePaths)
             notes.push(note)
@@ -1242,7 +1255,7 @@ export default class DatabaseManager {
         )
         `
 
-      db.all(sql, (err: any, rows: any[]) => {
+      db.all(sql, async (err: any, rows: any[]) => {
         if (err) {
           console.log('Error while searching for due flashcards', err)
           reject(err)
@@ -1256,6 +1269,8 @@ export default class DatabaseManager {
             oid: row.oid,
             oidFile: row.file_oid,
             oidNote: row.note_oid,
+            repositorySlug,
+            repositoryPath: this.#getRepositoryPath(repositorySlug),
             relativePath: row.relative_path,
             slug: row.slug,
             shortTitle: row.short_title,
@@ -1263,13 +1278,14 @@ export default class DatabaseManager {
             attributes: JSON.parse(row.attributes),
             front: row.front,
             back: row.back,
+            medias: [],
             dueAt: row.due_at,
             studiedAt: row.studied_at,
             settings: JSON.parse(row.settings)
           }
           results.push(flashcard)
         }
-        resolve(results)
+        resolve(await this.enrichFlashcardsWithMedias(repositorySlug, results))
       })
     })
   }
@@ -1305,7 +1321,7 @@ export default class DatabaseManager {
         AND flashcard.relative_path = ?
         `
 
-      db.all(sql, [relativePath], (err: any, rows: any[]) => {
+      db.all(sql, [relativePath], async (err: any, rows: any[]) => {
         if (err) {
           console.log('Error while searching for flashcards in file', err)
           reject(err)
@@ -1319,6 +1335,8 @@ export default class DatabaseManager {
             oid: row.oid,
             oidFile: row.file_oid,
             oidNote: row.note_oid,
+            repositorySlug,
+            repositoryPath: this.#getRepositoryPath(repositorySlug),
             relativePath: row.relative_path,
             slug: row.slug,
             shortTitle: row.short_title,
@@ -1326,13 +1344,14 @@ export default class DatabaseManager {
             attributes: JSON.parse(row.attributes),
             front: row.front,
             back: row.back,
+            medias: [],
             dueAt: row.due_at,
             studiedAt: row.studied_at,
             settings: JSON.parse(row.settings)
           }
           results.push(flashcard)
         }
-        resolve(results)
+        resolve(await this.enrichFlashcardsWithMedias(repositorySlug, results))
       })
     })
   }
@@ -1691,7 +1710,7 @@ export default class DatabaseManager {
     const notesMediaRelativePaths = new Map<string, string[]>()
     for (let i = 0; i < notes.length; i++) {
       const note = notes[i]
-      const noteMediaRelativePaths = extractMediaRelativePaths(note)
+      const noteMediaRelativePaths = extractMediaRelativePathsFromNote(note)
       notesMediaRelativePaths.set(note.oid, noteMediaRelativePaths)
       mediaRelativePaths.push(...noteMediaRelativePaths)
     }
@@ -1718,6 +1737,44 @@ export default class DatabaseManager {
     }
 
     return notes
+  }
+
+  async enrichFlashcardsWithMedias(
+    repositorySlug: string,
+    flashcards: Flashcard[]
+  ): Promise<Flashcard[]> {
+    // Collect information about medias in flashcards
+    const mediaRelativePaths: string[] = []
+    const flashcardsMediaRelativePaths = new Map<string, string[]>()
+    for (let i = 0; i < flashcards.length; i++) {
+      const flashcard = flashcards[i]
+      const flashcardMediaRelativePaths = extractMediaRelativePathsFromFlashcard(flashcard)
+      flashcardsMediaRelativePaths.set(flashcard.oid, flashcardMediaRelativePaths)
+      mediaRelativePaths.push(...flashcardMediaRelativePaths)
+    }
+
+    // Search for medias
+    const foundMedias = await this.searchMediasByRelativePaths(mediaRelativePaths, repositorySlug)
+    const mediasByRelativePaths = new Map<string, Media>()
+    foundMedias.forEach((media: Media) => mediasByRelativePaths.set(media.relativePath, media))
+
+    // Append found medias on flashcards
+    for (let i = 0; i < flashcards.length; i++) {
+      const flashcard = flashcards[i]
+      if (!flashcardsMediaRelativePaths.has(flashcard.oid)) {
+        continue
+      }
+
+      const referencedMediaRelativePaths = flashcardsMediaRelativePaths.get(flashcard.oid)
+      referencedMediaRelativePaths?.forEach((mediaRelativePath) => {
+        const media = mediasByRelativePaths.get(mediaRelativePath)
+        if (media) {
+          flashcard.medias.push(media)
+        }
+      })
+    }
+
+    return flashcards
   }
 
   /* Converters */
