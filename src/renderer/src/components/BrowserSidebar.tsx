@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useMemo } from 'react'
 import {
   XIcon as CloseIcon,
   FolderIcon as FolderCloseIcon,
@@ -13,9 +13,16 @@ import { Action, Actions } from './Actions'
 type BrowserSidebarProps = {
   onFileSelected?: (file: FileRef) => void
   onClose?: () => void
+  defaultRepositorySlug?: string
+  defaultRelativePath?: string
 }
 
-function BrowserSidebar({ onFileSelected, onClose }: BrowserSidebarProps) {
+function BrowserSidebar({
+  onFileSelected,
+  onClose,
+  defaultRepositorySlug,
+  defaultRelativePath
+}: BrowserSidebarProps) {
   const { config } = useContext(ConfigContext)
 
   // Read configured repositories (useful to populate the dropdown)
@@ -43,6 +50,22 @@ function BrowserSidebar({ onFileSelected, onClose }: BrowserSidebarProps) {
   // Check https://dgreene1.github.io/react-accessible-treeview/docs/examples-DirectoryTree
   const folder = filesToFolder(files)
   const data = flattenTree(folder)
+
+  // Compute selected and expanded IDs based on default props
+  const selectedIds = useMemo(() => {
+    if (!defaultRepositorySlug || !defaultRelativePath) return []
+    return [`@${defaultRepositorySlug}/${defaultRelativePath}`]
+  }, [defaultRepositorySlug, defaultRelativePath])
+
+  const expandedIds = useMemo(() => {
+    if (!defaultRepositorySlug || !defaultRelativePath) return []
+    const ids: string[] = [`@${defaultRepositorySlug}`]
+    const parts = defaultRelativePath.split('/')
+    for (let depth = 0; depth < parts.length - 1; depth++) {
+      ids.push(`@${defaultRepositorySlug}/${parts.slice(0, depth + 1).join('/')}`)
+    }
+    return ids
+  }, [defaultRepositorySlug, defaultRelativePath])
 
   // Triggered when a user select a directory or a file in the tree view
   const handleTreeViewSelect = (value: ITreeViewOnNodeSelectProps) => {
@@ -81,8 +104,8 @@ function BrowserSidebar({ onFileSelected, onClose }: BrowserSidebarProps) {
             aria-label="directory tree"
             // Tip: You can use relativePath as ids in TreeView which makes easy to
             // reference nodes in the tree without having to find a random id
-            selectedIds={[]}
-            expandedIds={[]}
+            selectedIds={selectedIds}
+            expandedIds={expandedIds}
             onNodeSelect={handleTreeViewSelect}
             nodeRenderer={({ element, isBranch, isExpanded, getNodeProps, level }) => (
               <div {...getNodeProps()} style={{ paddingLeft: 20 * (level - 1) }}>
