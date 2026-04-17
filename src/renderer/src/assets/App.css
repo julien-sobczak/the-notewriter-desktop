@@ -150,7 +150,7 @@ svg {
 .MainMenu {
   position: relative;
   display: flex;
-  height: 100%;
+  height: calc(100vh - var(--top-bar-height));
 }
 
 .TopBar {
@@ -262,6 +262,11 @@ svg {
   border-right: 1px solid var(--color-separator);
 }
 
+.BrowserSidecar {
+  height: 100%;
+  overflow: scroll;
+}
+
 .EditorArea {
   flex-grow: 1;
   display: none;
@@ -304,7 +309,9 @@ svg {
 }
 
 .LayoutGrid .RenderedNote {
-  flex-grow: 0;
+  flex: 1;
+  /* Ensure space is filled but also ensure notes are not rendered too small */
+  min-width: 20em;
 }
 
 .Actions {
@@ -474,6 +481,7 @@ ul.Filter li.selected {
   /* FIXME still useful */
   display: flex;
   position: relative;
+  height: 100%;
   margin: var(--desktop-layout-margin);
   overflow: auto;
   flex-grow: 1;

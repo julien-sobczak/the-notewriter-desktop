@@ -68,10 +68,11 @@ function RenderedFileTab(props: RenderedFileTabProps) {
       setFile(result)
 
       // Load available desks for this file
-      setDesks(getDesksForFile(config, result))
+      const fileDesks = getDesksForFile(config, result)
+      setDesks(fileDesks)
       // Select the first desk by default if available
-      if (desks.length > 0) {
-        setSelectedDesk(desks[0])
+      if (fileDesks.length > 0) {
+        setSelectedDesk(fileDesks[0])
       }
     }
     const listNotesInFile = async () => {
