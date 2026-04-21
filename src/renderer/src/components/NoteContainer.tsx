@@ -7,7 +7,10 @@ import {
   ListNumbersIcon,
   SortAscendingIcon,
   SortDescendingIcon,
-  ShuffleIcon
+  ShuffleIcon,
+  FunnelIcon as FilterIcon,
+  TagSimpleIcon as TagIcon,
+  AtIcon as AttributeIcon
 } from '@phosphor-icons/react'
 import classNames from 'classnames'
 import { Note } from '@renderer/Model'
@@ -45,6 +48,12 @@ function NoteContainer({
   const [selectedLayout, setSelectedLayout] = useState(layout)
   const [originalNotes, setOriginalNotes] = useState<Note[]>([])
   const [sortedNotes, setSortedNotes] = useState<Note[]>([])
+  const [showFilterTags, setShowFilterTags] = useState<boolean>(false)
+  const [showFilterAttributes, setShowFilterAttributes] = useState<boolean>(false)
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [availableAttributes, setAvailableAttributes] = useState<string[]>([])
+  const [currentFilterTags, setCurrentFilterTags] = useState<string[]>([])
+  const [currentFilterAttributes, setCurrentFilterAttributes] = useState<string[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Initialize and track notes changes
@@ -53,6 +62,33 @@ function NoteContainer({
       setOriginalNotes([...notes])
       setSortedNotes([...notes])
     }
+  }, [notes])
+
+  // Extract all unique tags and attribute names used by notes in this container
+  useEffect(() => {
+    if (!notes) {
+      setAvailableTags([])
+      setAvailableAttributes([])
+      return
+    }
+
+    const tags = new Set<string>()
+    const attributes = new Set<string>()
+
+    notes.forEach((note) => {
+      note.tags?.forEach((tag) => tags.add(tag))
+      Object.keys(note.attributes || {}).forEach((attributeName) => attributes.add(attributeName))
+    })
+
+    const uniqueTags = [...tags]
+    const uniqueAttributes = [...attributes]
+
+    setAvailableTags(uniqueTags)
+    setAvailableAttributes(uniqueAttributes)
+    setCurrentFilterTags((oldFilterTags) => oldFilterTags.filter((tag) => uniqueTags.includes(tag)))
+    setCurrentFilterAttributes((oldFilterAttributes) =>
+      oldFilterAttributes.filter((attribute) => uniqueAttributes.includes(attribute))
+    )
   }, [notes])
 
   // Fisher-Yates shuffle algorithm
@@ -75,6 +111,22 @@ function NoteContainer({
 
   const handleShuffle = () => {
     setSortedNotes(shuffleArray(originalNotes))
+  }
+
+  const handleToggleFilterTag = (tag: string) => {
+    if (currentFilterTags.includes(tag)) {
+      setCurrentFilterTags(currentFilterTags.filter((t) => t !== tag))
+    } else {
+      setCurrentFilterTags([...currentFilterTags, tag])
+    }
+  }
+
+  const handleToggleFilterAttribute = (attribute: string) => {
+    if (currentFilterAttributes.includes(attribute)) {
+      setCurrentFilterAttributes(currentFilterAttributes.filter((a) => a !== attribute))
+    } else {
+      setCurrentFilterAttributes([...currentFilterAttributes, attribute])
+    }
   }
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
@@ -148,6 +200,25 @@ function NoteContainer({
     setSelectedLayout(newLayout)
   }
 
+  const filteredNotes = sortedNotes.filter((note) => {
+    if (currentFilterTags.length > 0) {
+      const hasAllTags = currentFilterTags.every((tag) => (note.tags || []).includes(tag))
+      if (!hasAllTags) {
+        return false
+      }
+    }
+    if (currentFilterAttributes.length > 0) {
+      const noteAttributes = Object.keys(note.attributes || {})
+      const hasAllAttributes = currentFilterAttributes.every((attribute) =>
+        noteAttributes.includes(attribute)
+      )
+      if (!hasAllAttributes) {
+        return false
+      }
+    }
+    return true
+  })
+
   return (
     <div className="NoteContainer">
       <div className="Header">
@@ -166,6 +237,26 @@ function NoteContainer({
             />
             <Subaction title="Shuffle" onClick={handleShuffle} icon={<ShuffleIcon />} />
           </Action>
+          {(availableTags.length > 0 || availableAttributes.length > 0) && (
+            <Action title="Filter notes" icon={<FilterIcon />}>
+              {availableTags.length > 0 && (
+                <Subaction
+                  title="Tags"
+                  selected={showFilterTags}
+                  onClick={() => setShowFilterTags(!showFilterTags)}
+                  icon={<TagIcon />}
+                />
+              )}
+              {availableAttributes.length > 0 && (
+                <Subaction
+                  title="Attributes"
+                  selected={showFilterAttributes}
+                  onClick={() => setShowFilterAttributes(!showFilterAttributes)}
+                  icon={<AttributeIcon />}
+                />
+              )}
+            </Action>
+          )}
           {layoutSelectable && (
             <Action title="List layout" onClick={() => changeLayout('list')} icon={<ListIcon />} />
           )}
@@ -178,11 +269,35 @@ function NoteContainer({
           {onClose && <Action title="Close panel" onClick={onClose} icon={<CloseIcon />} />}
         </Actions>
       </div>
+      {(showFilterTags || showFilterAttributes) && (
+        <ul className="Filter">
+          {showFilterTags &&
+            availableTags.map((tag) => (
+              <li
+                key={`tag-${tag}`}
+                className={currentFilterTags.includes(tag) ? 'selected' : ''}
+                onClick={() => handleToggleFilterTag(tag)}
+              >
+                #{tag}
+              </li>
+            ))}
+          {showFilterAttributes &&
+            availableAttributes.map((attribute) => (
+              <li
+                key={`attribute-${attribute}`}
+                className={currentFilterAttributes.includes(attribute) ? 'selected' : ''}
+                onClick={() => handleToggleFilterAttribute(attribute)}
+              >
+                @{attribute}
+              </li>
+            ))}
+        </ul>
+      )}
       <div
         className={classNames(['Content', `Layout${capitalize(selectedLayout)}`])}
         ref={containerRef}
       >
-        {sortedNotes?.map((note: Note) => {
+        {filteredNotes?.map((note: Note) => {
           return (
             <RenderedNote
               key={note.oid}
