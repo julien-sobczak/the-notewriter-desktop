@@ -64,6 +64,11 @@ function RenderedBlockStatic({ block, repositorySlug }: RenderedBlockStaticProps
   if (block.layout === 'container') {
     if (!loaded) return <Loader />
 
+    if (notes.length === 0) {
+      // Avoid appending a block to preserve space
+      return
+    }
+
     if (block.view === 'single') {
       const note = notes.length > 0 ? notes[0] : null
       return (

@@ -506,7 +506,7 @@ export default function RenderedNote({
       {showTitle && (
         <div className="RenderedNoteTitle">
           <NoteType value={note.type} />
-          <Markdown md={note.longTitle} inline />
+          <Markdown md={note.shortTitle} inline />
         </div>
       )}
       {showBody && (
