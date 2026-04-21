@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import {
   RowsIcon as ListIcon,
   SquaresFourIcon as GridIcon,
@@ -30,6 +30,10 @@ type NoteContainerProps = {
   showActions?: boolean
   showComment?: boolean
   onClose?: () => void
+}
+
+const areSameValues = (left: string[], right: string[]) => {
+  return left.length === right.length && left.every((value, index) => value === right[index])
 }
 
 function NoteContainer({
@@ -80,15 +84,29 @@ function NoteContainer({
       Object.keys(note.attributes || {}).forEach((attributeName) => attributes.add(attributeName))
     })
 
-    const uniqueTags = [...tags]
-    const uniqueAttributes = [...attributes]
+    const uniqueTags = [...tags].sort()
+    const uniqueAttributes = [...attributes].sort()
 
-    setAvailableTags(uniqueTags)
-    setAvailableAttributes(uniqueAttributes)
-    setCurrentFilterTags((oldFilterTags) => oldFilterTags.filter((tag) => uniqueTags.includes(tag)))
-    setCurrentFilterAttributes((oldFilterAttributes) =>
-      oldFilterAttributes.filter((attribute) => uniqueAttributes.includes(attribute))
+    setAvailableTags((oldAvailableTags) =>
+      areSameValues(oldAvailableTags, uniqueTags) ? oldAvailableTags : uniqueTags
     )
+    setAvailableAttributes((oldAvailableAttributes) =>
+      areSameValues(oldAvailableAttributes, uniqueAttributes)
+        ? oldAvailableAttributes
+        : uniqueAttributes
+    )
+    setCurrentFilterTags((oldFilterTags) => {
+      const newFilterTags = oldFilterTags.filter((tag) => uniqueTags.includes(tag))
+      return areSameValues(oldFilterTags, newFilterTags) ? oldFilterTags : newFilterTags
+    })
+    setCurrentFilterAttributes((oldFilterAttributes) => {
+      const newFilterAttributes = oldFilterAttributes.filter((attribute) =>
+        uniqueAttributes.includes(attribute)
+      )
+      return areSameValues(oldFilterAttributes, newFilterAttributes)
+        ? oldFilterAttributes
+        : newFilterAttributes
+    })
   }, [notes])
 
   // Fisher-Yates shuffle algorithm
@@ -200,24 +218,29 @@ function NoteContainer({
     setSelectedLayout(newLayout)
   }
 
-  const filteredNotes = sortedNotes.filter((note) => {
-    if (currentFilterTags.length > 0) {
-      const hasAllTags = currentFilterTags.every((tag) => (note.tags || []).includes(tag))
-      if (!hasAllTags) {
-        return false
+  const filteredNotes = useMemo(
+    () =>
+      sortedNotes.filter((note) => {
+        if (currentFilterTags.length > 0) {
+          const hasAllTags = currentFilterTags.every((tag) => (note.tags || []).includes(tag))
+          if (!hasAllTags) {
+            return false
+          }
+        }
+        if (currentFilterAttributes.length > 0) {
+          const noteAttributes = Object.keys(note.attributes || {})
+          const hasAllAttributes = currentFilterAttributes.every((attribute) =>
+            noteAttributes.includes(attribute)
+          )
+          if (!hasAllAttributes) {
+            return false
+          }
+        }
+        return true
       }
-    }
-    if (currentFilterAttributes.length > 0) {
-      const noteAttributes = Object.keys(note.attributes || {})
-      const hasAllAttributes = currentFilterAttributes.every((attribute) =>
-        noteAttributes.includes(attribute)
-      )
-      if (!hasAllAttributes) {
-        return false
-      }
-    }
-    return true
-  })
+    ),
+    [sortedNotes, currentFilterTags, currentFilterAttributes]
+  )
 
   return (
     <div className="NoteContainer">
